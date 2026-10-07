@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scene_plan.schema",
+  "title": "Scene Plan",
+  "description": "Semantic scene-by-scene plan. Every field maps to an executable output.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../artifact_envelope.schema.json"
+    },
+    {
+      "properties": {
+        "artifact_type": {
+          "const": "scene_plan"
+        },
+        "schema_version": {
+          "const": "2.0"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "scenes",
+            "total_duration_seconds",
+            "variety_score"
+          ],
+          "properties": {
+            "scenes": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "type",
+                  "start_seconds",
+                  "end_seconds",
+                  "shot_intent",
+                  "narrative_role",
+                  "subject",
+                  "required_assets"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "talking_head",
+                      "broll",
+                      "animation",
+                      "character_scene",
+                      "diagram",
+                      "text_card",
+                      "transition",
+                      "generated",
+                      "screen_recording"
+                    ]
+                  },
+                  "start_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "end_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "script_section_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "shot_intent": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "narrative_role": {
+                    "type": "string"
+                  },
+                  "information_role": {
+                    "type": "string"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subject_action": {
+                    "type": "string"
+                  },
+                  "environment": {
+                    "type": "string"
+                  },
+                  "composition": {
+                    "type": "string"
+                  },
+                  "camera": {
+                    "type": "object"
+                  },
+                  "motion": {
+                    "type": "object"
+                  },
+                  "animation_sequence": {
+                    "type": "array"
+                  },
+                  "transition_in": {
+                    "type": "string"
+                  },
+                  "transition_out": {
+                    "type": "string"
+                  },
+                  "overlays": {
+                    "type": "array"
+                  },
+                  "captions": {
+                    "type": "object"
+                  },
+                  "required_assets": {
+                    "type": "array"
+                  },
+                  "texture_keywords": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "scene_id": {
+                    "type": "string"
+                  },
+                  "viewer_understanding": {
+                    "type": "string"
+                  },
+                  "visual_purpose": {
+                    "type": "string"
+                  },
+                  "visual_metaphor": {
+                    "type": "string"
+                  },
+                  "composition_intent": {
+                    "type": "string"
+                  },
+                  "spatial_relationships": {
+                    "type": "string"
+                  },
+                  "depth_strategy": {
+                    "type": "string"
+                  },
+                  "camera_intent": {
+                    "type": "string"
+                  },
+                  "motion_intent": {
+                    "type": "string"
+                  },
+                  "transition_intent": {
+                    "type": "string"
+                  },
+                  "visual_technique": {
+                    "type": "string"
+                  },
+                  "caption_intent": {
+                    "type": "string"
+                  },
+                  "continuity_from_previous": {
+                    "type": "string"
+                  },
+                  "continuity_to_next": {
+                    "type": "string"
+                  },
+                  "variation_reason": {
+                    "type": "string"
+                  },
+                  "text_density": {
+                    "type": "string",
+                    "enum": ["low", "medium", "high"]
+                  },
+                  "signature_device_usage": {
+                    "type": "string",
+                    "enum": ["none", "subtle", "key_beat"]
+                  },
+                  "shots": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "reference_strategy": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "total_duration_seconds": {
+              "type": "number",
+              "minimum": 1
+            },
+            "variety_score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "scene_type_distribution": {
+              "type": "object"
+            },
+            "technique_usage": {
+              "type": "object"
+            }
+          },
+          "description": "Payload for scene_plan"
+        }
+      },
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "data"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "artifact_type": "research_brief",
+  "schema_version": "2.0",
+  "artifact_version": 1,
+  "production_id": "sample_production",
+  "stage": "research",
+  "status": "approved",
+  "created_at": "2026-10-05T14:56:29.671999Z",
+  "updated_at": "2026-10-05T14:56:29.671999Z",
+  "producer": {
+    "kind": "llm",
+    "provider": "gemini",
+    "model": "gemini-2.0-flash",
+    "tool": null,
+    "prompt_hash": null,
+    "source_artifacts": [],
+    "estimated_cost": null,
+    "actual_cost": null
+  },
+  "content_hash": "sha256:6d54a350649ee88eb43aa20aa1584d1acf7184a52e700b31ad6281b31cac580b",
+  "data": {
+    "topic": "Why Vector Databases Matter for AI Agents",
+    "audience": "AI engineers and technical builders",
+    "sources": [
+      {
+        "title": "Pinecone Architecture Overview",
+        "url": "https://www.pinecone.io/learn/vector-database/"
+      },
+      {
+        "title": "Qdrant Vector Search Handbook",
+        "url": "https://qdrant.tech/documentation/"
+      },
+      {
+        "title": "Chroma DB Embeddings Guide",
+        "url": "https://docs.trychroma.com/"
+      }
+    ],
+    "facts": [
+      "Vector databases index high-dimensional embeddings using algorithms like HNSW.",
+      "Traditional relational databases index scalar fields and cannot perform approximate nearest neighbor search efficiently.",
+      "Dense retrieval enables RAG architectures to ground LLMs on private external knowledge."
+    ],
+    "angles_discovered": [
+      "The geometric intuition: turning semantic meaning into spatial coordinates.",
+      "The memory bottleneck: why prompt context windows alone cannot replace vector search."
+    ]
+  },
+  "parent_artifacts": [],
+  "warnings": [],
+  "metadata": {}
+}

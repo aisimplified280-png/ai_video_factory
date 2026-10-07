@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+remotion-composer/node_modules/
+remotion-composer/.remotion/
+remotion-composer/out/
+
+# Public audio/media caches
+remotion-composer/public/*.wav
+remotion-composer/public/*.mp3
+remotion-composer/public/*.m4a
+remotion-composer/public/proj_*
+remotion-composer/public/assets/
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Environment and secrets
+.env
+.env.local
+.model_rank.json
+
+# Build outputs, benchmarks & heavy production artifacts
+output/
+reference_frames/
+projects/
+benchmark/
+*.mp4
+*.wav
+*.mp3
+*.m4a
+.cache/

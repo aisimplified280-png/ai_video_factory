@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "script.schema",
+  "title": "Script",
+  "description": "Full narration script with timing, speaker direction, and visual cues.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../artifact_envelope.schema.json"
+    },
+    {
+      "properties": {
+        "artifact_type": {
+          "const": "script"
+        },
+        "schema_version": {
+          "const": "2.0"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "sections",
+            "target_duration_seconds",
+            "word_count"
+          ],
+          "properties": {
+            "sections": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "spoken_text",
+                  "narrative_role"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "section_id": {
+                    "type": "string"
+                  },
+                  "spoken_text": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "timestamp_start": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "timestamp_end": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "estimated_start": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "estimated_end": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "duration": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "speaker_direction": {
+                    "type": "string"
+                  },
+                  "performance_direction": {
+                    "type": "object"
+                  },
+                  "pause_cues": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "pause_after": {
+                    "type": "number"
+                  },
+                  "emphasis_cues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "emphasis_words": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "visual_intent": {
+                    "type": "string"
+                  },
+                  "visual_enhancement_cues": {
+                    "type": "string"
+                  },
+                  "narrative_role": {
+                    "type": "string",
+                    "enum": [
+                      "hook",
+                      "context",
+                      "problem",
+                      "tension",
+                      "mechanism",
+                      "process",
+                      "proof",
+                      "evidence",
+                      "reveal",
+                      "payoff",
+                      "implication",
+                      "cta",
+                      "transition"
+                    ]
+                  },
+                  "primary_intent": {
+                    "type": "string"
+                  },
+                  "secondary_intents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "primary_subject": {
+                    "type": "string"
+                  },
+                  "entities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "keywords": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "production_id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "hook": {
+              "type": "string"
+            },
+            "audience": {
+              "type": "string"
+            },
+            "target_duration": {
+              "type": "number"
+            },
+            "target_duration_seconds": {
+              "type": "number",
+              "minimum": 1
+            },
+            "estimated_duration": {
+              "type": "number"
+            },
+            "estimated_duration_seconds": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "word_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "spoken_word_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "timing_status": {
+              "type": "string"
+            },
+            "cta": {
+              "type": "object"
+            },
+            "breathing_room_seconds": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "vo_script_text": {
+              "type": "string"
+            }
+          },
+          "description": "Payload for script"
+        }
+      },
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "data"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,261 @@
+name: tutorial-short
+version: "2.0"
+description: "45-60 second step-by-step instructional vertical short"
+target_duration: 50.0
+platform: youtube_shorts
+run_mode_default: auto
+
+required_stages:
+  - research
+  - proposal
+  - script
+  - art_direction
+  - scene_plan
+  - assets
+  - edit
+  - compose
+
+optional_stages:
+  - review
+  - publish
+
+required_artifacts:
+  - research_brief
+  - proposal_packet
+  - script
+  - art_direction
+  - scene_plan
+  - asset_manifest
+  - edit_decisions
+  - render_report
+
+stages:
+  research:
+    name: research
+    required: true
+    description: "Step-by-step procedure verification and prerequisites"
+    produces:
+      - research_brief
+    consumes:
+      - brief
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: min_sources
+        type: min
+        field: sources
+        threshold: 2.0
+        required: true
+        message: "At least 2 sources required"
+
+  proposal:
+    name: proposal
+    required: true
+    description: "Tutorial approach, callout style, and pacing plan"
+    produces:
+      - proposal_packet
+    consumes:
+      - research_brief
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: proposals_present
+        type: presence
+        field: concepts
+        required: true
+        message: "Proposals must be present"
+
+  script:
+    name: script
+    required: true
+    description: "Clear instructional voiceover with numbered action steps"
+    produces:
+      - script
+    consumes:
+      - research_brief
+      - proposal_packet
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: script_word_count_min
+        type: min
+        field: word_count
+        threshold: 70.0
+        required: true
+        message: "Tutorial script must have at least 70 words"
+
+  art_direction:
+    name: art_direction
+    required: true
+    description: "Clean UI callouts, high readability, step badges, and focus zoom cues"
+    produces:
+      - art_direction
+    consumes:
+      - proposal_packet
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: visual_variance_min
+        type: min
+        field: visual_variance
+        threshold: 5.0
+        required: true
+        message: "Visual variance score must be at least 5"
+
+  scene_plan:
+    name: scene_plan
+    required: true
+    description: "One scene per tutorial step with clear focus area"
+    produces:
+      - scene_plan
+    consumes:
+      - script
+      - art_direction
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: min_scenes
+        type: min
+        field: scenes
+        threshold: 4.0
+        required: true
+        message: "At least 4 step scenes required"
+
+  assets:
+    name: assets
+    required: true
+    description: "Step badges, screen recordings, arrow overlays, and UI mockups"
+    produces:
+      - asset_manifest
+    consumes:
+      - scene_plan
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: assets_present
+        type: presence
+        field: assets
+        required: true
+        message: "Assets list must be present"
+
+  edit:
+    name: edit
+    required: true
+    description: "Synchronized step progression with zoom transitions"
+    produces:
+      - edit_decisions
+    consumes:
+      - research_brief
+      - proposal_packet
+      - art_direction
+      - script
+      - scene_plan
+      - asset_manifest
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: tracks_present
+        type: presence
+        field: tracks
+        required: true
+        message: "Tracks must be defined in edit decisions"
+
+  compose:
+    name: compose
+    required: true
+    description: "Robust local rendering via ffmpeg_pil"
+    produces:
+      - render_report
+    consumes:
+      - edit_decisions
+      - asset_manifest
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: render_success
+        type: presence
+        field: final_video_path
+        required: true
+        message: "Render report must include final_video_path"
+
+  review:
+    name: review
+    required: false
+    description: "Step-by-step accuracy and visual timing check"
+    produces:
+      - review_report
+    consumes:
+      - render_report
+    approval:
+      mode: auto
+    max_revisions: 2
+    quality_gates:
+      - name: findings_present
+        type: presence
+        field: findings
+        required: true
+        message: "Review findings must be present"
+
+  publish:
+    name: publish
+    required: false
+    description: "Publish record with chapter marks"
+    produces:
+      - publish_log
+    consumes:
+      - render_report
+    approval:
+      mode: human
+    max_revisions: 2
+    quality_gates:
+      - name: final_video_confirmed
+        type: presence
+        field: final_video_path
+        required: true
+        message: "Publish log must confirm final video"
+
+quality_gates:
+  - name: min_scene_diversity
+    type: min
+    field: visual_variance
+    threshold: 5.0
+    required: true
+    message: "Pipeline visual variance must be at least 5.0"
+
+approval_policy:
+  research:
+    mode: auto
+  proposal:
+    mode: auto
+  script:
+    mode: auto
+  art_direction:
+    mode: auto
+  scene_plan:
+    mode: auto
+  assets:
+    mode: auto
+  edit:
+    mode: auto
+  compose:
+    mode: auto
+
+budget_policy:
+  budget_cap: 8.0
+  max_image_gen_calls: 15
+  max_video_gen_calls: 2
+  max_tts_chars: 4500
+  max_llm_tokens: 80000
+
+render_runtime_policy:
+  primary: ffmpeg_pil
+  fallback: null
+  strict: true

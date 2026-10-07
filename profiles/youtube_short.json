@@ -1,0 +1,12 @@
+{
+  "id": "youtube_short",
+  "platform": "youtube_shorts",
+  "resolution": {"width": 1080, "height": 1920},
+  "fps": 30,
+  "duration_constraints": {"minimum_seconds": 10, "maximum_seconds": 60},
+  "safe_zones": {
+    "caption": "lower_center_safe",
+    "cta": "center_safe",
+    "brand": "bottom_safe"
+  }
+}

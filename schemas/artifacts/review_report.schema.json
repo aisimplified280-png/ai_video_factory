@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "review_report.schema",
+  "title": "Review Report",
+  "description": "Structured findings from stage review. Every finding must cite evidence.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../artifact_envelope.schema.json"
+    },
+    {
+      "properties": {
+        "artifact_type": {
+          "const": "review_report"
+        },
+        "schema_version": {
+          "const": "2.0"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "reviewed_stage",
+            "reviewed_artifact_type",
+            "status",
+            "findings"
+          ],
+          "properties": {
+            "reviewed_stage": {
+              "type": "string"
+            },
+            "reviewed_artifact_type": {
+              "type": "string"
+            },
+            "reviewed_artifact_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "approved",
+                "rejected",
+                "warning"
+              ]
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "finding",
+                  "evidence",
+                  "severity"
+                ],
+                "properties": {
+                  "finding": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "severity": {
+                    "type": "string",
+                    "enum": [
+                      "info",
+                      "warning",
+                      "error",
+                      "critical"
+                    ]
+                  },
+                  "impact": {
+                    "type": "string"
+                  },
+                  "recommended_correction": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "auto_approved": {
+              "type": "boolean"
+            },
+            "reviewer": {
+              "type": "string"
+            }
+          },
+          "description": "Payload for review_report"
+        }
+      },
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "data"
+      ]
+    }
+  ]
+}

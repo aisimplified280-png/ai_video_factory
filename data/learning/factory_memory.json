@@ -1,0 +1,59 @@
+[
+  {
+    "production_id": "base_001",
+    "topic": "Robotics Warehouse Automation",
+    "selected_title": "Robots Just Took Another Human Job",
+    "title_angle": "shock_revelation",
+    "hook_text": "Warehouse robots are getting smarter fast.",
+    "hook_style": "fast_assertion",
+    "visual_style": "documentary_industrial",
+    "thumbnail_text": "ROBOTS UNLEASHED",
+    "metrics": {
+      "views": 48200,
+      "ctr_percent": 11.2,
+      "avg_watch_percentage": 86.4,
+      "subscribers_gained": 340,
+      "retention_dropoff_3s": 91.5
+    },
+    "composite_performance_score": 92.4,
+    "recorded_at": "2026-09-15T00:00:00Z"
+  },
+  {
+    "production_id": "base_002",
+    "topic": "Autonomous Fleet Coordination",
+    "selected_title": "This Warehouse AI Is Learning Too Fast",
+    "title_angle": "curiosity_gap",
+    "hook_text": "A new AI coordination engine can now direct entire fleets.",
+    "hook_style": "fast_assertion",
+    "visual_style": "documentary_industrial",
+    "thumbnail_text": "LEARNING FAST",
+    "metrics": {
+      "views": 36500,
+      "ctr_percent": 10.4,
+      "avg_watch_percentage": 81.2,
+      "subscribers_gained": 215,
+      "retention_dropoff_3s": 88.0
+    },
+    "composite_performance_score": 88.1,
+    "recorded_at": "2026-09-22T00:00:00Z"
+  },
+  {
+    "production_id": "base_003",
+    "topic": "Frontier AI Hardware",
+    "selected_title": "Why Warehouses Are Replacing Humans In 2026",
+    "title_angle": "extreme_shift",
+    "hook_text": "AI chip engineering just took a massive leap.",
+    "hook_style": "fast_assertion",
+    "visual_style": "high_contrast_cleanroom",
+    "thumbnail_text": "REPLACED 2026",
+    "metrics": {
+      "views": 29800,
+      "ctr_percent": 9.1,
+      "avg_watch_percentage": 78.5,
+      "subscribers_gained": 180,
+      "retention_dropoff_3s": 84.2
+    },
+    "composite_performance_score": 82.3,
+    "recorded_at": "2026-09-29T00:00:00Z"
+  }
+]

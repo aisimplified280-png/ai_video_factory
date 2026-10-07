@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research_brief.schema",
+  "title": "Research Brief",
+  "description": "Factual research about the topic. Produced by the research stage before any creative work begins.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../artifact_envelope.schema.json"
+    },
+    {
+      "properties": {
+        "artifact_type": {
+          "const": "research_brief"
+        },
+        "schema_version": {
+          "const": "2.0"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "topic",
+            "audience",
+            "sources",
+            "facts",
+            "angles_discovered"
+          ],
+          "properties": {
+            "topic": {
+              "type": "string",
+              "minLength": 3
+            },
+            "audience": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sources": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "url"
+                ],
+                "properties": {
+                  "source_id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "domain": {
+                    "type": "string"
+                  },
+                  "published_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "retrieved_at": {
+                    "type": "string"
+                  },
+                  "source_type": {
+                    "type": "string"
+                  },
+                  "author": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "content_excerpt": {
+                    "type": "string"
+                  },
+                  "relevance_score": {
+                    "type": "number"
+                  },
+                  "publisher": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "summary": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "facts": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "claim",
+                      "source_ids"
+                    ],
+                    "properties": {
+                      "claim": {
+                        "type": "string",
+                        "minLength": 5
+                      },
+                      "source_ids": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "confidence": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "data_points": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "expert_views": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "audience_questions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "angles_discovered": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 5
+              }
+            },
+            "content_landscape": {
+              "type": "string"
+            },
+            "risks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Payload for research_brief"
+        }
+      },
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "data"
+      ]
+    }
+  ]
+}

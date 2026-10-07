@@ -1,0 +1,27 @@
+{
+  "name": "ai-simplified-lab-composer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion execution engine for AI Simplified Lab edit_decisions. Executes canonical artifacts; invents nothing.",
+  "scripts": {
+    "dev": "remotion studio",
+    "validate": "tsc --noEmit",
+    "render": "node ./scripts/render.mjs",
+    "render:remotion": "remotion render Production"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.12.0",
+    "@types/react": "18.2.0",
+    "@types/react-dom": "18.2.0",
+    "typescript": "5.4.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

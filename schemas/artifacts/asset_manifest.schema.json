@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_manifest.schema",
+  "title": "Asset Manifest",
+  "description": "Every planned asset with its purpose, provider, and fallback chain.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../artifact_envelope.schema.json"
+    },
+    {
+      "properties": {
+        "artifact_type": {
+          "const": "asset_manifest"
+        },
+        "schema_version": {
+          "const": "2.0"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "assets",
+            "total_estimated_cost"
+          ],
+          "properties": {
+            "assets": {
+              "type": "array",
+              "minItems": 0,
+              "items": {
+                "type": "object",
+                "required": [
+                  "asset_id",
+                  "scene_id",
+                  "purpose",
+                  "type",
+                  "source",
+                  "status"
+                ],
+                "properties": {
+                  "asset_id": {
+                    "type": "string"
+                  },
+                  "scene_id": {
+                    "type": "string"
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "image",
+                      "video",
+                      "diagram",
+                      "chart",
+                      "code",
+                      "screenshot",
+                      "screen_recording",
+                      "logo",
+                      "icon",
+                      "music",
+                      "voice",
+                      "sfx",
+                      "background",
+                      "animation",
+                      "svg",
+                      "texture",
+                      "native_composition"
+                    ]
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "generated",
+                      "stock",
+                      "native",
+                      "local",
+                      "remote",
+                      "web",
+                      "local_library",
+                      "hybrid"
+                    ]
+                  },
+                  "provider": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "model": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "prompt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "negative_prompt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "reference_assets": {
+                    "type": "array"
+                  },
+                  "expected_duration": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "quality_requirements": {
+                    "type": "object"
+                  },
+                  "fallback_chain": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "file_path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "generating",
+                      "ready",
+                      "failed",
+                      "needs_review"
+                    ]
+                  },
+                  "cost_usd": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            },
+            "total_estimated_cost": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "description": "Payload for asset_manifest"
+        }
+      },
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "data"
+      ]
+    }
+  ]
+}

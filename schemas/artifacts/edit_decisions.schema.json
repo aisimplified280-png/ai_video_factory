@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "edit_decisions.schema",
+  "title": "Edit Decisions",
+  "description": "Complete timeline contract. The composition runtime executes this exactly.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../artifact_envelope.schema.json"
+    },
+    {
+      "properties": {
+        "artifact_type": {
+          "const": "edit_decisions"
+        },
+        "schema_version": {
+          "const": "2.0"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "production_id",
+            "total_duration",
+            "platform_profile",
+            "platform",
+            "runtime_lock_source",
+            "render_runtime",
+            "renderer_family",
+            "composition_mode",
+            "timeline",
+            "video_tracks",
+            "audio_tracks",
+            "caption_track",
+            "validation",
+            "cta",
+            "tracks"
+          ],
+          "properties": {
+            "total_duration": {
+              "type": "number",
+              "minimum": 1
+            },
+            "platform_profile": {
+              "const": "profiles/youtube_short.json"
+            },
+            "runtime_lock_source": {
+              "type": "object",
+              "required": ["artifact_type", "version", "content_hash", "locked_at", "locked_concept_id"],
+              "properties": {
+                "artifact_type": {"const": "proposal_packet"},
+                "version": {"type": "integer", "minimum": 1},
+                "content_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+                "locked_at": {"type": "string"},
+                "locked_concept_id": {"type": "string"}
+              }
+            },
+            "platform": {
+              "type": "object",
+              "required": ["profile", "resolution", "fps", "duration_constraints", "safe_zones"],
+              "properties": {
+                "profile": {"const": "profiles/youtube_short.json"},
+                "resolution": {
+                  "type": "object",
+                  "required": ["width", "height"],
+                  "properties": {"width": {"const": 1080}, "height": {"const": 1920}}
+                },
+                "fps": {"const": 30},
+                "duration_constraints": {
+                  "type": "object",
+                  "required": ["minimum_seconds", "maximum_seconds"]
+                },
+                "safe_zones": {
+                  "type": "object",
+                  "required": ["caption", "cta", "brand"]
+                }
+              }
+            },
+            "render_runtime": {
+              "type": "string",
+              "enum": [
+                "remotion",
+                "hyperframes",
+                "ffmpeg_pil"
+              ]
+            },
+            "renderer_family": {
+              "type": "string",
+              "enum": ["explainer", "cinematic", "motion_graphics", "documentary", "screen_demo", "hybrid"]
+            },
+            "composition_mode": {
+              "type": "string",
+              "enum": [
+                "templated",
+                "atelier"
+              ]
+            },
+            "timeline": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["event_id", "scene_id", "track_id", "start", "end", "duration", "z_index", "role", "purpose"]
+              }
+            },
+          "video_tracks": {"type": "object", "minProperties": 1},
+          "audio_tracks": {
+              "type": "object",
+              "required": ["narration", "music", "sfx"],
+              "properties": {
+                "narration": {"type": "array", "minItems": 1},
+                "music": {"type": "array", "minItems": 1},
+                "sfx": {"type": "array", "minItems": 1}
+              }
+            },
+          "caption_track": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["event_id", "scene_id", "start", "end", "caption_text_reference", "safe_zone"]
+              }
+            },
+          "cta": {
+              "type": "object",
+              "required": ["scene_id", "start", "end", "channel_branding", "caption_event_id", "audio_requirement"]
+            },
+          "tracks": {
+              "type": "object",
+              "required": [
+                "video"
+              ],
+              "properties": {
+                "video": {
+                  "type": "array"
+                },
+                "narration": {
+                  "type": "array"
+                },
+                "music": {
+                  "type": "array"
+                },
+                "captions": {
+                  "type": "array"
+                },
+                "sfx": {
+                  "type": "array"
+                }
+              }
+            },
+            "validation": {
+              "type": "object",
+              "required": ["no_gaps", "no_overlaps", "all_assets_resolved", "duration_covered", "audio_valid", "captions_valid", "cta_present", "renderer_locked"],
+              "properties": {
+                "no_gaps": {
+                  "type": "boolean"
+                },
+                "no_overlaps": {
+                  "type": "boolean"
+                },
+                "all_assets_resolved": {
+                  "type": "boolean"
+                },
+                "duration_covered": {
+                  "type": "boolean"
+                },
+                "audio_valid": {
+                  "type": "boolean"
+                },
+                "captions_valid": {
+                  "type": "boolean"
+                },
+                "cta_present": {
+                  "type": "boolean"
+                },
+                "renderer_locked": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "description": "Payload for edit_decisions"
+        }
+      },
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "data"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,261 @@
+name: youtube-short
+version: "2.0"
+description: "30-60 second vertical short for YouTube Shorts"
+target_duration: 45.0
+platform: youtube_shorts
+run_mode_default: auto
+
+required_stages:
+  - research
+  - proposal
+  - script
+  - art_direction
+  - scene_plan
+  - assets
+  - edit
+  - compose
+
+optional_stages:
+  - review
+  - publish
+
+required_artifacts:
+  - research_brief
+  - proposal_packet
+  - script
+  - art_direction
+  - scene_plan
+  - asset_manifest
+  - edit_decisions
+  - render_report
+
+stages:
+  research:
+    name: research
+    required: true
+    description: "Multi-source research gathering angles and evidence"
+    produces:
+      - research_brief
+    consumes:
+      - brief
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: min_sources
+        type: min
+        field: sources
+        threshold: 3.0
+        required: true
+        message: "At least 3 distinct research sources required"
+
+  proposal:
+    name: proposal
+    required: true
+    description: "2-3 divergent production proposals with locked render runtime"
+    produces:
+      - proposal_packet
+    consumes:
+      - research_brief
+    approval:
+      mode: human
+    max_revisions: 3
+    quality_gates:
+      - name: proposals_present
+        type: presence
+        field: concepts
+        required: true
+        message: "Proposals list must be present"
+
+  script:
+    name: script
+    required: true
+    description: "Spoken narration script with beat pacing and word count discipline"
+    produces:
+      - script
+    consumes:
+      - research_brief
+      - proposal_packet
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: script_word_count_min
+        type: min
+        field: word_count
+        threshold: 60.0
+        required: true
+        message: "Script must have at least 60 words"
+
+  art_direction:
+    name: art_direction
+    required: true
+    description: "Visual rules, color palette, typography personality, and anti-patterns"
+    produces:
+      - art_direction
+    consumes:
+      - proposal_packet
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: visual_variance_min
+        type: min
+        field: visual_variance
+        threshold: 5.0
+        required: true
+        message: "Visual variance score must be at least 5"
+
+  scene_plan:
+    name: scene_plan
+    required: true
+    description: "Detailed scene sequence breakdown with visual layout and kinetic beats"
+    produces:
+      - scene_plan
+    consumes:
+      - script
+      - art_direction
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: min_scenes
+        type: min
+        field: scenes
+        threshold: 4.0
+        required: true
+        message: "At least 4 scenes required"
+
+  assets:
+    name: assets
+    required: true
+    description: "Resolution, generation, and curation of all visual and audio assets"
+    produces:
+      - asset_manifest
+    consumes:
+      - scene_plan
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: assets_present
+        type: presence
+        field: assets
+        required: true
+        message: "Assets list must be present"
+
+  edit:
+    name: edit
+    required: true
+    description: "Timeline construction, shot pacing, audio ducking, and transition rules"
+    produces:
+      - edit_decisions
+    consumes:
+      - research_brief
+      - proposal_packet
+      - art_direction
+      - script
+      - scene_plan
+      - asset_manifest
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: timeline_tracks_present
+        type: presence
+        field: tracks
+        required: true
+        message: "Tracks list must be present in edit decisions"
+
+  compose:
+    name: compose
+    required: true
+    description: "Composition rendering into final pixel-perfect MP4 via designated runtime"
+    produces:
+      - render_report
+    consumes:
+      - edit_decisions
+      - asset_manifest
+    approval:
+      mode: human
+    max_revisions: 3
+    quality_gates:
+      - name: render_success
+        type: presence
+        field: final_video_path
+        required: true
+        message: "Render report must include final_video_path"
+
+  review:
+    name: review
+    required: false
+    description: "Automated and human quality inspection of rendered output"
+    produces:
+      - review_report
+    consumes:
+      - render_report
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: findings_present
+        type: presence
+        field: findings
+        required: true
+        message: "Review findings must be present"
+
+  publish:
+    name: publish
+    required: false
+    description: "Distribution packaging and upload logging"
+    produces:
+      - publish_log
+    consumes:
+      - render_report
+    approval:
+      mode: human
+    max_revisions: 2
+    quality_gates:
+      - name: final_video_confirmed
+        type: presence
+        field: final_video_path
+        required: true
+        message: "Publish log must confirm final video"
+
+quality_gates:
+  - name: min_scene_diversity
+    type: min
+    field: visual_variance
+    threshold: 6.0
+    required: true
+    message: "Pipeline visual variance must be at least 6.0"
+
+approval_policy:
+  research:
+    mode: auto
+  proposal:
+    mode: human
+  script:
+    mode: auto
+  art_direction:
+    mode: auto
+  scene_plan:
+    mode: auto
+  assets:
+    mode: auto
+  edit:
+    mode: auto
+  compose:
+    mode: human
+
+budget_policy:
+  budget_cap: 10.0
+  max_image_gen_calls: 20
+  max_video_gen_calls: 5
+  max_tts_chars: 5000
+  max_llm_tokens: 100000
+
+render_runtime_policy:
+  primary: remotion
+  fallback: ffmpeg_pil
+  strict: true

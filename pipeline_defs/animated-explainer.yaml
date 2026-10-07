@@ -1,0 +1,261 @@
+name: animated-explainer
+version: "2.0"
+description: "60-90 second animated explainer with HyperFrames vector motion"
+target_duration: 75.0
+platform: youtube
+run_mode_default: auto
+
+required_stages:
+  - research
+  - proposal
+  - script
+  - art_direction
+  - scene_plan
+  - assets
+  - edit
+  - compose
+
+optional_stages:
+  - review
+  - publish
+
+required_artifacts:
+  - research_brief
+  - proposal_packet
+  - script
+  - art_direction
+  - scene_plan
+  - asset_manifest
+  - edit_decisions
+  - render_report
+
+stages:
+  research:
+    name: research
+    required: true
+    description: "Deep explainer research covering technical fundamentals and analogies"
+    produces:
+      - research_brief
+    consumes:
+      - brief
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: min_sources
+        type: min
+        field: sources
+        threshold: 3.0
+        required: true
+        message: "At least 3 sources required for explainer"
+
+  proposal:
+    name: proposal
+    required: true
+    description: "Visual concept and infographic metaphor proposals"
+    produces:
+      - proposal_packet
+    consumes:
+      - research_brief
+    approval:
+      mode: human
+    max_revisions: 3
+    quality_gates:
+      - name: proposals_present
+        type: presence
+        field: concepts
+        required: true
+        message: "Proposals must be present"
+
+  script:
+    name: script
+    required: true
+    description: "Educational voiceover breakdown with progressive disclosure"
+    produces:
+      - script
+    consumes:
+      - research_brief
+      - proposal_packet
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: script_word_count_min
+        type: min
+        field: word_count
+        threshold: 120.0
+        required: true
+        message: "Explainer script must have at least 120 words"
+
+  art_direction:
+    name: art_direction
+    required: true
+    description: "Design system, illustration rules, diagrams, and typography"
+    produces:
+      - art_direction
+    consumes:
+      - proposal_packet
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: visual_variance_min
+        type: min
+        field: visual_variance
+        threshold: 6.0
+        required: true
+        message: "Visual variance must be at least 6"
+
+  scene_plan:
+    name: scene_plan
+    required: true
+    description: "Scene storyboard with visual layers and motion keybeats"
+    produces:
+      - scene_plan
+    consumes:
+      - script
+      - art_direction
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: min_scenes
+        type: min
+        field: scenes
+        threshold: 5.0
+        required: true
+        message: "At least 5 scenes required for explainer"
+
+  assets:
+    name: assets
+    required: true
+    description: "SVGs, charts, illustration layers, and sound cues"
+    produces:
+      - asset_manifest
+    consumes:
+      - scene_plan
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: assets_present
+        type: presence
+        field: assets
+        required: true
+        message: "Assets manifest must contain assets"
+
+  edit:
+    name: edit
+    required: true
+    description: "Motion pacing, transitions, and audio-visual synchronization"
+    produces:
+      - edit_decisions
+    consumes:
+      - research_brief
+      - proposal_packet
+      - art_direction
+      - script
+      - scene_plan
+      - asset_manifest
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: tracks_present
+        type: presence
+        field: tracks
+        required: true
+        message: "Tracks must be defined in edit decisions"
+
+  compose:
+    name: compose
+    required: true
+    description: "Vector motion composition rendered via HyperFrames"
+    produces:
+      - render_report
+    consumes:
+      - edit_decisions
+      - asset_manifest
+    approval:
+      mode: human
+    max_revisions: 3
+    quality_gates:
+      - name: render_success
+        type: presence
+        field: final_video_path
+        required: true
+        message: "Render report must include final_video_path"
+
+  review:
+    name: review
+    required: false
+    description: "Quality and clarity inspection"
+    produces:
+      - review_report
+    consumes:
+      - render_report
+    approval:
+      mode: auto
+    max_revisions: 3
+    quality_gates:
+      - name: findings_present
+        type: presence
+        field: findings
+        required: true
+        message: "Review findings must be present"
+
+  publish:
+    name: publish
+    required: false
+    description: "Publication metadata and artifact logging"
+    produces:
+      - publish_log
+    consumes:
+      - render_report
+    approval:
+      mode: human
+    max_revisions: 2
+    quality_gates:
+      - name: final_video_confirmed
+        type: presence
+        field: final_video_path
+        required: true
+        message: "Publish log must confirm final video"
+
+quality_gates:
+  - name: min_scene_diversity
+    type: min
+    field: visual_variance
+    threshold: 6.0
+    required: true
+    message: "Pipeline visual variance must be at least 6.0"
+
+approval_policy:
+  research:
+    mode: auto
+  proposal:
+    mode: human
+  script:
+    mode: auto
+  art_direction:
+    mode: auto
+  scene_plan:
+    mode: auto
+  assets:
+    mode: auto
+  edit:
+    mode: auto
+  compose:
+    mode: human
+
+budget_policy:
+  budget_cap: 15.0
+  max_image_gen_calls: 30
+  max_video_gen_calls: 8
+  max_tts_chars: 8000
+  max_llm_tokens: 150000
+
+render_runtime_policy:
+  primary: hyperframes
+  fallback: ffmpeg_pil
+  strict: true

@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "proposal_packet.schema",
+  "title": "Proposal Packet",
+  "description": "2-3 genuinely different creative concepts. Renderer family and runtime are LOCKED at approval.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../artifact_envelope.schema.json"
+    },
+    {
+      "properties": {
+        "artifact_type": {
+          "const": "proposal_packet"
+        },
+        "schema_version": {
+          "const": "2.0"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "concepts",
+            "selected_concept_id"
+          ],
+          "properties": {
+            "concepts": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "required": [
+                  "concept_id",
+                  "hook",
+                  "audience_promise",
+                  "narrative_structure",
+                  "visual_direction",
+                  "tone",
+                  "target_duration",
+                  "renderer_family",
+                  "render_runtime",
+                  "composition_mode"
+                ],
+                "properties": {
+                  "concept_id": {
+                    "type": "string"
+                  },
+                  "hook": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "audience_promise": {
+                    "type": "string"
+                  },
+                  "narrative_structure": {
+                    "type": "string"
+                  },
+                  "visual_direction": {
+                    "type": "string"
+                  },
+                  "tone": {
+                    "type": "string"
+                  },
+                  "target_duration": {
+                    "type": "number",
+                    "minimum": 10
+                  },
+                  "taste_profile": {
+                    "type": "string"
+                  },
+                  "renderer_family": {
+                    "type": "string",
+                    "enum": [
+                      "explainer",
+                      "cinematic",
+                      "motion_graphics",
+                      "documentary",
+                      "screen_demo",
+                      "hybrid"
+                    ]
+                  },
+                  "render_runtime": {
+                    "type": "string",
+                    "enum": [
+                      "remotion",
+                      "hyperframes",
+                      "ffmpeg_pil"
+                    ]
+                  },
+                  "composition_mode": {
+                    "type": "string",
+                    "enum": [
+                      "templated",
+                      "atelier"
+                    ]
+                  },
+                  "asset_strategy": {
+                    "type": "string"
+                  },
+                  "estimated_cost": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            },
+            "selected_concept_id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "null until a concept is approved/selected"
+            }
+          },
+          "description": "Payload for proposal_packet"
+        }
+      },
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "data"
+      ]
+    }
+  ]
+}

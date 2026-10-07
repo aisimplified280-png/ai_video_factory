@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "render_report.schema",
+  "title": "Render Report",
+  "description": "Output of the composition stage. Records what was actually rendered.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../artifact_envelope.schema.json"
+    },
+    {
+      "properties": {
+        "artifact_type": {
+          "const": "render_report"
+        },
+        "schema_version": {
+          "const": "2.0"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "final_video_path",
+            "duration_rendered",
+            "scenes_rendered"
+          ],
+          "properties": {
+            "final_video_path": {
+              "type": "string"
+            },
+            "duration_rendered": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scenes_rendered": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "render_runtime_used": {
+              "type": "string"
+            },
+            "codec": {
+              "type": "string"
+            },
+            "resolution": {
+              "type": "string"
+            },
+            "fps": {
+              "type": "number"
+            },
+            "file_size_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "render_duration_seconds": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "scene_reports": {
+              "type": "array"
+            },
+            "errors": {
+              "type": "array"
+            },
+            "warnings": {
+              "type": "array"
+            }
+          },
+          "description": "Payload for render_report"
+        }
+      },
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "data"
+      ]
+    }
+  ]
+}

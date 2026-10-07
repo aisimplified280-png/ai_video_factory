@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI SIMPLIFIED LAB — Video Factory</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="top-nav">
+  <div class="nav-container">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="brand-title">AI SIMPLIFIED LAB</span>
+    </div>
+    <div class="nav-actions">
+      <button onclick="purgeQueue()" class="btn-secondary btn-sm" title="Clear stale jobs and background instances">
+        🧹 Purge Queue
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="shell">
+  <header class="hero">
+    <span class="badge-top">AI VIDEO FACTORY V2</span>
+    <h1>Generate Viral Shorts <span class="accent">In Seconds</span></h1>
+    <p class="muted">Enter a topic or paste a script. Visuals, narration, and forced timing render automatically.</p>
+  </header>
+
+  <div id="jobBox"></div>
+
+  <section class="form-container">
+    <form class="panel" method="post" action="/create" id="createForm">
+      <div class="form-group">
+        <label for="topic">Topic or Narration Script</label>
+        <textarea id="topic" name="topic" required autofocus placeholder="e.g. 'What is MCP - Model Context Protocol?' OR paste your narration script..."></textarea>
+      </div>
+
+      <!-- Minimal UI: Only Topic and Submit Button on the main view -->
+
+      <input type="hidden" id="styleInput" name="style" value="auto">
+
+      <details class="advanced-opt">
+        <summary>⚙️ Advanced Custom Prompting & Instructions</summary>
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="form-group">
+            <label for="duration">Target Duration</label>
+            <select id="duration" name="duration">
+              <option value="auto" selected>Auto (Match Narration)</option>
+              <option value="15">15 Seconds</option>
+              <option value="30">30 Seconds (Standard Short)</option>
+              <option value="45">45 Seconds</option>
+              <option value="60">60 Seconds</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="music">Background Music</label>
+            <select id="music" name="music">
+              {% for opt in music_options %}
+              <option value="{{ opt.id }}">{{ opt.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 12px;">
+          <label for="notes">Instructions</label>
+          <textarea id="notes" name="notes" placeholder="e.g. Dark technical aesthetic, emphasize container isolation and privacy..." style="min-height:75px;"></textarea>
+        </div>
+      </details>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">
+        Generate Short Video ⚡
+      </button>
+    </form>
+  </section>
+
+  {% if error %}
+  <div class="error-banner">
+    <b>Error:</b> {{ error }}
+  </div>
+  {% endif %}
+
+  <section class="recent">
+    <div class="recent-header">
+      <h2>Recent Generations</h2>
+      <span class="recent-count">{{ runs|length }} Videos</span>
+    </div>
+
+    <div id="recentList" class="recent-grid">
+    {% if runs %}
+      {% for run in runs %}
+      <article class="video-card" id="run-{{loop.index}}">
+        <div class="thumb-container" id="container-{{run.folder}}">
+          <img class="thumb" src="/output/{{run.folder}}/{{run.preview}}" loading="lazy" alt="Preview">
+          {% if run.video %}
+          <button onclick="playInline('{{run.folder}}')" class="play-btn">▶</button>
+          {% endif %}
+        </div>
+        <div class="card-info">
+          <h3 class="card-title">{{ run.title }}</h3>
+          <p class="card-meta">{{ run.duration }}s · {{ run.created }}</p>
+          <div class="card-actions">
+            {% if run.video %}
+            <a href="/output/{{run.folder}}/final_video.mp4" target="_blank" download class="btn-action primary">Download MP4</a>
+            {% endif %}
+            <a href="/output/{{run.folder}}/vo_script.txt" target="_blank" class="btn-action">Script</a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <p class="muted">No generated videos yet. Enter a topic above to create your first Short!</p>
+      </div>
+    {% endif %}
+    </div>
+  </section>
+</main>
+
+<script>
+function selectStyle(s,el){
+  document.getElementById('styleInput').value=s;
+}
+
+function playInline(folder){
+  const el = document.getElementById('container-'+folder);
+  if(!el) return;
+  el.innerHTML = `<video controls autoplay loop style="width:100%;height:100%;object-fit:cover;border-radius:12px;"><source src="/output/${folder}/final_video.mp4" type="video/mp4"></video>`;
+}
+
+function purgeQueue(){
+  if(confirm("Are you sure you want to clear all running instances and purge the background job queue?")){
+    fetch('/api/jobs/clear', {method: 'POST'})
+      .then(r => r.json())
+      .then(d => {
+        document.getElementById('jobBox').innerHTML = '';
+        alert(d.message || "Queue cleared!");
+        location.reload();
+      });
+  }
+}
+
+const renderedJobStates = {};
+
+function pollJobs(){
+  fetch('/api/jobs').then(r=>r.json()).then(jobs=>{
+    const box = document.getElementById('jobBox');
+    if(!box) return;
+    const entries = Object.values(jobs);
+    if(entries.length === 0){ box.innerHTML = ''; return; }
+    
+    entries.reverse().forEach(j=>{
+      let jobEl = document.getElementById('job-card-' + j.id);
+      const stateKey = `${j.status}-${j.progress}-${j.step}-${j.out}`;
+      
+      if(jobEl && renderedJobStates[j.id] === stateKey) return;
+      renderedJobStates[j.id] = stateKey;
+
+      if(!jobEl){
+        jobEl = document.createElement('div');
+        jobEl.id = 'job-card-' + j.id;
+        box.appendChild(jobEl);
+      }
+
+      if(j.status==='running'){
+        jobEl.className = 'job-card-active';
+        const logLines = (j.logs || []).map(l => `<div>> ${l}</div>`).join('');
+        jobEl.innerHTML = `<div class="job-header">
+            <h3>Rendering: ${j.topic}</h3>
+            <span class="job-status-tag">ACTIVE</span>
+          </div>
+          <div class="step-text">${j.step}</div>
+          <div class="jobbar"><div class="jobfill" style="width:${j.progress}%"></div></div>
+          <div class="jobpct">${j.progress}% complete</div>
+          <div class="terminal-log">${logLines}</div>`;
+        const term = jobEl.querySelector('.terminal-log');
+        if(term) term.scrollTop = term.scrollHeight;
+      } else if(j.status==='done'){
+        jobEl.className = 'job-card-done';
+        jobEl.innerHTML = `<div class="job-header">
+            <h3>✔ Video Complete: ${j.topic}</h3>
+          </div>
+          <div class="job-done-body">
+            <video controls loop style="width:100%;max-width:280px;border-radius:12px;box-shadow:0 8px 24px rgba(16,185,129,0.2)"><source src="/output/${j.out}/final_video.mp4" type="video/mp4"></video>
+            <div class="links" style="margin-top:12px">
+              <a href="/output/${j.out}/final_video.mp4" download target="_blank" class="btn-action primary">Download MP4</a>
+              <a href="/output/${j.out}/vo_script.txt" target="_blank" class="btn-action">Script</a>
+            </div>
+          </div>`;
+      } else if(j.status==='error'){
+        jobEl.className = 'job-card-error';
+        jobEl.innerHTML = `<h3>Failed: ${j.topic}</h3><div class="step-text" style="color:#ef4444">${j.error||'Unknown error'}</div>`;
+      }
+    });
+  }).catch(e=>{});
+}
+setInterval(pollJobs, 2000);
+pollJobs();
+</script>
+</body>
+</html>

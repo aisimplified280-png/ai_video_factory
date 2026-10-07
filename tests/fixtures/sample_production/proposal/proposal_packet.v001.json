@@ -1,0 +1,53 @@
+{
+  "artifact_type": "proposal_packet",
+  "schema_version": "2.0",
+  "artifact_version": 1,
+  "production_id": "sample_production",
+  "stage": "proposal",
+  "status": "approved",
+  "created_at": "2026-10-05T14:56:49.908230Z",
+  "updated_at": "2026-10-05T14:56:49.908230Z",
+  "producer": {
+    "kind": "human",
+    "provider": null,
+    "model": null,
+    "tool": null,
+    "prompt_hash": null,
+    "source_artifacts": [],
+    "estimated_cost": null,
+    "actual_cost": null
+  },
+  "content_hash": "sha256:50f02bfb9877572b51ed5a650ff50a06aeb9696fc6d63c8f0a36cdd3860e39b1",
+  "data": {
+    "selected_concept_id": "concept_spatial_geometry",
+    "concepts": [
+      {
+        "concept_id": "concept_spatial_geometry",
+        "hook": "What if words weren't letters, but GPS coordinates in a 1,536-dimensional space?",
+        "audience_promise": "You will finally understand how AI memories actually work in under 45 seconds.",
+        "narrative_structure": "Hook -> Intuition -> Mechanism -> Real-world impact",
+        "visual_direction": "Dark mode cyber-editorial with neon glowing vector point clouds and cluster lines.",
+        "tone": "Technical, authoritative, and intellectually stimulating.",
+        "target_duration": 45.0,
+        "renderer_family": "motion_graphics",
+        "render_runtime": "remotion",
+        "composition_mode": "atelier"
+      },
+      {
+        "concept_id": "concept_library_analogy",
+        "hook": "How does ChatGPT read 10 million books in 12 milliseconds?",
+        "audience_promise": "Discover the secret engine behind modern AI agent memory.",
+        "narrative_structure": "Mystery -> Analogy -> Reveal -> Takeaway",
+        "visual_direction": "Kinetic infographic with high-contrast split screens and telemetry meters.",
+        "tone": "Fast-paced, punchy, high-retention.",
+        "target_duration": 42.0,
+        "renderer_family": "explainer",
+        "render_runtime": "remotion",
+        "composition_mode": "atelier"
+      }
+    ]
+  },
+  "parent_artifacts": [],
+  "warnings": [],
+  "metadata": {}
+}

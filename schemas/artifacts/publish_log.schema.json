@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "publish_log.schema",
+  "title": "Publish Log",
+  "description": "Record of what was published and where.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../artifact_envelope.schema.json"
+    },
+    {
+      "properties": {
+        "artifact_type": {
+          "const": "publish_log"
+        },
+        "schema_version": {
+          "const": "2.0"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "final_video_path",
+            "published_at"
+          ],
+          "properties": {
+            "final_video_path": {
+              "type": "string"
+            },
+            "published_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "platform": {
+              "type": "string"
+            },
+            "upload_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "thumbnail_path": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "uploaded",
+                "published",
+                "failed"
+              ]
+            },
+            "errors": {
+              "type": "array"
+            }
+          },
+          "description": "Payload for publish_log"
+        }
+      },
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "data"
+      ]
+    }
+  ]
+}

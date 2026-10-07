@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "artifact_envelope.schema.json",
+  "title": "Artifact Envelope",
+  "description": "Common envelope wrapping every persisted artifact in the AI Simplified Lab production system.",
+  "type": "object",
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "artifact_version",
+    "production_id",
+    "stage",
+    "status",
+    "created_at",
+    "updated_at",
+    "producer",
+    "content_hash",
+    "data"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "artifact_type": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Canonical type name, e.g. research_brief, scene_plan"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "2.0",
+      "description": "Schema contract version"
+    },
+    "artifact_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically increasing version. Increments on every revision."
+    },
+    "production_id": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Unique identifier of the production this artifact belongs to"
+    },
+    "stage": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Pipeline stage that produced this artifact"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "generating", "ready", "failed", "approved", "rejected"],
+      "description": "Current lifecycle status of this artifact"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when this version was created"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp of last status update"
+    },
+    "producer": {
+      "$ref": "#/$defs/ProducerInfo"
+    },
+    "content_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "SHA-256 hash of canonical JSON of the data field"
+    },
+    "data": {
+      "type": "object",
+      "description": "Artifact-type-specific payload. Validated by artifact-specific schema."
+    },
+    "parent_artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ArtifactReference" },
+      "default": [],
+      "description": "Artifacts this artifact was derived from"
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Non-blocking quality notes recorded at generation time"
+    },
+    "metadata": {
+      "type": "object",
+      "default": {},
+      "description": "Arbitrary extra metadata (run mode, timing, etc.)"
+    }
+  },
+  "$defs": {
+    "ProducerInfo": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["system", "human", "llm", "tool", "provider"]
+        },
+        "provider": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] },
+        "tool": { "type": ["string", "null"] },
+        "prompt_hash": {
+          "type": ["string", "null"],
+          "pattern": "^(sha256:[0-9a-f]{64})?$"
+        },
+        "source_artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ArtifactReference" },
+          "default": []
+        },
+        "estimated_cost": { "type": ["number", "null"], "minimum": 0 },
+        "actual_cost": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "ArtifactReference": {
+      "type": "object",
+      "required": ["artifact_type", "version", "content_hash"],
+      "additionalProperties": false,
+      "properties": {
+        "artifact_type": { "type": "string", "minLength": 1 },
+        "version": { "type": "integer", "minimum": 1 },
+        "content_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}
