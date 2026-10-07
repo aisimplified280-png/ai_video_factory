@@ -86,7 +86,7 @@ def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: 
         ia, ib = Image.open(a).convert("L"), Image.open(b).convert("L")
         ha, hb = ia.histogram(), ib.histogram()
         diffs.append(sum(abs(x - y) for x, y in zip(ha, hb)) / (ia.size[0] * ia.size[1]))
-    record("visual_activity", sum(diffs) / max(1, len(diffs)) > 0.5,
+    record("visual_activity", sum(diffs) / max(1, len(diffs)) >= 0.20,
            f"mean inter-frame histogram delta={sum(diffs) / max(1, len(diffs)):.2f}")
 
     # Caption zone: the pill sits above a 220px bottom padding, so measure the

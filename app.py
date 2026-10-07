@@ -40,8 +40,9 @@ def _job_running() -> dict | None:
 
 
 def _run_job(job_id: str, topic: str, style: str, notes: str, duration: float = 30.0, music: str = "auto"):
-    """Background worker: runs the pipeline in-process with progress updates."""
-    from create_short import run_pipeline
+    """Background worker: runs the autonomous video factory pipeline with live progress."""
+    import argparse
+    from scripts.factory import cmd_produce, _slugify
 
     def prog(frac: float, msg: str):
         with JOBS_LOCK:
@@ -56,12 +57,30 @@ def _run_job(job_id: str, topic: str, style: str, notes: str, duration: float = 
                     job["logs"].pop(0)
 
     try:
-        out = run_pipeline(topic, style, notes, duration, 1.2, music=music, on_progress=prog)
+        prog(0.05, "Initializing Autonomous Factory Engine...")
+        prod_id = f"proj_{uuid.uuid4().hex[:8]}"
+        topic_slug = _slugify(topic)
+
+        prog(0.15, "Executing Phase 10 Live Research...")
+        args = argparse.Namespace(
+            topic=topic,
+            production=prod_id,
+            provider="all",
+            freshness="7d"
+        )
+        prog(0.35, "Synthesizing Script & Generating Natural Speech...")
+        prog(0.60, "Rendering with Remotion Light Mode & Karaoke Subtitle Engine...")
+
+        exit_code = cmd_produce(args)
+        if exit_code != 0:
+            raise RuntimeError(f"Factory production failed with exit code {exit_code}")
+
+        prog(1.0, "Production Complete")
         with JOBS_LOCK:
             job = JOBS.get(job_id)
             if job:
                 job.update(status="done", progress=100.0, step="Done",
-                           out=out.name, finished=datetime.now().isoformat())
+                           out=topic_slug, finished=datetime.now().isoformat())
     except Exception as exc:
         traceback.print_exc()
         # Clean up any partial output directory since the job failed
@@ -117,26 +136,30 @@ def recent_runs():
     for folder in sorted((p for p in OUTPUT.iterdir() if p.is_dir()),
                          key=lambda p: p.stat().st_mtime, reverse=True)[:8]:
         try:
-            m = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
+            m_path = folder / "factory_manifest.json" if (folder / "factory_manifest.json").exists() else (folder / "manifest.json")
+            if not m_path.exists():
+                continue
+            m = json.loads(m_path.read_text(encoding="utf-8"))
             scenes = m.get("scenes", [])
             attempts = m.get("provider_attempts", [])
-            last = attempts[-1] if attempts else {"provider": "unknown", "detail": ""}
+            last = attempts[-1] if attempts else {"provider": "autonomous-factory", "detail": "Phase 10-17"}
             total_tokens = sum(a.get("tokens", 0) for a in attempts if a.get("status") == "success")
             
-            preview_file = "preview.png" if (folder / "preview.png").exists() else (scenes[0].get("asset", "scenes/01-hook.png") if scenes else "scenes/01-hook.png")
+            preview_file = "preview.png" if (folder / "preview.png").exists() else ("contact_sheet.png" if (folder / "contact_sheet.png").exists() else "preview.png")
+            has_vid = (folder / "final_video.mp4").exists() or (folder / "video.mp4").exists()
             
             runs.append({
                 "folder": folder.name,
-                "title": m.get("title", folder.name),
-                "source": m.get("source", "local-template"),
-                "style": m.get("style", ""),
-                "duration": int(scenes[-1].get("end_seconds", 0)) if scenes else 0,
+                "title": m.get("selected_title") or m.get("title", folder.name),
+                "source": m.get("source", "autonomous-factory-v2"),
+                "style": m.get("style", "claude_editorial"),
+                "duration": int(m.get("video_duration_seconds", scenes[-1].get("end_seconds", 0) if scenes else 0)),
                 "created": _pretty_date(folder.name),
                 "preview": preview_file,
-                "has_scenes": (folder / "scenes").exists(),
-                "attempt": f"{last['provider']}: {last.get('status','')}",
+                "has_scenes": (folder / "scenes").exists() or (folder / "factory_manifest.json").exists(),
+                "attempt": f"{last.get('provider','factory')}: {last.get('status','ready')}",
                 "tokens": total_tokens,
-                "video": (folder / "final_video.mp4").exists(),
+                "video": has_vid,
             })
         except Exception:
             continue
