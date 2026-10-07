@@ -42,8 +42,8 @@ def test_style_systems_registration():
     assert StyleSystemId.BLOOMBERG_GRAPHICS in STYLE_SYSTEMS
 
     claude = get_style_system("claude_editorial")
-    assert claude.primary_bg == "#12151C"
-    assert claude.accent == "#D97736"
+    assert claude.primary_bg == "#F8FAFC"
+    assert claude.accent == "#1E40AF"
 
     apple = get_style_system("apple_keynote")
     assert apple.primary_bg == "#0B0D11"
@@ -97,6 +97,13 @@ def test_transformative_transitions():
     valid, errs = validate_transition_integrity(trans)
     assert valid is True
     assert len(errs) == 0
+
+    from production.phase17.transition_director import assign_boundary_transitions
+    boundary_trans = assign_boundary_transitions(5)
+    assert len(boundary_trans) == 4
+    valid_b, errs_b = validate_transition_integrity(boundary_trans)
+    assert valid_b is True
+    assert len(errs_b) == 0
 
     # Test rejection of forbidden cut
     invalid, errs_bad = validate_transition_integrity(["hard_cut", "fade"])

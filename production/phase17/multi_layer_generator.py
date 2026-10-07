@@ -112,6 +112,7 @@ def generate_scene_layers(
     border_rgb = _hex_to_rgb(st.border_color)
     text_rgb = _hex_to_rgb(st.primary_text)
     muted_rgb = _hex_to_rgb(st.secondary_text)
+    surface_rgb = st.surface_rgb() if hasattr(st, "surface_rgb") else (255, 255, 255)
 
     font_title = _get_font(42, bold=True)
     font_sub = _get_font(24)
@@ -132,43 +133,62 @@ def generate_scene_layers(
     fg_draw = ImageDraw.Draw(fg_img)
 
     # ---------------------------------------------------------------------
-    # CLEAN CINEMATIC OVERLAYS (NO CLUTTERED FLOATING CARDS, NO FAKE AI PHOTOS)
-    # Background provides unified architectural atmosphere.
-    # Midground and foreground supply subtle optical depth cues.
+    # MEANINGFUL MULTI-LAYER DEPTH ARCHITECTURE (ISSUE #3)
+    # Background (z=0): Architectural environment and perspective floor.
+    # Midground (z=10): Real subject geometry (nodes, conduits, data streams).
+    # Foreground (z=20): Floating telemetry tags and camera framing registration.
     # ---------------------------------------------------------------------
-    if scene_index == 0:
-        # Scene 1: Optical Precision Target Reticle in active area
-        cx, cy = 540, 880
-        rw, b_len = 200, 24
-        mid_draw.line([(cx - rw, cy - rw), (cx - rw + b_len, cy - rw)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx - rw, cy - rw), (cx - rw, cy - rw + b_len)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx + rw, cy + rw), (cx + rw - b_len, cy + rw)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx + rw, cy + rw), (cx + rw, cy + rw - b_len)], fill=(*accent_rgb, 255), width=2)
-    elif scene_index == 1:
-        # Scene 2: High-tech precision alignment crosshair
-        cx, cy = 540, 1080
-        mid_draw.line([(cx - 30, cy), (cx + 30, cy)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx, cy - 30), (cx, cy + 30)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.ellipse([(cx - 15, cy - 15), (cx + 15, cy + 15)], outline=(*accent_rgb, 255), width=1)
-    elif scene_index == 2:
-        # Scene 3: Clean waypoint reticle
-        cx, cy = 540, 970
-        mid_draw.line([(cx - 30, cy), (cx + 30, cy)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx, cy - 30), (cx, cy + 30)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.ellipse([(cx - 45, cy - 45), (cx + 45, cy + 45)], outline=(56, 189, 248, 255), width=1)
-    elif scene_index == 3:
-        # Scene 4: Floor corridor alignment ticks
-        for cx in [320, 540, 760]:
-            mid_draw.line([(cx - 15, 1200), (cx + 15, 1200)], fill=(*accent_rgb, 255), width=2)
-    else:
-        # Scene 5: Keynote stage pedestal crosshair
-        cx, cy = width // 2, 700
-        mid_draw.line([(cx - 30, cy), (cx + 30, cy)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx, cy - 30), (cx, cy + 30)], fill=(*accent_rgb, 255), width=2)
+    cx = width // 2
 
-    # Foreground: Minimal safe-margin corner registration mark (x: 100, y: 320)
-    fg_draw.line([(100, 320), (120, 320)], fill=(255, 255, 255, 255), width=1)
-    fg_draw.line([(100, 320), (100, 340)], fill=(255, 255, 255, 255), width=1)
+    if scene_index == 0:
+        # Scene 1: Central Architecture Gateway Bridge Plate
+        mid_draw.rounded_rectangle([(cx - 320, 620), (cx + 320, 840)], radius=18, fill=(*surface_rgb, 235), outline=(*border_rgb, 255), width=2)
+        mid_draw.line([(cx - 280, 730), (cx + 280, 730)], fill=(*accent_rgb, 255), width=3)
+        mid_draw.ellipse([(cx - 16, 714), (cx + 16, 746)], fill=(*accent_rgb, 255))
+        mid_draw.text((cx - 220, 650), "ENTERPRISE ARCHITECTURE BRIDGE", fill=(*text_rgb, 255), font=font_mono)
+        # Foreground: Top status tag
+        fg_draw.rounded_rectangle([(100, 310), (380, 360)], radius=10, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
+        fg_draw.text((120, 324), "TELEMETRY // PROD-US-EAST", fill=(*muted_rgb, 255), font=font_badge)
+
+    elif scene_index == 1:
+        # Scene 2: Production Data Pipeline Stage Channels
+        for off, label in [(-260, "DATA INGESTION"), (0, "ETL PIPELINE"), (260, "VECTOR STORE")]:
+            mid_draw.rounded_rectangle([(cx + off - 110, 600), (cx + off + 110, 860)], radius=14, fill=(*surface_rgb, 230), outline=(*border_rgb, 255), width=2)
+            mid_draw.line([(cx + off, 520), (cx + off, 600)], fill=(*accent_rgb, 255), width=3)
+            mid_draw.text((cx + off - 80, 710), label, fill=(*text_rgb, 255), font=font_badge)
+        # Foreground: Floating throughput pill
+        fg_draw.rounded_rectangle([(width - 380, 310), (width - 100, 360)], radius=10, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=1)
+        fg_draw.text((width - 360, 324), "THROUGHPUT: 1.4M T/S", fill=(*accent_rgb, 255), font=font_badge)
+
+    elif scene_index == 2:
+        # Scene 3: Multi-Agent Coordination Mesh
+        mid_draw.ellipse([(cx - 70, 710), (cx + 70, 850)], fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
+        mid_draw.line([(cx - 240, 640), (cx, 780)], fill=(*accent_rgb, 255), width=2)
+        mid_draw.line([(cx + 240, 640), (cx, 780)], fill=(*accent_rgb, 255), width=2)
+        mid_draw.line([(cx - 240, 920), (cx, 780)], fill=(*accent_rgb, 255), width=2)
+        mid_draw.line([(cx + 240, 920), (cx, 780)], fill=(*accent_rgb, 255), width=2)
+        mid_draw.text((cx - 50, 765), "AGENTS", fill=(*text_rgb, 255), font=font_badge)
+        # Foreground: Agent concurrency tag
+        fg_draw.rounded_rectangle([(100, 310), (360, 360)], radius=10, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
+        fg_draw.text((120, 324), "CONCURRENCY: 16 THREADS", fill=(*muted_rgb, 255), font=font_badge)
+
+    elif scene_index == 3:
+        # Scene 4: Enterprise Performance Metrics Card
+        mid_draw.rounded_rectangle([(cx - 360, 580), (cx + 360, 920)], radius=20, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
+        mid_draw.line([(cx - 320, 740), (cx + 320, 740)], fill=(*border_rgb, 255), width=1)
+        mid_draw.text((cx - 320, 630), "DEPLOYMENT VELOCITY", fill=(*muted_rgb, 255), font=font_badge)
+        mid_draw.text((cx - 320, 670), "+340%", fill=(*accent_rgb, 255), font=font_title)
+        # Foreground: SLA badge
+        fg_draw.rounded_rectangle([(width - 340, 310), (width - 100, 360)], radius=10, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
+        fg_draw.text((width - 320, 324), "SLA: 99.99% UPTIME", fill=(*accent_rgb, 255), font=font_badge)
+
+    else:
+        # Scene 5: Monogram Emblem Plate
+        mid_draw.rounded_rectangle([(cx - 180, 620), (cx + 180, 840)], radius=24, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
+        mid_draw.text((cx - 45, 700), "AI", fill=(*text_rgb, 255), font=font_title)
+        # Foreground: Safe margin corner marks
+        fg_draw.line([(100, 320), (130, 320)], fill=(*accent_rgb, 255), width=2)
+        fg_draw.line([(100, 320), (100, 350)], fill=(*accent_rgb, 255), width=2)
 
     mid_path = output_dir / f"mid_{scene_id}.png"
     mid_img.save(mid_path, "PNG")

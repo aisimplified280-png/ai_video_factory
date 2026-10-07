@@ -69,29 +69,55 @@ def analyze_scene_intent(
         research_pack=research_pack,
     )
 
-    # 1. Final Scene (CTA)
+    combined_ctx = f"{topic_lower} {text_lower} {research_context.lower()}"
+    is_nlp_topic = any(w in combined_ctx for w in [
+        "token", "tokens", "embedding", "embeddings", "attention", "transformer", "vocabulary", "subword"
+    ])
     is_cta = (total_scenes > 1 and scene_idx == total_scenes - 1) or role == "cta" or "subscribe" in text_lower
-    if is_cta:
+
+    # Honor grounded claim visual plan directly if available
+    if claim_plan and claim_plan.preferred_visualization:
+        if is_cta:
+            rec_mode = VisualMode.BRAND_CTA
+            fallbacks = [VisualMode.ABSTRACT, VisualMode.DATA_INTERFACE]
+        elif scene_idx == 0 or role == "hook":
+            rec_mode = VisualMode.INTERFACE if is_nlp_topic else (VisualMode.DETAIL if "robot" in topic_lower else VisualMode.LITERAL)
+            fallbacks = [VisualMode.LITERAL, VisualMode.DATA_VISUALIZATION]
+        elif any(w in text_lower for w in ["control", "motor", "actuator", "direct"]) and any(w in text_lower for w in ["physical", "robot", "arm"]):
+            rec_mode = VisualMode.LITERAL
+            fallbacks = [VisualMode.MECHANISM, VisualMode.DEMONSTRATION]
+        elif any(w in text_lower for w in ["neural", "signal", "synapse", "flow", "weights", "latent"]):
+            rec_mode = VisualMode.METAPHOR
+            fallbacks = [VisualMode.ABSTRACT, VisualMode.DATA_INTERFACE]
+        elif claim_plan.claim_type == ClaimType.BUSINESS_IMPACT:
+            rec_mode = VisualMode.SCALE
+            fallbacks = [VisualMode.DATA_VISUALIZATION, VisualMode.DEMONSTRATION]
+        elif claim_plan.claim_type == ClaimType.DEMONSTRATION or any(w in text_lower for w in ["adapt", "obstacle", "fleet", "reroute"]):
+            rec_mode = VisualMode.DEMONSTRATION
+            fallbacks = [VisualMode.MECHANISM, VisualMode.COMPARISON]
+        elif claim_plan.claim_type == ClaimType.MECHANISM:
+            rec_mode = VisualMode.DATA_VISUALIZATION if is_nlp_topic else VisualMode.MECHANISM
+            fallbacks = [VisualMode.INTERFACE, VisualMode.DEMONSTRATION]
+        else:
+            rec_mode = VisualMode.LITERAL
+            fallbacks = [VisualMode.DEMONSTRATION, VisualMode.ENVIRONMENT]
+
         return SemanticSceneIntent(
             section_id=sec_id,
             scene_id=scene_id,
             spoken_text=text,
-            narrative_role="cta",
-            primary_intent="brand_lock",
-            what_is_said="Channel subscription, authority callout, frontier AI briefing",
-            what_viewer_sees="Clean minimalist dark futuristic tech space with subtle kinetic brand emblem",
-            what_viewer_feels="Authoritative clarity and invitation to subscribe without visual chaos",
-            recommended_mode=VisualMode.BRAND_CTA,
-            fallback_modes=[VisualMode.ABSTRACT, VisualMode.DATA_INTERFACE],
+            narrative_role=role or ("cta" if is_cta else ("hook" if scene_idx == 0 else "reveal")),
+            primary_intent="brand_lock" if is_cta else ("emerge" if scene_idx == 0 else "dynamic_track"),
+            what_is_said=claim_plan.action or text[:60],
+            what_viewer_sees=claim_plan.preferred_visualization,
+            what_viewer_feels=claim_plan.relationship or "Technical clarity and authority",
+            recommended_mode=rec_mode,
+            fallback_modes=fallbacks,
             claim_plan=claim_plan,
         )
 
-    # 2. Hook (Scene 0)
-    combined_ctx = f"{topic_lower} {text_lower} {research_context.lower()}"
-    is_nlp_topic = any(w in combined_ctx for w in [
-        "token", "embedding", "attention", "transformer", "language", "nlp", "prompt", "vocabulary", "vector", "word"
-    ])
-    if scene_idx == 0 or role == "hook":
+    # 1. Final Scene (CTA) fallback
+    if is_cta:
         if is_nlp_topic:
             return SemanticSceneIntent(
                 section_id=sec_id,

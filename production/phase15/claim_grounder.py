@@ -82,12 +82,12 @@ def extract_claim_visual_plan(
             grounding_level=GroundingLevel.LEVEL_4.value,
         )
 
-    # 2. NLP / AI Terminology Branch (Tokens, Embeddings, Attention, Language)
+    # 2. NLP / AI Terminology Branch (Tokens, Embeddings, Attention)
     is_nlp_topic = any(k in topic_lower or k in text_lower for k in [
-        "token", "embedding", "attention", "transformer", "language", "nlp", "prompt", "vocabulary", "vector", "word"
+        "token", "tokens", "embedding", "embeddings", "attention", "transformer", "vocabulary", "subword"
     ])
     if is_nlp_topic:
-        if scene_idx == 0 or role == "hook" or any(k in text_lower for k in ["how ai", "understands", "language", "human words", "prompt"]):
+        if scene_idx == 0 or role == "hook" or any(k in text_lower for k in ["how ai", "understands", "language", "human words"]):
             return ClaimVisualPlan(
                 claim_id=f"claim_{scene_id}",
                 section_id=sec_id,
@@ -215,7 +215,140 @@ def extract_claim_visual_plan(
                 grounding_level=GroundingLevel.LEVEL_4.value,
             )
 
-    # 3. Hook / Immediate Dramatic Capability (Robotics & Physical Automation)
+    # 3. Enterprise Architecture, FDE, AI Agents & Cloud Pipeline Branch
+    is_fde_or_enterprise = any(k in topic_lower or k in text_lower for k in [
+        "fde", "forward deployed", "enterprise", "architecture", "pipeline", "agentic",
+        "orchestrat", "workflows", "integration", "software", "production delivery", "cloud",
+        "solutions", "infrastructure", "developer", "data lake", "erp", "rag"
+    ])
+    if is_fde_or_enterprise:
+        if scene_idx == 0 or role == "hook":
+            return ClaimVisualPlan(
+                claim_id=f"claim_{scene_id}",
+                section_id=sec_id,
+                scene_id=scene_id,
+                narration_text=text,
+                claim_type=ClaimType.CAPABILITY,
+                entities=["Enterprise Architecture Gateway", "Frontier Model Core", "Mission-Critical Telemetry Bus"],
+                action="forward deployed engineer connects legacy enterprise data lakes and ERP workflows to frontier model reasoning cores",
+                object="enterprise architecture bridge and secure real-time data bus",
+                environment="modern enterprise technology operations center with high-contrast architectural systems grid",
+                relationship="forward deployed engineer establishes live production bridge between frontier AI and enterprise software",
+                required_visual_evidence=[
+                    "enterprise architecture gateway",
+                    "frontier model core",
+                    "production telemetry bus",
+                    "absence of warehouse robotics",
+                ],
+                preferred_visualization="Enterprise architecture gateway bridging client ERP systems directly into frontier reasoning core with active data bus telemetry",
+                acceptable_alternatives=[
+                    "Clean high-contrast architectural topology showing production gateway and secure data conduits",
+                    "Interactive enterprise system diagram with bidirectional model integration",
+                ],
+                unacceptable_visuals=[
+                    "warehouse robots",
+                    "conveyor belt",
+                    "robotic gripper clamp",
+                    "forklift",
+                    "pneumatic actuator",
+                ],
+                grounding_level=GroundingLevel.LEVEL_4.value,
+            )
+        elif scene_idx == 1 or any(k in text_lower for k in ["data", "ingest", "pipeline", "stream", "lake", "warehouse", "etl", "rag"]):
+            return ClaimVisualPlan(
+                claim_id=f"claim_{scene_id}",
+                section_id=sec_id,
+                scene_id=scene_id,
+                narration_text=text,
+                claim_type=ClaimType.MECHANISM,
+                entities=["High-Throughput Production Data Pipeline", "Enterprise SQL DWH", "Context Injection Bus"],
+                action="ingesting raw enterprise data streams and unstructured repositories into real-time context buffer",
+                object="multi-stage production pipeline channels and context buffer",
+                environment="cloud data infrastructure and high-throughput ingestion corridors",
+                relationship="data engineering pipeline supplies validated real-time context to frontier models",
+                required_visual_evidence=[
+                    "data pipeline channels",
+                    "context streaming buffer",
+                    "throughput telemetry",
+                    "absence of robotic arms",
+                ],
+                preferred_visualization="Multi-stage production data pipeline streaming unstructured documents and SQL records into real-time context buffer",
+                acceptable_alternatives=[
+                    "Three-stage ingestion channel with data validation badges and high-speed telemetry",
+                    "Real-time context injection bus routing enterprise data streams",
+                ],
+                unacceptable_visuals=[
+                    "robotic arms",
+                    "conveyor belts",
+                    "pneumatic clamps",
+                    "warehouse rovers",
+                ],
+                grounding_level=GroundingLevel.LEVEL_4.value,
+            )
+        elif scene_idx == 2 or any(k in text_lower for k in ["agent", "orchestrat", "tool", "debug", "error", "reasoning", "coordinate"]):
+            return ClaimVisualPlan(
+                claim_id=f"claim_{scene_id}",
+                section_id=sec_id,
+                scene_id=scene_id,
+                narration_text=text,
+                claim_type=ClaimType.DEMONSTRATION,
+                entities=["Multi-Agent Orchestration Mesh", "Enterprise Tool Runner", "API Gateway & Reasoning Core"],
+                action="autonomous reasoning agents coordinating multi-step decisions, invoking enterprise tools, and resolving exceptions on the fly",
+                object="agent orchestration mesh nodes, tool runner interfaces, and verification loops",
+                environment="distributed cloud architecture coordination console",
+                relationship="agentic systems execute complex enterprise workflows with autonomous self-healing and tool integration",
+                required_visual_evidence=[
+                    "agent orchestration mesh",
+                    "enterprise tool runner",
+                    "real-time verification loop",
+                    "absence of warehouse obstacles",
+                ],
+                preferred_visualization="Multi-agent orchestration mesh connecting API gateway to autonomous reasoning agent, RAG vector store, and enterprise tool runner",
+                acceptable_alternatives=[
+                    "Interactive agent topology executing automated tool calls and self-correction loop",
+                    "Distributed systems coordination map with live task status nodes",
+                ],
+                unacceptable_visuals=[
+                    "warehouse obstacles",
+                    "conveyor belts",
+                    "robotic claws",
+                    "rover collision",
+                ],
+                grounding_level=GroundingLevel.LEVEL_4.value,
+            )
+        else:
+            return ClaimVisualPlan(
+                claim_id=f"claim_{scene_id}",
+                section_id=sec_id,
+                scene_id=scene_id,
+                narration_text=text,
+                claim_type=ClaimType.BUSINESS_IMPACT,
+                entities=["Enterprise Cloud Performance Dashboard", "Deployment Velocity Telemetry", "99.99% SLA Uptime Grid"],
+                action="enterprise delivery velocity scaling by 340% with 99.99% uptime SLA across global cloud clusters",
+                object="real-time performance analytics and cloud telemetry grid",
+                environment="global enterprise operations command center / cloud telemetry hub",
+                relationship="production deployment accelerates enterprise time-to-market from months to weeks",
+                required_visual_evidence=[
+                    "velocity metrics (+340%)",
+                    "99.99% uptime SLA",
+                    "enterprise impact dashboard",
+                    "absence of warehouse rovers",
+                ],
+                preferred_visualization="Enterprise business impact dashboard showing deployment cycle compression from 6 months to 2 weeks and 99.99% SLA uptime",
+                acceptable_alternatives=[
+                    "Cloud performance metrics panel with latency counter and 340% velocity uplift",
+                    "Enterprise ROI comparison chart with production reliability gauges",
+                ],
+                unacceptable_visuals=[
+                    "warehouse rovers",
+                    "forklifts",
+                    "conveyor line",
+                    "pallet storage",
+                ],
+                grounding_level=GroundingLevel.LEVEL_4.value,
+            )
+
+    # 4. Hook / Immediate Dramatic Capability (Robotics & Physical Automation)
     if scene_idx == 0 or role == "hook":
         # Extract subject from topic
         subject_ent = "warehouse robots"

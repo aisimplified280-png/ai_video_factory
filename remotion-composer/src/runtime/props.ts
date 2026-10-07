@@ -56,6 +56,7 @@ export interface CaptionProps {
   scene_id: string;
   start: number;
   end: number;
+  audio_duration?: number;
   textReference: string;
   emphasisWords: string[];
 }

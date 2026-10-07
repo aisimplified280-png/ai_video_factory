@@ -424,29 +424,30 @@ class ShotDirector:
 
         # Dynamically inject tailored option directly from ClaimVisualPlan if present
         if claim_plan:
+            is_rob = any(k in (claim_plan.action + " " + claim_plan.environment + " " + " ".join(claim_plan.entities)).lower() for k in ["robot", "clamp", "gripper", "agv", "rover", "pneumatic"])
             if chosen_mode == VisualMode.BRAND_CTA:
                 custom_shot_type = "clean_minimalist_studio"
             elif scene_idx == 0:
-                custom_shot_type = "extreme_macro_probe"
+                custom_shot_type = "extreme_macro_probe" if is_rob else "systems_architecture_overview"
             elif chosen_mode == VisualMode.LITERAL:
-                custom_shot_type = "industrial_arm_command_medium"
+                custom_shot_type = "industrial_arm_command_medium" if is_rob else "pipeline_data_flow_medium"
             elif chosen_mode == VisualMode.DEMONSTRATION:
-                custom_shot_type = "dynamic_obstacle_reroute_overhead"
+                custom_shot_type = "dynamic_obstacle_reroute_overhead" if is_rob else "multi_agent_coordination_mesh"
             elif chosen_mode == VisualMode.SCALE:
-                custom_shot_type = "high_throughput_logistics_flow"
+                custom_shot_type = "high_throughput_logistics_flow" if is_rob else "enterprise_cloud_telemetry_dashboard"
             else:
                 custom_shot_type = f"{chosen_mode.value}_grounded_execution"
 
             custom_opt = {
                 "shot_type": custom_shot_type,
                 "camera_motion": "push_in" if scene_idx == 0 else "tracking",
-                "camera_angle": "macro_probe_level" if scene_idx == 0 else "eye_level_three_quarter",
-                "composition": "tight_macro_crop" if scene_idx == 0 else "balanced_rule_of_thirds",
+                "camera_angle": "macro_probe_level" if (scene_idx == 0 and is_rob) else "eye_level_three_quarter",
+                "composition": "tight_macro_crop" if (scene_idx == 0 and is_rob) else "balanced_rule_of_thirds",
                 "subject": ", ".join(claim_plan.entities) or intent.what_is_said,
                 "action": claim_plan.action,
                 "environment": claim_plan.environment,
-                "lens_feel": "24mm_macro_probe" if scene_idx == 0 else "35mm_standard",
-                "depth": "extreme_shallow_dof" if scene_idx == 0 else "medium_depth",
+                "lens_feel": "24mm_macro_probe" if (scene_idx == 0 and is_rob) else "35mm_standard",
+                "depth": "extreme_shallow_dof" if (scene_idx == 0 and is_rob) else "medium_depth",
                 "visual_metaphor": claim_plan.relationship,
                 "lighting": "sharp high-contrast directional lighting with cool specular highlights",
                 "motion_intensity": 8.0 if scene_idx == 0 else 7.0,

@@ -24,6 +24,8 @@ import {incomingStyle as fadeIn, outgoingStyle as fadeOut} from '../transitions/
 import {flashStyle} from '../transitions/lightFlash';
 import {incomingStyle as wipeIn} from '../transitions/wipe';
 import {incomingStyle as zoomIn, outgoingStyle as zoomOut} from '../transitions/zoom';
+import {incomingStyle as objectIn, outgoingStyle as objectOut} from '../transitions/objectTransition';
+import {incomingStyle as morphIn, outgoingStyle as morphOut} from '../transitions/shapeMorph';
 import {ActionLayer} from '../primitives/ActionLayer';
 import {BackgroundLayer} from '../primitives/BackgroundLayer';
 import {ChartLayer} from '../primitives/ChartLayer';
@@ -62,11 +64,13 @@ export function transitionModuleFor(intent: string | null): string {
     case 'cross_dissolve':
       return 'fade';
     case 'directional_wipe':
-    case 'object_transition':
       return 'wipe';
+    case 'object_transition':
+      return 'objectTransition';
     case 'zoom_transition':
-    case 'shape_morph':
       return 'zoom';
+    case 'shape_morph':
+      return 'shapeMorph';
     case 'light_flash':
       return 'lightFlash';
     case 'motion_blur':
@@ -310,6 +314,10 @@ function headStyleFor(intent: string | null, overlap: number, local: number): Re
       return wipeIn(progress);
     case 'zoom':
       return zoomIn(progress);
+    case 'objectTransition':
+      return objectIn(progress);
+    case 'shapeMorph':
+      return morphIn(progress);
     case 'motionBlur':
       return blurIn(progress);
     default:
@@ -328,6 +336,10 @@ function tailStyleFor(intent: string | null, tail: number, intoTail: number): Re
       return fadeOut(progress);
     case 'zoom':
       return zoomOut(progress);
+    case 'objectTransition':
+      return objectOut(progress);
+    case 'shapeMorph':
+      return morphOut(progress);
     case 'motionBlur':
       return blurOut(progress);
     default:

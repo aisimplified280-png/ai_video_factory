@@ -35,27 +35,478 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
   const sub = subject.toLowerCase();
   const vis = visualPurpose.toLowerCase();
 
-  const isAITerms =
-    isAITopic ||
+  const isOutro =
+    sc.includes('scene_05') ||
+    sc.includes('sec_05') ||
+    sub.includes('cta') ||
+    sub.includes('outro') ||
+    sub.includes('subscribe') ||
+    sc.includes('brand');
+
+  const isNLPTerms =
     sub.includes('token') ||
     sub.includes('embedding') ||
     sub.includes('attention') ||
     sub.includes('transformer') ||
-    sub.includes('nlp') ||
-    sub.includes('language') ||
-    sub.includes('ai') ||
+    sub.includes('vocab') ||
     vis.includes('token') ||
     vis.includes('embedding') ||
     vis.includes('attention') ||
     vis.includes('transformer') ||
-    vis.includes('nlp') ||
     vis.includes('prompt');
+
+  const isRobotics =
+    sub.includes('robot') ||
+    sub.includes('clamp') ||
+    sub.includes('manipulat') ||
+    sub.includes('arm') ||
+    sub.includes('kinematic') ||
+    sub.includes('actuator') ||
+    sub.includes('warehouse') ||
+    sub.includes('agv') ||
+    sub.includes('rover') ||
+    vis.includes('robot') ||
+    vis.includes('clamp') ||
+    vis.includes('arm') ||
+    vis.includes('agv');
+
+  const isEnterpriseFDE = !isNLPTerms && !isRobotics;
+
+  // ===========================================================================
+  // DOMAIN C: FORWARD DEPLOYED ENGINEER & ENTERPRISE AI SYSTEMS PIPELINE
+  // (Architecture Bridge, High-Throughput Data Pipeline, Multi-Agent Orchestration, Production Dashboard)
+  // ===========================================================================
+  if (isEnterpriseFDE && !isOutro) {
+    const cx = width / 2;
+
+    // -------------------------------------------------------------------------
+    // FDE SCENE 01: ARCHITECTURE BRIDGE & ENTERPRISE GATEWAY
+    // -------------------------------------------------------------------------
+    if (sc.includes('scene_01') || sc.includes('sec_01') || sub.includes('hook') || sub.includes('bridge') || sub.includes('fde')) {
+      const cardScale = 0.96 + 0.04 * Math.min(1, p * 3.5);
+      const pulseT = (p * 4) % 1;
+
+      return (
+        <AbsoluteFill style={{pointerEvents: 'none'}}>
+          <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+            <defs>
+              <filter id="fdeCardShadow" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="14" floodColor="#000000" floodOpacity="0.06" />
+              </filter>
+              <filter id="fdeGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            {/* Architectural Blueprint Grid Lines */}
+            <line x1={80} y1={420} x2={width - 80} y2={420} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="6 6" opacity={0.6} />
+            <line x1={80} y1={1200} x2={width - 80} y2={1200} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="6 6" opacity={0.6} />
+
+            {/* Header Zone: Technical State Tag */}
+            <g transform={`translate(${cx}, 320)`}>
+              <rect x={-280} y={-24} width={560} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#fdeCardShadow)" />
+              <circle cx={-250} cy={0} r={6} fill="#1E40AF" />
+              <text x={-230} y={6} fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
+                ENTERPRISE ARCHITECTURE // FORWARD DEPLOYED ENGINEER
+              </text>
+            </g>
+
+            {/* Hero Visualization (Middle Zone): The FDE Production Bridge */}
+            <g transform={`translate(${cx}, 680) scale(${cardScale})`}>
+              <rect x={-480} y={-180} width={960} height={360} rx={22} fill="#FFFFFF" stroke="#E2E8F0" strokeWidth={2} filter="url(#fdeCardShadow)" />
+              <rect x={-480} y={-180} width={960} height={46} rx={22} fill="#F8FAFC" />
+              <line x1={-480} y1={-134} x2={480} y2={-134} stroke="#E2E8F0" strokeWidth={1} />
+              <circle cx={-445} cy={-157} r={6} fill="#EF4444" />
+              <circle cx={-425} cy={-157} r={6} fill="#F59E0B" />
+              <circle cx={-405} cy={-157} r={6} fill="#10B981" />
+              <text x={-375} y={-152} fill="#64748B" fontSize={13} fontFamily="monospace" fontWeight={700}>
+                enterprise_gateway.topology [LIVE PRODUCTION]
+              </text>
+              <text x={440} y={-152} textAnchor="end" fill="#1E40AF" fontSize={12} fontFamily="monospace" fontWeight={800}>
+                STATUS: DEPLOYED
+              </text>
+
+              {/* Left Column: Client Infrastructure Stack */}
+              <g transform="translate(-320, 20)">
+                <rect x={-130} y={-90} width={260} height={180} rx={16} fill="#EFF6FF" stroke="#1E40AF" strokeWidth={2} />
+                <rect x={-110} y={-75} width={220} height={28} rx={6} fill="#1E40AF" />
+                <text x={0} y={-56} textAnchor="middle" fill="#FFFFFF" fontSize={12} fontFamily="monospace" fontWeight={800}>
+                  CLIENT ENTERPRISE STACK
+                </text>
+                <text x={0} y={-10} textAnchor="middle" fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={700}>
+                  • Enterprise ERP / SAP
+                </text>
+                <text x={0} y={16} textAnchor="middle" fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={700}>
+                  • Production SQL / S3
+                </text>
+                <text x={0} y={42} textAnchor="middle" fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={700}>
+                  • Custom Internal APIs
+                </text>
+                <text x={0} y={70} textAnchor="middle" fill="#64748B" fontSize={11} fontFamily="monospace" fontWeight={600}>
+                  [MESSY UNSTRUCTURED DATA]
+                </text>
+              </g>
+
+              {/* Right Column: Frontier AI Model Core */}
+              <g transform="translate(320, 20)">
+                <rect x={-130} y={-90} width={260} height={180} rx={16} fill="#FFFBEB" stroke="#D97706" strokeWidth={2} />
+                <rect x={-110} y={-75} width={220} height={28} rx={6} fill="#D97706" />
+                <text x={0} y={-56} textAnchor="middle" fill="#FFFFFF" fontSize={12} fontFamily="monospace" fontWeight={800}>
+                  FRONTIER AI MODEL CORE
+                </text>
+                <text x={0} y={-10} textAnchor="middle" fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={700}>
+                  • LLM Weights / API
+                </text>
+                <text x={0} y={16} textAnchor="middle" fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={700}>
+                  • Reasoning Engine
+                </text>
+                <text x={0} y={42} textAnchor="middle" fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={700}>
+                  • Context Window (2M)
+                </text>
+                <text x={0} y={70} textAnchor="middle" fill="#D97706" fontSize={11} fontFamily="monospace" fontWeight={600}>
+                  [ISOLATED RAW CAPABILITY]
+                </text>
+              </g>
+
+              {/* Center Conduit: The FDE Integration Gateway */}
+              <g transform="translate(0, 20)">
+                <line x1={-190} y1={-20} x2={190} y2={-20} stroke="#1E40AF" strokeWidth={3} strokeDasharray="8 6" />
+                <line x1={-190} y1={20} x2={190} y2={20} stroke="#D97706" strokeWidth={3} strokeDasharray="8 6" />
+
+                <circle cx={-190 + pulseT * 380} cy={-20} r={6} fill="#1E40AF" filter="url(#fdeGlow)" />
+                <circle cx={190 - pulseT * 380} cy={20} r={6} fill="#D97706" filter="url(#fdeGlow)" />
+
+                <rect x={-105} y={-45} width={210} height={90} rx={16} fill="#FFFFFF" stroke="#0F172A" strokeWidth={2.5} filter="url(#fdeCardShadow)" />
+                <text x={0} y={-16} textAnchor="middle" fill="#1E40AF" fontSize={12} fontFamily="monospace" fontWeight={900}>
+                  ⚡ FORWARD DEPLOYED
+                </text>
+                <text x={0} y={8} textAnchor="middle" fill="#0F172A" fontSize={16} fontFamily="monospace" fontWeight={900}>
+                  ENGINEER
+                </text>
+                <text x={0} y={28} textAnchor="middle" fill="#64748B" fontSize={11} fontFamily="monospace" fontWeight={700}>
+                  LATENCY: 14ms // ACTIVE
+                </text>
+              </g>
+            </g>
+
+            {/* Lower Diagnostic Chips */}
+            <g transform={`translate(${cx}, 970)`}>
+              <text x={0} y={-40} textAnchor="middle" fill="#64748B" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
+                THE MISSION: EMBED DIRECTLY & INTEGRATE INTO PRODUCTION
+              </text>
+              {[
+                {label: 'SECURITY: TLS 1.3 / VPC PEERED', x: -280, color: '#1E40AF', bg: '#EFF6FF'},
+                {label: 'SCHEMA: DYNAMIC ETL ADAPTATION', x: 0, color: '#0F172A', bg: '#F1F5F9'},
+                {label: 'RUNTIME: CLIENT-SITE ZERO-TOUCH', x: 280, color: '#D97706', bg: '#FEF3C7'},
+              ].map((chip, idx) => (
+                <g key={`chip-${idx}`} transform={`translate(${chip.x}, 0)`}>
+                  <rect x={-130} y={-24} width={260} height={48} rx={12} fill={chip.bg} stroke={chip.color} strokeWidth={1.5} filter="url(#fdeCardShadow)" />
+                  <text x={0} y={6} textAnchor="middle" fill={chip.color} fontSize={11} fontFamily="monospace" fontWeight={800}>
+                    {chip.label}
+                  </text>
+                </g>
+              ))}
+            </g>
+
+            {/* Bottom Architecture Banner */}
+            <g transform={`translate(${cx}, 1160)`}>
+              <line x1={-320} y1={0} x2={320} y2={0} stroke="#E2E8F0" strokeWidth={2} strokeDasharray="8 6" />
+              <rect x={-240} y={20} width={480} height={46} rx={12} fill="#FFFFFF" stroke="#1E40AF" strokeWidth={1.5} filter="url(#fdeCardShadow)" />
+              <text x={0} y={48} textAnchor="middle" fill="#1E40AF" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                BRIDGING THE CHASM TO PRODUCTION DEPLOYMENT ↓
+              </text>
+            </g>
+          </svg>
+        </AbsoluteFill>
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // FDE SCENE 02: HIGH-THROUGHPUT DATA PIPELINE & CONTEXT ENGINE
+    // -------------------------------------------------------------------------
+    if (sc.includes('scene_02') || sc.includes('sec_02') || sub.includes('data') || sub.includes('pipeline') || sub.includes('ingest')) {
+      const streams = [
+        {title: 'UNSTRUCTURED REPOS', format: 'PDF / DOCS / GIT', badge: '1.4M TOKENS/S', color: '#1E40AF', x: -300},
+        {title: 'ENTERPRISE SQL DWH', format: 'POSTGRES / SNOWFLAKE', badge: 'NORMALIZED 0.99', color: '#0D9488', x: 0},
+        {title: 'TELEMETRY & LOGS', format: 'KAFKA / CLOUDWATCH', badge: 'LATENCY < 8MS', color: '#D97706', x: 300},
+      ];
+      const streamProgress = (p * 2.5) % 1;
+
+      return (
+        <AbsoluteFill style={{pointerEvents: 'none'}}>
+          <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+            <defs>
+              <filter id="fdeCardShadow2" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="14" floodColor="#000000" floodOpacity="0.06" />
+              </filter>
+            </defs>
+
+            {/* Header Zone */}
+            <g transform={`translate(${cx}, 320)`}>
+              <rect x={-280} y={-24} width={560} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#fdeCardShadow2)" />
+              <circle cx={-250} cy={0} r={6} fill="#1E40AF" />
+              <text x={-230} y={6} fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
+                DATA PIPELINE // CONTEXT ASSEMBLY ENGINE
+              </text>
+            </g>
+
+            {/* Top Source Banner */}
+            <g transform={`translate(${cx}, 460)`}>
+              <rect x={-420} y={-36} width={840} height={72} rx={16} fill="#FFFFFF" stroke="#E2E8F0" strokeWidth={2} filter="url(#fdeCardShadow2)" />
+              <text x={0} y={5} textAnchor="middle" fill="#0F172A" fontSize={22} fontFamily="monospace" fontWeight={800}>
+                &lt;ENTERPRISE DATA SOURCES&gt; INGESTION STREAM &lt;/&gt;
+              </text>
+              <text x={0} y={55} textAnchor="middle" fill="#1E40AF" fontSize={13} fontFamily="monospace" fontWeight={800}>
+                CONTINUOUS NORMALIZATION & EMBEDDING STREAM ↓
+              </text>
+            </g>
+
+            {/* 3 Cascading Pipeline Channels */}
+            {streams.map((s, idx) => {
+              const startX = cx + s.x;
+              const startY = 496;
+              const endY = 860;
+              const packetY = startY + streamProgress * (endY - startY);
+
+              return (
+                <g key={`pipe-${idx}`}>
+                  <line x1={startX} y1={startY} x2={startX} y2={endY} stroke={s.color} strokeWidth={2.5} strokeDasharray="8 6" opacity={0.65} />
+                  <circle cx={startX} cy={packetY} r={6} fill={s.color} />
+                  <circle cx={startX} cy={packetY} r={12} fill="none" stroke={s.color} strokeWidth={1.5} opacity={0.5} />
+
+                  <g transform={`translate(${startX}, 720)`}>
+                    <rect x={-130} y={-60} width={260} height={120} rx={16} fill="#FFFFFF" stroke={s.color} strokeWidth={2} filter="url(#fdeCardShadow2)" />
+                    <text x={0} y={-26} textAnchor="middle" fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                      {s.title}
+                    </text>
+                    <text x={0} y={-4} textAnchor="middle" fill="#64748B" fontSize={11} fontFamily="monospace" fontWeight={700}>
+                      {s.format}
+                    </text>
+                    <rect x={-90} y={15} width={180} height={28} rx={6} fill="#F8FAFC" stroke="#E2E8F0" strokeWidth={1} />
+                    <text x={0} y={34} textAnchor="middle" fill={s.color} fontSize={12} fontFamily="monospace" fontWeight={800}>
+                      {s.badge}
+                    </text>
+                  </g>
+                </g>
+              );
+            })}
+
+            {/* Bottom Aggregator Collector Hub */}
+            <g transform={`translate(${cx}, 1040)`}>
+              <rect x={-420} y={-60} width={840} height={120} rx={18} fill="#EFF6FF" stroke="#1E40AF" strokeWidth={2.5} filter="url(#fdeCardShadow2)" />
+              <text x={0} y={-20} textAnchor="middle" fill="#1E40AF" fontSize={15} fontFamily="monospace" fontWeight={900}>
+                ⚡ CONTEXT ASSEMBLY BUFFER // ZERO DATA LEAKAGE
+              </text>
+              <text x={0} y={12} textAnchor="middle" fill="#0F172A" fontSize={22} fontFamily="monospace" fontWeight={800}>
+                STRUCTURED PROMPT INJECTION [READY FOR INFERENCE]
+              </text>
+              <text x={0} y={40} textAnchor="middle" fill="#64748B" fontSize={12} fontFamily="monospace" fontWeight={700}>
+                COMPLIANCE: SOC-2 TYPE II // AES-256 GCM ENCRYPTION
+              </text>
+            </g>
+
+            {/* Bottom HUD Conduit */}
+            <g transform={`translate(${cx}, 1240)`}>
+              <line x1={-300} y1={0} x2={300} y2={0} stroke="#E2E8F0" strokeWidth={2} />
+              <rect x={-200} y={16} width={400} height={44} rx={12} fill="#FFFFFF" stroke="#0D9488" strokeWidth={1.5} filter="url(#fdeCardShadow2)" />
+              <text x={0} y={44} textAnchor="middle" fill="#0D9488" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                HIGH-THROUGHPUT REAL-TIME CONTEXT STREAM
+              </text>
+            </g>
+          </svg>
+        </AbsoluteFill>
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // FDE SCENE 03: MULTI-AGENT ORCHESTRATION & SYSTEM INTEGRATION
+    // -------------------------------------------------------------------------
+    if (sc.includes('scene_03') || sc.includes('sec_03') || sub.includes('agent') || sub.includes('orchestrat') || sub.includes('tool')) {
+      const nodes = [
+        {id: 'gw', title: 'CLIENT API GATEWAY', role: 'SECURITY & ROUTING', x: cx, y: 550, color: '#1E40AF'},
+        {id: 'ag1', title: 'REASONING AGENT', role: 'CHAIN-OF-THOUGHT', x: cx - 280, y: 780, color: '#D97706'},
+        {id: 'rag', title: 'RAG & VECTOR STORE', role: 'HIGH-DENSITY RETRIEVAL', x: cx + 280, y: 780, color: '#0D9488'},
+        {id: 'tool', title: 'ENTERPRISE TOOL RUNNER', role: 'SANDBOX EXECUTION', x: cx, y: 1010, color: '#1E40AF'},
+      ];
+
+      const dashOffset = -p * 160;
+
+      return (
+        <AbsoluteFill style={{pointerEvents: 'none'}}>
+          <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+            <defs>
+              <filter id="fdeCardShadow3" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="14" floodColor="#000000" floodOpacity="0.06" />
+              </filter>
+            </defs>
+
+            {/* Header Zone */}
+            <g transform={`translate(${cx}, 320)`}>
+              <rect x={-280} y={-24} width={560} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#fdeCardShadow3)" />
+              <circle cx={-250} cy={0} r={6} fill="#D97706" />
+              <text x={-230} y={6} fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
+                MULTI-AGENT ORCHESTRATION // SYSTEM INTEGRATION
+              </text>
+            </g>
+
+            {/* Central Diamond Graph Connection Lines */}
+            {[
+              {from: 0, to: 1},
+              {from: 0, to: 2},
+              {from: 1, to: 3},
+              {from: 2, to: 3},
+              {from: 1, to: 2},
+            ].map((edge, idx) => {
+              const src = nodes[edge.from];
+              const tgt = nodes[edge.to];
+              return (
+                <g key={`edge-${idx}`}>
+                  <line
+                    x1={src.x}
+                    y1={src.y}
+                    x2={tgt.x}
+                    y2={tgt.y}
+                    stroke="#1E40AF"
+                    strokeWidth={2.5}
+                    strokeDasharray="8 6"
+                    strokeDashoffset={dashOffset}
+                    opacity={0.65}
+                  />
+                  <circle
+                    cx={src.x + (tgt.x - src.x) * ((p * 3 + idx * 0.25) % 1)}
+                    cy={src.y + (tgt.y - src.y) * ((p * 3 + idx * 0.25) % 1)}
+                    r={5}
+                    fill="#D97706"
+                  />
+                </g>
+              );
+            })}
+
+            {/* Central Hub */}
+            <g transform={`translate(${cx}, 780)`}>
+              <circle cx={0} cy={0} r={68 + Math.sin(p * Math.PI * 4) * 6} fill="none" stroke="#D97706" strokeWidth={2} strokeDasharray="6 4" opacity={0.6} />
+              <circle cx={0} cy={0} r={52} fill="#FFFFFF" stroke="#1E40AF" strokeWidth={2.5} filter="url(#fdeCardShadow3)" />
+              <text x={0} y={-6} textAnchor="middle" fill="#0F172A" fontSize={13} fontFamily="monospace" fontWeight={900}>
+                ORCHESTRATOR
+              </text>
+              <text x={0} y={16} textAnchor="middle" fill="#D97706" fontSize={11} fontFamily="monospace" fontWeight={800}>
+                4 AGENTS
+              </text>
+            </g>
+
+            {/* 4 Agent Nodes */}
+            {nodes.map((node, i) => (
+              <g key={`agent-${i}`} transform={`translate(${node.x}, ${node.y})`}>
+                <rect x={-140} y={-45} width={280} height={90} rx={18} fill="#FFFFFF" stroke={node.color} strokeWidth={2} filter="url(#fdeCardShadow3)" />
+                <text x={0} y={-8} textAnchor="middle" fill="#0F172A" fontSize={15} fontFamily="monospace" fontWeight={900}>
+                  {node.title}
+                </text>
+                <text x={0} y={20} textAnchor="middle" fill={node.color} fontSize={11} fontFamily="monospace" fontWeight={800}>
+                  {node.role}
+                </text>
+              </g>
+            ))}
+
+            {/* Bottom Telemetry Card */}
+            <g transform={`translate(${cx}, 1240)`}>
+              <rect x={-300} y={-24} width={600} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#fdeCardShadow3)" />
+              <text x={0} y={6} textAnchor="middle" fill="#1E40AF" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                BIDIRECTIONAL TOOL CALLS: 128 OPS/SEC // VERIFIED EXECUTION
+              </text>
+            </g>
+          </svg>
+        </AbsoluteFill>
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // FDE SCENE 04: ENTERPRISE BUSINESS IMPACT & CLOUD DASHBOARD
+    // -------------------------------------------------------------------------
+    if (sc.includes('scene_04') || sc.includes('sec_04') || sub.includes('impact') || sub.includes('value') || sub.includes('scale')) {
+      return (
+        <AbsoluteFill style={{pointerEvents: 'none'}}>
+          <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+            <defs>
+              <filter id="fdeCardShadow4" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="14" floodColor="#000000" floodOpacity="0.06" />
+              </filter>
+            </defs>
+
+            {/* Header Zone */}
+            <g transform={`translate(${cx}, 320)`}>
+              <rect x={-280} y={-24} width={560} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#fdeCardShadow4)" />
+              <circle cx={-250} cy={0} r={6} fill="#1E40AF" />
+              <text x={-230} y={6} fill="#0F172A" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
+                ENTERPRISE BUSINESS IMPACT // PRODUCTION VALUE
+              </text>
+            </g>
+
+            {/* 3 Metric Cards */}
+            <g transform={`translate(${cx}, 520)`}>
+              <rect x={-420} y={-65} width={840} height={130} rx={20} fill="#FFFFFF" stroke="#1E40AF" strokeWidth={2} filter="url(#fdeCardShadow4)" />
+              <text x={-380} y={-18} fill="#64748B" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                DEPLOYMENT TIMELINE (TIME-TO-VALUE)
+              </text>
+              <text x={-380} y={32} fill="#1E40AF" fontSize={42} fontFamily="monospace" fontWeight={900}>
+                2 WEEKS
+              </text>
+              <rect x={240} y={-12} width={150} height={40} rx={10} fill="#EFF6FF" stroke="#1E40AF" strokeWidth={1.5} />
+              <text x={315} y={14} textAnchor="middle" fill="#1E40AF" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                vs 6 MONTHS
+              </text>
+            </g>
+
+            <g transform={`translate(${cx}, 700)`}>
+              <rect x={-420} y={-65} width={840} height={130} rx={20} fill="#FFFFFF" stroke="#0D9488" strokeWidth={2} filter="url(#fdeCardShadow4)" />
+              <text x={-380} y={-18} fill="#64748B" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                PRODUCTION SYSTEM RELIABILITY
+              </text>
+              <text x={-380} y={32} fill="#0D9488" fontSize={42} fontFamily="monospace" fontWeight={900}>
+                99.99% UPTIME
+              </text>
+              <rect x={240} y={-12} width={150} height={40} rx={10} fill="#F0FDF4" stroke="#0D9488" strokeWidth={1.5} />
+              <text x={315} y={14} textAnchor="middle" fill="#0D9488" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                ACTIVE SLA
+              </text>
+            </g>
+
+            <g transform={`translate(${cx}, 880)`}>
+              <rect x={-420} y={-65} width={840} height={130} rx={20} fill="#FFFFFF" stroke="#D97706" strokeWidth={2} filter="url(#fdeCardShadow4)" />
+              <text x={-380} y={-18} fill="#64748B" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                DEVELOPMENT & CONTEXT VELOCITY
+              </text>
+              <text x={-380} y={32} fill="#D97706" fontSize={42} fontFamily="monospace" fontWeight={900}>
+                +340% GAIN
+              </text>
+              <rect x={240} y={-12} width={150} height={40} rx={10} fill="#FFFBEB" stroke="#D97706" strokeWidth={1.5} />
+              <text x={315} y={14} textAnchor="middle" fill="#D97706" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                VERIFIED ROI
+              </text>
+            </g>
+
+            {/* Cloud Grid at Bottom */}
+            <g transform={`translate(${cx}, 1120)`}>
+              <line x1={-420} y1={0} x2={420} y2={0} stroke="#E2E8F0" strokeWidth={2} />
+              {[-320, -160, 0, 160, 320].map((gx, idx) => (
+                <line key={`cloud-grid-${idx}`} x1={gx * 0.5} y1={0} x2={gx} y2={100} stroke="#E2E8F0" strokeWidth={1.5} strokeDasharray="4 4" />
+              ))}
+              <rect x={-260} y={35} width={520} height={46} rx={12} fill="#FFFFFF" stroke="#1E40AF" strokeWidth={1.5} filter="url(#fdeCardShadow4)" />
+              <text x={0} y={64} textAnchor="middle" fill="#1E40AF" fontSize={14} fontFamily="monospace" fontWeight={800}>
+                ENTERPRISE SCALE DEPLOYED // MISSION CRITICAL STATUS
+              </text>
+            </g>
+          </svg>
+        </AbsoluteFill>
+      );
+    }
+  }
 
   // ===========================================================================
   // DOMAIN A: AI TERMINOLOGY VISUAL PIPELINE
   // (Prompt Ingestion, Token Cascade, Self-Attention Graph, 3D Vector Manifold)
   // ===========================================================================
-  if (isAITerms) {
+  if (isNLPTerms && !isOutro) {
     const cx = width / 2;
 
     // -------------------------------------------------------------------------
@@ -727,16 +1178,12 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
   // DOMAIN B: PHYSICAL ROBOTICS & WAREHOUSE AUTOMATION PIPELINE
   // (Industrial Manipulator, 3D Kinematics, Aisle Rerouting, 3D AGV Perspective)
   // ===========================================================================
-
-  // ---------------------------------------------------------------------------
-  // SCENE 01: INDUSTRIAL WAREHOUSE ROBOTIC PICKING ARM & TACTILE CLAMPING
-  // Voiceover: "Warehouse robots are getting smarter fast."
-  // Grounded context: Overhead gantry crane runway girder, conveyor roller table,
-  // warehouse racking silhouettes. HUD card sits safely at top-right with an
-  // angled leader line connecting to the tactile contact pad—100% ZERO OVERLAP!
-  // ---------------------------------------------------------------------------
-  if (sc.includes('scene_01') || sc.includes('sec_01') || sc.includes('clamp') || sc.includes('grip')) {
-    const cx = width / 2;
+  if (isRobotics && !isOutro) {
+    // ---------------------------------------------------------------------------
+    // SCENE 01: INDUSTRIAL WAREHOUSE ROBOTIC PICKING ARM & TACTILE CLAMPING
+    // ---------------------------------------------------------------------------
+    if (sc.includes('scene_01') || sc.includes('sec_01') || sc.includes('clamp') || sc.includes('grip')) {
+      const cx = width / 2;
 
     // Snappier physical cycle (1.35x speed):
     // Phase 1 (p < 0.22): Gantry trolley and arm descend into pick zone
@@ -1439,8 +1886,8 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
       </AbsoluteFill>
     );
   }
+}
 
-  // ---------------------------------------------------------------------------
   // ---------------------------------------------------------------------------
   // SCENE 05: OUTRO & ANIMATED YOUTUBE SUBSCRIBE INTERACTION
   // Minimalist, high-production design: Clean channel logo + dynamic YouTube

@@ -28,8 +28,13 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
   }
 
   const range = eventFrames(active.start, active.end, fps);
-  const totalSceneFrames = Math.max(1, range.endFrame - range.startFrame);
-  const currentProgress = Math.min(1, Math.max(0, (frame - range.startFrame) / totalSceneFrames));
+  const speechOnsetFrames = Math.round(fps * 0.08);
+  const speechDurationSeconds = active.audio_duration && active.audio_duration > 0
+    ? active.audio_duration
+    : Math.max(1, (active.end - active.start) - 0.25);
+  const totalSpeechFrames = Math.max(1, Math.round((speechDurationSeconds - 0.08) * fps));
+  const framesIntoScene = frame - range.startFrame;
+  const currentProgress = Math.min(1, Math.max(0, (framesIntoScene - speechOnsetFrames) / totalSpeechFrames));
 
   return (
     <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 220, pointerEvents: 'none'}}>

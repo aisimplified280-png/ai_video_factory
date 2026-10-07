@@ -263,129 +263,155 @@ def cmd_produce(args: argparse.Namespace) -> int:
             comm = edge_tts.Communicate(spoken, "en-US-JennyNeural")
             asyncio.run(comm.save(str(audio_dir / f"narration_{sc_id}.mp3")))
 
-    # Resolve baseline edit_decisions
-    try:
-        v1_env = store.latest("edit_decisions", production_id)
-        v1_data = v1_env.data
-    except Exception:
-        total_dur = round(float(canonical_script.get("target_duration_seconds") or canonical_script.get("estimated_duration_seconds") or 30.0), 2)
-        timeline = []
-        narration_tracks = []
-        caption_tracks = []
-        current_time = 0.0
-        for idx, sec in enumerate(sections):
-            sc_id = f"scene_{idx+1:02d}"
-            s_dur = float(sec.get("estimated_duration", 5.5))
-            s_start = round(current_time, 2)
-            s_end = round(current_time + s_dur, 2)
-            current_time = s_end
-            c = plan_data.get("scene_concepts", [])[idx] if idx < len(plan_data.get("scene_concepts", [])) else {}
-            timeline.append({
-                "event_id": f"event_{sc_id}_primary",
-                "scene_id": sc_id,
-                "shot_id": f"{sc_id}_shot_01",
-                "track_id": "video_primary",
-                "role": "primary_visual",
-                "asset_id": f"ast_{sc_id}_primary",
-                "start": s_start,
-                "end": s_end,
-                "duration": s_dur,
-                "z_index": 10,
-                "purpose": c.get("visual_intent", sec.get("role", "visual")),
-                "framing": c.get("shot_type", "medium_shot"),
-                "camera_intent": c.get("camera_intent", "approach_subject"),
-                "motion_intent": c.get("motion_intent", "assemble"),
-                "transition_in": "hard_cut" if idx == 0 else c.get("transition_in", "fade"),
-                "transition_out": "hard_cut",
-                "caption_ref": f"caption_{sc_id}",
-                "audio_ref": f"narration_{sc_id}",
-            })
-            narration_tracks.append({
-                "event_id": f"narration_{sc_id}",
-                "track": "narration",
-                "start": s_start,
-                "end": s_end,
-                "audio_asset_id": f"projects/{production_id}/audio/narration_{sc_id}.mp3",
-                "requirement": {
-                    "required": True,
-                    "spoken_text": sec.get("spoken_text", ""),
-                },
-            })
-            caption_tracks.append({
-                "event_id": f"caption_{sc_id}",
-                "scene_id": sc_id,
-                "start": s_start,
-                "end": s_end,
-                "caption_text_reference": sec.get("spoken_text", ""),
-                "safe_zone": "caption",
-                "emphasis_words": sec.get("emphasis_words", []),
-            })
-        cta_sec = sections[-1] if sections else {}
-        cta_sc_id = f"scene_{len(sections):02d}"
-        cta_start = timeline[-1]["start"] if timeline else max(0.0, total_dur - 5.0)
-        v1_data = {
-            "production_id": production_id,
-            "total_duration": total_dur,
-            "platform_profile": "profiles/youtube_short.json",
-            "platform": {
-                "profile": "profiles/youtube_short.json",
-                "resolution": {"width": 1080, "height": 1920},
-                "fps": 30,
-                "duration_constraints": {"minimum_seconds": 15, "maximum_seconds": 60},
-                "safe_zones": {
-                    "caption": {"top": 1400, "bottom": 1650, "left": 100, "right": 980},
-                    "cta": {"top": 1650, "bottom": 1850, "left": 100, "right": 980},
-                    "brand": {"top": 100, "bottom": 250, "left": 100, "right": 980},
-                },
+    # Generate fresh baseline edit_decisions using real measured audio durations
+    def _get_audio_dur(p: Path) -> float:
+        cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(p)]
+        try:
+            out = subprocess.check_output(cmd, text=True)
+            return max(1.5, float(out.strip()))
+        except Exception:
+            return 5.0
+
+    timeline = []
+    narration_tracks = []
+    caption_tracks = []
+    current_time = 0.0
+    for idx, sec in enumerate(sections):
+        sc_id = f"scene_{idx+1:02d}"
+        audio_f = audio_dir / f"narration_{sc_id}.mp3"
+        measured_dur = _get_audio_dur(audio_f) if audio_f.exists() else float(sec.get("estimated_duration", 5.5))
+        # Natural breathing pause between scenes so voice never cuts off
+        s_dur = round(max(measured_dur + 0.35, 3.2), 2)
+        s_start = round(current_time, 2)
+        s_end = round(current_time + s_dur, 2)
+        current_time = s_end
+        c = plan_data.get("scene_concepts", [])[idx] if idx < len(plan_data.get("scene_concepts", [])) else {}
+        timeline.append({
+            "event_id": f"event_{sc_id}_primary",
+            "scene_id": sc_id,
+            "shot_id": f"{sc_id}_shot_01",
+            "track_id": "video_primary",
+            "role": "primary_visual",
+            "asset_id": f"ast_{sc_id}_primary",
+            "start": s_start,
+            "end": s_end,
+            "duration": s_dur,
+            "z_index": 10,
+            "purpose": c.get("visual_intent", sec.get("role", "visual")),
+            "framing": c.get("shot_type", "medium_shot"),
+            "camera_intent": c.get("camera_intent", "approach_subject"),
+            "motion_intent": c.get("motion_intent", "assemble"),
+            "transition_in": "hard_cut" if idx == 0 else c.get("transition_in", "zoom_transition"),
+            "transition_out": "hard_cut",
+            "caption_ref": f"caption_{sc_id}",
+            "audio_ref": f"narration_{sc_id}",
+        })
+        narration_tracks.append({
+            "event_id": f"narration_{sc_id}",
+            "track": "narration",
+            "start": s_start,
+            "end": s_end,
+            "audio_asset_id": f"projects/{production_id}/audio/narration_{sc_id}.mp3",
+            "requirement": {
+                "required": True,
+                "spoken_text": sec.get("spoken_text", ""),
             },
-            "runtime_lock_source": {
-                "artifact_type": "proposal_packet",
-                "version": proposal_env.artifact_version,
-                "content_hash": proposal_env.content_hash,
-                "locked_at": "2026-10-07T00:00:00Z",
-                "locked_concept_id": "c1",
-            },
-            "render_runtime": "remotion",
-            "renderer_family": "explainer",
-            "composition_mode": "atelier",
-            "timeline": timeline,
-            "video_tracks": {"video_primary": timeline},
-            "audio_tracks": {
-                "narration": narration_tracks,
-                "music": [{"event_id": "music_bed", "track": "music", "start": 0.0, "end": total_dur, "audio_asset_id": None, "requirement": {"required": False}}],
-                "sfx": [{"event_id": "sfx_cta_resolve", "track": "sfx", "start": max(0.0, total_dur - 0.5), "end": total_dur, "audio_asset_id": None, "requirement": {"required": False}}],
-            },
-            "caption_track": caption_tracks,
-            "tracks": {
-                "video": ["video_primary"],
-                "narration": ["narration"],
-                "music": ["music"],
-                "captions": ["captions"],
-                "sfx": ["sfx"],
-            },
-            "cta": {
-                "scene_id": cta_sc_id,
-                "start": cta_start,
-                "end": total_dur,
-                "channel_branding": "AI Simplified Lab",
-                "caption_event_id": f"caption_{cta_sc_id}",
-                "audio_asset_id": None,
-                "audio_requirement": {
-                    "required": True,
-                    "spoken_text": cta_sec.get("spoken_text", "Subscribe to AI Simplified Lab for daily frontier AI briefings."),
-                },
-            },
-            "validation": {
-                "no_gaps": True,
-                "no_overlaps": True,
-                "all_assets_resolved": True,
-                "duration_covered": True,
-                "audio_valid": True,
-                "captions_valid": True,
-                "cta_present": True,
-                "renderer_locked": True,
+        })
+        caption_tracks.append({
+            "event_id": f"caption_{sc_id}",
+            "scene_id": sc_id,
+            "start": s_start,
+            "end": s_end,
+            "audio_duration": measured_dur,
+            "caption_text_reference": sec.get("spoken_text", ""),
+            "safe_zone": "caption",
+            "emphasis_words": sec.get("emphasis_words", []),
+        })
+    total_dur = round(current_time, 2)
+    cta_sec = sections[-1] if sections else {}
+    cta_sc_id = f"scene_{len(sections):02d}"
+    cta_start = timeline[-1]["start"] if timeline else max(0.0, total_dur - 5.0)
+
+    profile_file = ROOT / "profiles/youtube_short.json"
+    if profile_file.exists():
+        prof_data = json.loads(profile_file.read_text(encoding="utf-8"))
+        platform_cfg = {
+            "profile": "profiles/youtube_short.json",
+            "resolution": prof_data.get("resolution", {"width": 1080, "height": 1920}),
+            "fps": prof_data.get("fps", 30),
+            "duration_constraints": prof_data.get("duration_constraints", {"minimum_seconds": 15, "maximum_seconds": 60}),
+            "safe_zones": {
+                "caption": {"top": 1400, "bottom": 1650, "left": 100, "right": 980},
+                "cta": {"top": 1650, "bottom": 1850, "left": 100, "right": 980},
+                "brand": {"top": 100, "bottom": 250, "left": 100, "right": 980},
             },
         }
+    else:
+        platform_cfg = {
+            "profile": "profiles/youtube_short.json",
+            "resolution": {"width": 1080, "height": 1920},
+            "fps": 30,
+            "duration_constraints": {"minimum_seconds": 15, "maximum_seconds": 60},
+            "safe_zones": {
+                "caption": {"top": 1400, "bottom": 1650, "left": 100, "right": 980},
+                "cta": {"top": 1650, "bottom": 1850, "left": 100, "right": 980},
+                "brand": {"top": 100, "bottom": 250, "left": 100, "right": 980},
+            },
+        }
+
+    v1_data = {
+        "production_id": production_id,
+        "total_duration": total_dur,
+        "platform_profile": "profiles/youtube_short.json",
+        "platform": platform_cfg,
+        "runtime_lock_source": {
+            "artifact_type": "proposal_packet",
+            "version": proposal_env.artifact_version,
+            "content_hash": proposal_env.content_hash,
+            "locked_at": "2026-10-07T00:00:00Z",
+            "locked_concept_id": "c1",
+        },
+        "render_runtime": "remotion",
+        "renderer_family": "explainer",
+        "composition_mode": "atelier",
+        "timeline": timeline,
+        "video_tracks": {"video_primary": timeline},
+        "audio_tracks": {
+            "narration": narration_tracks,
+            "music": [{"event_id": "music_bed", "track": "music", "start": 0.0, "end": total_dur, "audio_asset_id": None, "requirement": {"required": False}}],
+            "sfx": [{"event_id": "sfx_cta_resolve", "track": "sfx", "start": max(0.0, total_dur - 0.5), "end": total_dur, "audio_asset_id": None, "requirement": {"required": False}}],
+        },
+        "caption_track": caption_tracks,
+        "tracks": {
+            "video": ["video_primary"],
+            "narration": ["narration"],
+            "music": ["music"],
+            "captions": ["captions"],
+            "sfx": ["sfx"],
+        },
+        "cta": {
+            "scene_id": cta_sc_id,
+            "start": cta_start,
+            "end": total_dur,
+            "channel_branding": "AI Simplified Lab",
+            "caption_event_id": f"caption_{cta_sc_id}",
+            "audio_asset_id": None,
+            "audio_requirement": {
+                "required": True,
+                "spoken_text": cta_sec.get("spoken_text", "Subscribe to AI Simplified Lab for daily frontier AI briefings."),
+            },
+        },
+        "validation": {
+            "no_gaps": True,
+            "no_overlaps": True,
+            "all_assets_resolved": True,
+            "duration_covered": True,
+            "audio_valid": True,
+            "captions_valid": True,
+            "cta_present": True,
+            "renderer_locked": True,
+        },
+    }
 
     mapped_data = map_edit_decisions(plan_data, v1_data, project_root)
     mapped_data["runtime_lock_source"] = {

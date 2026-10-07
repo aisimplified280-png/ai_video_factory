@@ -26,22 +26,26 @@ ALLOWED_TRANSITIONS = [
 ]
 
 
-def assign_transformative_transitions(scene_count: int) -> list[str]:
-    """Assigns purposeful, transformative transition intents for each scene boundary."""
-    # Sequence of meaningful transformations:
-    # Scene 1: Zoom in (extreme camera push into macro embodiment)
-    # Scene 2: Zoom through (push through gripper into articulated arm wrist)
-    # Scene 3: Directional wipe / tracking handoff (tracking camera follows arm onto mobile chassis)
-    # Scene 4: Zoom through (accelerates past barrier into expansive logistics floor)
-    # Scene 5: Motion blur / object transition (raceway rovers converge into brand monogram)
+def assign_transformative_transitions(scene_count: int, as_boundaries: bool = False) -> list[str]:
+    """Assigns purposeful, transformative transition intents for each scene boundary.
+    
+    If as_boundaries is True, returns (scene_count - 1) transitions representing the
+    exact boundaries between scenes, resolving boundary-count ambiguity (Issue #8).
+    """
     patterns = [
         "zoom_transition",
-        "zoom_transition",
         "directional_wipe",
-        "zoom_transition",
+        "object_transition",
+        "shape_morph",
         "motion_blur",
     ]
-    return [patterns[i % len(patterns)] for i in range(scene_count)]
+    target_count = max(0, scene_count - 1) if as_boundaries else scene_count
+    return [patterns[i % len(patterns)] for i in range(target_count)]
+
+
+def assign_boundary_transitions(scene_count: int) -> list[str]:
+    """Returns exactly (scene_count - 1) transitions between adjacent scenes."""
+    return assign_transformative_transitions(scene_count, as_boundaries=True)
 
 
 def validate_transition_integrity(transitions: list[str]) -> tuple[bool, list[str]]:

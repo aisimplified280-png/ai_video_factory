@@ -180,6 +180,7 @@ def build_production_props(
             "scene_id": caption.get("scene_id"),
             "start": caption.get("start"),
             "end": caption.get("end"),
+            "audio_duration": caption.get("audio_duration"),
             "textReference": text or caption.get("caption_text_reference", ""),
             "emphasisWords": caption.get("emphasis_words", []),
         })

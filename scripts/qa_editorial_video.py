@@ -14,9 +14,22 @@ from PIL import Image, ImageDraw, ImageFont, ImageStat
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SAMPLE_TIMES = list(range(0, 37, 3))
+SAMPLE_TIMES = list(range(0, 37, 3))  # Legacy fallback for 36s short templates
 CONTACT_WIDTH = 300
 CONTACT_HEIGHT = 533
+
+
+def compute_sample_times(duration: float, step: float = 3.0) -> list[float]:
+    """Generate sample timestamps covering the entire video from 0 to duration."""
+    times = []
+    t = 0.0
+    while t < duration - 1.0:
+        times.append(round(t, 2))
+        t += step
+    final_time = max(0.0, round(duration - 0.05, 2))
+    if not times or (final_time - times[-1]) >= 0.5:
+        times.append(final_time)
+    return times
 
 
 def _run(command):
@@ -119,11 +132,10 @@ def analyze_generation(output_dir: Path):
     frame_dir.mkdir(parents=True, exist_ok=True)
 
     sample_records = []
-    for timestamp in SAMPLE_TIMES:
-        if timestamp > duration:
-            continue
+    sampling_schedule = compute_sample_times(duration)
+    for idx, timestamp in enumerate(sampling_schedule):
         actual_time = min(float(timestamp), max(0.0, duration - 0.05))
-        frame_path = frame_dir / f"frame_{timestamp:02d}s.png"
+        frame_path = frame_dir / f"frame_{idx:02d}_{int(actual_time):02d}s.png"
         _extract_frame(video_path, actual_time, frame_path)
         sample_records.append((actual_time, frame_path))
     _build_contact_sheet(sample_records, qa_dir / "contact_sheet.png")
