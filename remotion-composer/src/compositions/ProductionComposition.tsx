@@ -74,7 +74,7 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
     );
 
   return (
-    <AbsoluteFill style={{backgroundColor: props.theme.background}}>
+    <AbsoluteFill style={{backgroundColor: isAITopic ? '#F8FAFC' : (props.theme.background || '#F8FAFC')}}>
       {sceneOrder.map((scene) => {
         // Each scene owns exactly its own time range: backgrounds and events
         // from one scene can never cover another scene's content. Event

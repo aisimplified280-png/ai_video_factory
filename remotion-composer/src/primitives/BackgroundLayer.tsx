@@ -31,17 +31,17 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
   const sub = subject.toLowerCase();
   const vis = visualPurpose.toLowerCase();
 
-  // Dynamic Theme Selection
-  let primaryBg = '#0B0F19';    // Midnight Charcoal
-  let secondaryTint = '#1E293B'; // Slate Glow
+  // Dynamic Theme Selection: Clean off-white paper canvas (#F8FAFC / #F1F5F9)
+  let primaryBg = '#F8FAFC';    // Clean off-white paper canvas
+  let secondaryTint = '#F1F5F9'; // Soft Slate Glow
   let microTexture: 'tech_grid' | 'cyber_matrix' | 'neural_mesh' | 'starfield' | 'hazard_ember' | 'brand_vignette' = 'tech_grid';
-  let accentGlow = '#06B6D4';
+  let accentGlow = '#1E40AF';   // Brand Royal Blue ambient glow
 
   if (sc.includes('scene_05') || sc.includes('sec_05') || sc.includes('brand') || sc.includes('cta')) {
-    // 1. Outro / Brand Summary (Absolute Pitch + Indigo Mist + Burnished Gold)
-    primaryBg = '#05070B';
-    secondaryTint = '#1D1E2C';
-    accentGlow = '#F59E0B';
+    // 1. Outro / Brand Summary: Off-white canvas with royal blue ambient glow
+    primaryBg = '#F8FAFC';
+    secondaryTint = '#F1F5F9';
+    accentGlow = '#1E40AF';
     microTexture = 'brand_vignette';
   } else if (
     (isAITopic && (sc.includes('scene_04') || sc.includes('sec_04'))) ||
@@ -50,10 +50,10 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
     vis.includes('embedding') ||
     vis.includes('cloud')
   ) {
-    // 2. 3D Vector Space / Embedding Cloud (Pitch Black + Deep Cosmic Abyss + Electric Cyan)
-    primaryBg = '#05070B';
-    secondaryTint = '#0A192F';
-    accentGlow = '#06B6D4';
+    // 2. 3D Vector Space: Crisp Off-White with Royal Blue Tint
+    primaryBg = '#F8FAFC';
+    secondaryTint = '#EDF2F7';
+    accentGlow = '#1E40AF';
     microTexture = 'starfield';
   } else if (
     (isAITopic && (sc.includes('scene_03') || sc.includes('sec_03'))) ||
@@ -61,10 +61,10 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
     vis.includes('attention') ||
     sub.includes('weight')
   ) {
-    // 3. Self-Attention / Neural Graph (Dark Indigo/Violet + Deep Electric Violet + Electric Purple)
-    primaryBg = '#0F0C1B';
-    secondaryTint = '#2D124D';
-    accentGlow = '#A855F7';
+    // 3. Self-Attention / Neural Graph: Clean Off-White + Amber & Royal Blue Hue
+    primaryBg = '#F8FAFC';
+    secondaryTint = '#F1F5F9';
+    accentGlow = '#D97706';
     microTexture = 'neural_mesh';
   } else if (
     (isAITopic && (sc.includes('scene_02') || sc.includes('sec_02'))) ||
@@ -73,10 +73,10 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
     sub.includes('fragment') ||
     sub.includes('matrix')
   ) {
-    // 4. High Density Data / Numerical Tokens (Cobalt Dark Navy + Deep Cobalt + Neon Mint)
-    primaryBg = '#08131E';
-    secondaryTint = '#0F2E4A';
-    accentGlow = '#10B981';
+    // 4. Numerical Tokenization: Clean Paper with Royal Blue Accent
+    primaryBg = '#F8FAFC';
+    secondaryTint = '#EFF6FF';
+    accentGlow = '#1E40AF';
     microTexture = 'cyber_matrix';
   } else if (
     sub.includes('obstacle') ||
@@ -85,16 +85,16 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
     vis.includes('obstacle') ||
     vis.includes('reroute')
   ) {
-    // 5. Alert / Rerouting / Action (Crimson Ink + Deep Ember + Signal Orange)
-    primaryBg = '#180C10';
-    secondaryTint = '#3B1219';
-    accentGlow = '#F97316';
+    // 5. Alert / Action: Off-White with Amber Accent
+    primaryBg = '#FAF6F0';
+    secondaryTint = '#F5ECE0';
+    accentGlow = '#D97706';
     microTexture = 'hazard_ember';
   } else {
-    // 6. Deep Tech / Hook / Typing Prompt (Deep Slate + Slate Glow + Glowing Amber)
-    primaryBg = '#0D1117';
-    secondaryTint = '#1E293B';
-    accentGlow = isAITopic ? '#F59E0B' : '#06B6D4';
+    // 6. Hook / Natural Language Input: Clean Blueprint Paper
+    primaryBg = '#F8FAFC';
+    secondaryTint = '#F1F5F9';
+    accentGlow = '#1E40AF';
     microTexture = 'tech_grid';
   }
 
@@ -121,37 +121,37 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
           top: 0,
           left: 0,
           pointerEvents: 'none',
-          opacity: 0.9,
+          opacity: 0.95,
         }}
       >
         <defs>
           <radialGradient id="ambientOrb" cx="50%" cy="30%" r="50%">
-            <stop offset="0%" stopColor={accentGlow} stopOpacity="0.08" />
+            <stop offset="0%" stopColor={accentGlow} stopOpacity="0.04" />
             <stop offset="100%" stopColor={accentGlow} stopOpacity="0.0" />
           </radialGradient>
         </defs>
 
-        {/* Ambient atmospheric glow orb */}
+        {/* Ambient atmospheric warm glow orb */}
         <circle cx={540} cy={480} r={520} fill="url(#ambientOrb)" />
 
-        {/* 1. Tech Blueprint Grid Micro-Texture */}
+        {/* 1. Fine Engineering Blueprint Grid Micro-Texture (#CBD5E1, 20-25% Opacity) */}
         {microTexture === 'tech_grid' && (
-          <g opacity={0.12}>
+          <g opacity={0.25}>
             {[180, 360, 540, 720, 900].map((x) => (
-              <line key={`grid-x-${x}`} x1={x} y1={0} x2={x} y2={1920} stroke="#38BDF8" strokeWidth={1} strokeDasharray="4 8" />
+              <line key={`grid-x-${x}`} x1={x} y1={0} x2={x} y2={1920} stroke="#CBD5E1" strokeWidth={1} strokeDasharray="6 6" />
             ))}
             {[320, 640, 960, 1280, 1600].map((y) => (
-              <line key={`grid-y-${y}`} x1={0} y1={y} x2={1080} y2={y} stroke="#38BDF8" strokeWidth={1} strokeDasharray="4 8" />
+              <line key={`grid-y-${y}`} x1={0} y1={y} x2={1080} y2={y} stroke="#CBD5E1" strokeWidth={1} strokeDasharray="6 6" />
             ))}
           </g>
         )}
 
-        {/* 2. Cyber Matrix Dot Grid Micro-Texture */}
+        {/* 2. Cyber Matrix Subtle Dot Grid Micro-Texture */}
         {microTexture === 'cyber_matrix' && (
-          <g opacity={0.18}>
+          <g opacity={0.35}>
             {[180, 360, 540, 720, 900].map((x) =>
               [400, 600, 800, 1000, 1200, 1400].map((y) => (
-                <circle key={`dot-${x}-${y}`} cx={x} cy={y} r={2} fill="#10B981" />
+                <circle key={`dot-${x}-${y}`} cx={x} cy={y} r={2} fill="#CBD5E1" />
               ))
             )}
           </g>
@@ -159,36 +159,36 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
 
         {/* 3. Neural Mesh Arcs Micro-Texture */}
         {microTexture === 'neural_mesh' && (
-          <g opacity={0.15}>
-            <circle cx={540} cy={800} r={280} fill="none" stroke="#A855F7" strokeWidth={1} strokeDasharray="6 6" />
-            <circle cx={540} cy={800} r={480} fill="none" stroke="#A855F7" strokeWidth={1} strokeDasharray="8 8" />
-            <line x1={200} y1={400} x2={880} y2={1200} stroke="#A855F7" strokeWidth={0.8} strokeDasharray="4 6" />
-            <line x1={880} y1={400} x2={200} y2={1200} stroke="#A855F7" strokeWidth={0.8} strokeDasharray="4 6" />
+          <g opacity={0.45}>
+            <circle cx={540} cy={800} r={280} fill="none" stroke="#E2E8F0" strokeWidth={1} strokeDasharray="6 6" />
+            <circle cx={540} cy={800} r={480} fill="none" stroke="#E2E8F0" strokeWidth={1} strokeDasharray="8 8" />
+            <line x1={200} y1={400} x2={880} y2={1200} stroke="#E2E8F0" strokeWidth={0.8} strokeDasharray="4 6" />
+            <line x1={880} y1={400} x2={200} y2={1200} stroke="#E2E8F0" strokeWidth={0.8} strokeDasharray="4 6" />
           </g>
         )}
 
-        {/* 4. Deep Space / Starfield Particles Micro-Texture */}
+        {/* 4. Vector Space Subtle Coordinate Ticks */}
         {microTexture === 'starfield' && (
-          <g opacity={0.22}>
+          <g opacity={0.35}>
             {[
               [140, 320, 1.5], [890, 420, 2], [320, 680, 1], [760, 820, 1.8],
               [210, 1100, 1.2], [940, 1240, 1.5], [480, 1420, 2], [820, 1560, 1.2],
             ].map(([sx, sy, sr], idx) => (
-              <circle key={`star-${idx}`} cx={sx} cy={sy} r={sr} fill="#67E8F9" />
+              <circle key={`star-${idx}`} cx={sx} cy={sy} r={sr} fill="#94A3B8" />
             ))}
           </g>
         )}
 
-        {/* 5. Alert Hazard Ember Lines Micro-Texture */}
+        {/* 5. Alert Hazard Subtle Guide Lines */}
         {microTexture === 'hazard_ember' && (
-          <g opacity={0.14}>
+          <g opacity={0.25}>
             {[300, 600, 900, 1200, 1500].map((hy) => (
-              <line key={`haz-${hy}`} x1={0} y1={hy} x2={1080} y2={hy + 200} stroke="#F97316" strokeWidth={1} strokeDasharray="10 10" />
+              <line key={`haz-${hy}`} x1={0} y1={hy} x2={1080} y2={hy + 200} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="10 10" />
             ))}
           </g>
         )}
 
-        {/* 6. Brand Vignette Vignette Gradient */}
+        {/* 6. Brand Vignette Vignette Border */}
         {microTexture === 'brand_vignette' && (
           <rect
             x={0}
@@ -196,9 +196,9 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
             width={1080}
             height={1920}
             fill="none"
-            stroke="#05070B"
+            stroke="#E5E0D8"
             strokeWidth={140}
-            opacity={0.45 * vignettePulse}
+            opacity={0.25 * vignettePulse}
           />
         )}
       </svg>

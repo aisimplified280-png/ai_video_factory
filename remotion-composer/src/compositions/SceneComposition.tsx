@@ -191,7 +191,7 @@ export function mergeStyles(...styles: (React.CSSProperties | undefined)[]): Rea
   return merged;
 }
 
-function LayerContent({event, assets, theme, scene, ctaBranding, width, height, progress}: {
+function LayerContent({event, assets, theme, scene, ctaBranding, width, height, progress, isAITopic}: {
   event: EditEventProps;
   assets: AssetProps[];
   theme: ThemeProps;
@@ -200,6 +200,7 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
   width: number;
   height: number;
   progress: number;
+  isAITopic?: boolean;
 }) {
   const asset = assetById(assets, event.asset_id);
   switch (event.role) {
@@ -219,6 +220,9 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
         return <VideoLayer src={requireAssetUrl(asset)} />;
       }
       if (asset.kind === 'image-still') {
+        if (isAITopic) {
+          return null;
+        }
         // Declared video, delivered still: full camera motion, no playback.
         return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
       }
@@ -246,6 +250,10 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
       }
       if (spec.path || event.motion_intent === 'trace') {
         return <LineLayer width={width} height={height} reveal={trace(progress).reveal} color={theme.accent} path={spec.path} />;
+      }
+      if (isAITopic) {
+        // Procedural vector blueprint engine owns the visuals: suppress dark raster background images
+        return null;
       }
       return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
     }
@@ -383,6 +391,7 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
                 width={width}
                 height={height}
                 progress={progress}
+                isAITopic={isAITopic}
               />
             </AbsoluteFill>
             {local < flashFrames ? <AbsoluteFill style={flashStyle(flashFrames <= 1 ? 1 : local / (flashFrames - 1))} /> : null}

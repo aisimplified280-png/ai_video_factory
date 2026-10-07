@@ -11,8 +11,8 @@ export interface CaptionTrackProps {
 }
 
 /** Caption layer driven exclusively by edit_decisions caption references.
- * Timing is never regenerated here; only presentation of the referenced text. */
-export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps, mode = 'emphasis_words'}) => {
+ * Timing is never regenerated here; presentation adds dynamic word-by-word karaoke reveal. */
+export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps, mode = 'karaoke'}) => {
   const frame = useCurrentFrame();
   const active = captions.find((caption) => {
     const range = eventFrames(caption.start, caption.end, fps);
@@ -21,55 +21,118 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
   if (!active) {
     return null;
   }
-  // RULE 1: Disable standard bottom captions when on-screen CTA graphic is active
+  // RULE C: Auto-hide subtitle renderer as soon as Scene 5 (Outro / CTA) triggers
   const scLower = (active.scene_id || '').toLowerCase();
   if (scLower.includes('scene_05') || scLower.includes('sec_05') || scLower.includes('cta') || scLower.includes('outro')) {
     return null;
   }
-  const emphasis = new Set(active.emphasisWords.map((word) => word.toLowerCase()));
+
+  const range = eventFrames(active.start, active.end, fps);
+  const totalSceneFrames = Math.max(1, range.endFrame - range.startFrame);
+  const currentProgress = Math.min(1, Math.max(0, (frame - range.startFrame) / totalSceneFrames));
+
   return (
-    <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 210}}>
+    <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 220, pointerEvents: 'none'}}>
       <div
         style={{
-          fontFamily: theme.fontFamily,
-          fontSize: Math.round(theme.bodySize * 1.12),
-          fontWeight: 800,
-          color: '#FFFFFF',
-          textShadow: '0 4px 20px rgba(0,0,0,0.98), 0 2px 6px rgba(0,0,0,0.95), 0 0 30px rgba(0,0,0,0.9)',
-          letterSpacing: '-0.02em',
+          background: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 12px 32px rgba(30, 64, 175, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04)',
+          borderRadius: 24,
+          padding: '16px 32px',
           maxWidth: '88%',
           textAlign: 'center',
-          lineHeight: 1.35,
+          transform: 'translateY(0px)',
+          transition: 'transform 0.15s ease-out',
         }}
       >
-        {mode === 'emphasis_words' ? (
-          <EmphasisText text={active.textReference} emphasis={emphasis} accent={theme.accent} />
-        ) : (
-          active.textReference
-        )}
+        <div
+          style={{
+            fontFamily: theme.fontFamily || '-apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "Segoe UI", Roboto, sans-serif',
+            fontSize: Math.round(theme.bodySize * 1.12),
+            fontWeight: 800,
+            color: '#0F172A',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.4,
+          }}
+        >
+          <KaraokeText
+            text={active.textReference}
+            progress={currentProgress}
+            emphasisWords={active.emphasisWords}
+          />
+        </div>
       </div>
     </AbsoluteFill>
   );
 };
 
-function EmphasisText({text, emphasis, accent}: {text: string; emphasis: Set<string>; accent: string}) {
-  const words = text.split(/\s+/);
+function KaraokeText({
+  text,
+  progress,
+  emphasisWords,
+}: {
+  text: string;
+  progress: number;
+  emphasisWords: string[];
+}) {
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+
+  const emphasis = new Set(emphasisWords.map((w) => w.toLowerCase()));
+  // Calculate active word index based on time progress
+  const activeWordIdx = Math.min(words.length - 1, Math.floor(progress * words.length));
+
   return (
     <>
       {words.map((word, index) => {
-        const hot = emphasis.has(word.replace(/[.,!?;:]+$/, '').toLowerCase());
+        const cleanWord = word.replace(/[.,!?;:]+$/, '').toLowerCase();
+        const isEmphasized = emphasis.has(cleanWord);
+        const isPast = index < activeWordIdx;
+        const isActive = index === activeWordIdx;
+        const isUpcoming = index > activeWordIdx;
+
+        // Active spoken word has scale pop, royal blue or amber highlight
+        let color = '#0F172A'; // Slate Ink for spoken past words
+        let opacity = 1.0;
+        let scale = 1.0;
+        let backgroundColor = 'transparent';
+        let textShadow = 'none';
+
+        if (isActive) {
+          color = isEmphasized ? '#D97706' : '#1E40AF'; // Amber for keyword, Royal Blue for active word
+          backgroundColor = isEmphasized ? '#FEF3C7' : '#EFF6FF'; // Soft amber or soft blue pill
+          scale = 1.12;
+          opacity = 1.0;
+          textShadow = '0 2px 8px rgba(30, 64, 175, 0.15)';
+        } else if (isUpcoming) {
+          color = '#475569'; // Dark slate
+          opacity = 0.40; // 40% opacity for upcoming words
+          scale = 1.0;
+        } else if (isPast) {
+          color = '#0F172A';
+          opacity = 1.0;
+        }
+
         return (
           <span
             key={index}
-            style={
-              hot
-                ? {
-                    color: accent,
-                    fontWeight: 900,
-                    textShadow: `0 0 24px ${accent}cc, 0 4px 16px rgba(0,0,0,0.98)`,
-                  }
-                : undefined
-            }
+            style={{
+              display: 'inline-block',
+              color,
+              opacity,
+              transform: `scale(${scale})`,
+              transformOrigin: 'center center',
+              transition: 'transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.12s ease',
+              backgroundColor,
+              padding: isActive ? '2px 8px' : '0 2px',
+              borderRadius: 8,
+              margin: '0 2px',
+              fontWeight: isActive ? 900 : 800,
+              textShadow,
+            }}
           >
             {word}
             {index < words.length - 1 ? ' ' : ''}

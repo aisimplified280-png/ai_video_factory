@@ -49,13 +49,13 @@ def _theme_from_art_direction(art: dict[str, Any]) -> dict[str, Any]:
         return default
 
     return {
-        "background": color("primary", "#0F172A"),
-        "surface": "#16213A",
-        "text": "#F8F7F2",
-        "mutedText": color("neutral", "#9AA6B2"),
-        "accent": color("accent_1", "#38BDF8"),
-        "accentSecondary": color("accent_2", "#F4A261"),
-        "fontFamily": "Arial, Helvetica, sans-serif",
+        "background": color("primary", "#F8FAFC"),
+        "surface": "#FFFFFF",
+        "text": "#0F172A",
+        "mutedText": color("neutral", "#475569"),
+        "accent": color("accent_1", "#1E40AF"),
+        "accentSecondary": color("accent_2", "#D97706"),
+        "fontFamily": "-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         "headlineSize": 64,
         "bodySize": 34,
         "lineWeight": 3,

@@ -15,17 +15,17 @@ export interface ArtDirectionInput {
 }
 
 export const DEFAULT_THEME: ThemeProps = {
-  background: '#12151C',
-  surface: '#1A202C',
-  text: '#F8FAFC',
-  mutedText: '#94A3B8',
-  accent: '#D97736',
-  accentSecondary: '#4F709C',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  background: '#F8FAFC',
+  surface: '#FFFFFF',
+  text: '#0F172A',
+  mutedText: '#475569',
+  accent: '#1E40AF',
+  accentSecondary: '#D97706',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   headlineSize: 64,
   bodySize: 34,
   lineWeight: 2,
-  cornerRadius: 12,
+  cornerRadius: 16,
   motion: {stiffness: 90, damping: 22, mass: 1},
 };
 

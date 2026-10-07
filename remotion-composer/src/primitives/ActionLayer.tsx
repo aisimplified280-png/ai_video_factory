@@ -60,8 +60,10 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
 
     // -------------------------------------------------------------------------
     // AI SCENE 01 (00:00 - 00:02): HOOK
-    // Animated typing prompt box where raw English text flows in, instantly
-    // highlighting words and breaking them apart with an energetic amber glow.
+    // Sleek macOS/browser-style window card in pure white (#FFFFFF) sitting on the
+    // warm cream canvas, featuring a glowing amber cursor typing out the query in
+    // Charcoal Black (#1A1917). Active words shatter into crisp white chips with
+    // warm amber highlights.
     // -------------------------------------------------------------------------
     if (sc.includes('scene_01') || sc.includes('sec_01') || sub.includes('hook') || sub.includes('prompt')) {
       const promptFull = 'How AI understands human language';
@@ -71,109 +73,110 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
       const showCursor = Math.floor(p * 20) % 2 === 0;
 
       const words = [
-        {text: 'How', w: 100},
-        {text: 'AI', w: 75},
-        {text: 'understands', w: 230},
-        {text: 'human', w: 130},
-        {text: 'language', w: 175},
+        {text: 'How', w: 105},
+        {text: 'AI', w: 80},
+        {text: 'understands', w: 240},
+        {text: 'human', w: 135},
+        {text: 'language', w: 185},
       ];
       const shatterProgress = Math.max(0, (p - 0.35) / 0.65);
       const scanX = 140 + p * 800;
+      const cardScale = 0.96 + 0.04 * Math.min(1, p * 3.5);
 
       return (
         <AbsoluteFill style={{pointerEvents: 'none'}}>
           <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
             <defs>
-              <filter id="amberGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="8" result="blur" />
+              <filter id="claudeCardShadow" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="12" floodColor="#000000" floodOpacity="0.06" />
+              </filter>
+              <filter id="softAmberGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>
-              <linearGradient id="promptGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#1E293B" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#0F172A" stopOpacity="0.98" />
-              </linearGradient>
             </defs>
 
-            {/* Background Environmental Wireframe Grid Lines */}
-            <line x1={100} y1={420} x2={width - 100} y2={420} stroke="#334155" strokeWidth={1} strokeDasharray="6 6" opacity={0.6} />
-            <line x1={100} y1={1200} x2={width - 100} y2={1200} stroke="#334155" strokeWidth={1} strokeDasharray="6 6" opacity={0.6} />
+            {/* Fine Engineering Blueprint Grid Overlay (#E2E8F0, 40% Opacity) */}
+            <line x1={80} y1={420} x2={width - 80} y2={420} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="6 6" opacity={0.6} />
+            <line x1={80} y1={1200} x2={width - 80} y2={1200} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="6 6" opacity={0.6} />
 
-            {/* Top HUD Telemetry Pill */}
-            <g transform={`translate(${cx}, 360)`}>
-              <rect x={-240} y={-24} width={480} height={48} rx={12} fill="#0F172A" stroke="#334155" strokeWidth={1.5} />
-              <circle cx={-210} cy={0} r={6} fill="#F59E0B" filter="url(#amberGlow)" />
-              <text x={-190} y={6} fill="#F8FAFC" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
-                PROMPT INGESTION // NATURAL LANGUAGE STREAM
+            {/* Header Zone (Top 15%): Technical Pipeline State Tag */}
+            <g transform={`translate(${cx}, 320)`}>
+              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow)" />
+              <circle cx={-230} cy={0} r={6} fill="#D97706" />
+              <text x={-210} y={6} fill="#1A1917" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
+                PROMPT INGESTION // STEP 01
               </text>
             </g>
 
-            {/* Main Animated Typing Prompt Window */}
-            <g transform={`translate(${cx}, 620)`}>
-              {/* Window Background Container */}
+            {/* Hero Graphic Zone (Middle 60%): Sleek macOS/Browser Card in Pure White */}
+            <g transform={`translate(${cx}, 620) scale(${cardScale})`}>
+              {/* Card Container with Soft Drop Shadow */}
               <rect
                 x={-460}
                 y={-140}
                 width={920}
                 height={260}
-                rx={18}
-                fill="url(#promptGrad)"
-                stroke="#F59E0B"
-                strokeWidth={2.5}
-                filter="url(#amberGlow)"
+                rx={20}
+                fill="#FFFFFF"
+                stroke="#E5E7EB"
+                strokeWidth={2}
+                filter="url(#claudeCardShadow)"
               />
               
-              {/* Window Title Header Bar */}
-              <rect x={-460} y={-140} width={920} height={46} rx={18} fill="#0B0F19" />
-              <rect x={-460} y={-100} width={920} height={6} fill="#0B0F19" />
+              {/* Window Header Bar with macOS dots */}
+              <rect x={-460} y={-140} width={920} height={46} rx={20} fill="#F8FAFC" />
+              <rect x={-460} y={-100} width={920} height={6} fill="#F8FAFC" />
+              <line x1={-460} y1={-94} x2={460} y2={-94} stroke="#E5E7EB" strokeWidth={1} />
               <circle cx={-425} cy={-117} r={6} fill="#EF4444" />
               <circle cx={-405} cy={-117} r={6} fill="#F59E0B" />
               <circle cx={-385} cy={-117} r={6} fill="#10B981" />
-              <text x={-355} y={-112} fill="#94A3B8" fontSize={13} fontFamily="monospace" fontWeight={700}>
-                input_stream.raw [UTF-8 ENCODING]
+              <text x={-355} y={-112} fill="#64748B" fontSize={13} fontFamily="monospace" fontWeight={700}>
+                natural_language_query.prompt [UTF-8]
               </text>
-              <text x={430} y={-112} textAnchor="end" fill="#64748B" fontSize={12} fontFamily="monospace">
-                PROMPT BUFFER
+              <text x={430} y={-112} textAnchor="end" fill="#94A3B8" fontSize={12} fontFamily="monospace" fontWeight={600}>
+                PROMPT STREAM
               </text>
 
-              {/* Glowing Prompt Command Symbol */}
-              <text x={-420} y={0} fill="#F59E0B" fontSize={36} fontFamily="monospace" fontWeight={900}>
+              {/* Glowing Amber Prompt Command Symbol */}
+              <text x={-420} y={2} fill="#D97706" fontSize={38} fontFamily="monospace" fontWeight={900}>
                 &gt;
               </text>
 
-              {/* Streaming Typed Text */}
-              <text x={-380} y={-2} fill="#FFFFFF" fontSize={32} fontFamily="monospace" fontWeight={800}>
+              {/* High-Contrast Charcoal Black Typed Text */}
+              <text x={-380} y={0} fill="#1A1917" fontSize={34} fontFamily="monospace" fontWeight={800}>
                 {displayedText}
-                {showCursor ? <tspan fill="#F59E0B">|</tspan> : null}
+                {showCursor ? <tspan fill="#D97706">|</tspan> : null}
               </text>
 
-              {/* Sub-status inside window */}
-              <line x1={-420} y1={50} x2={420} y2={50} stroke="#334155" strokeWidth={1} strokeDasharray="4 4" />
-              <text x={-420} y={85} fill="#94A3B8" fontSize={14} fontFamily="monospace" fontWeight={600}>
-                STATUS: RECEIVING RAW USER TOKENS...
+              {/* Window Sub-status Guide */}
+              <line x1={-420} y1={52} x2={420} y2={52} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="4 4" />
+              <text x={-420} y={85} fill="#64748B" fontSize={14} fontFamily="monospace" fontWeight={600}>
+                STATUS: RECEIVING RAW USER INPUT...
               </text>
-              <text x={420} y={85} textAnchor="end" fill="#F59E0B" fontSize={14} fontFamily="monospace" fontWeight={800}>
+              <text x={420} y={85} textAnchor="end" fill="#D97706" fontSize={14} fontFamily="monospace" fontWeight={800}>
                 {charsVisible}/{promptFull.length} CHARS
               </text>
             </g>
 
-            {/* Word Boundary Shatter & Glowing Chips (Reveals as p progresses) */}
-            <g transform={`translate(${cx}, 920)`}>
+            {/* Word Boundary Decomposition: Clean White Chips with Amber Highlight */}
+            <g transform={`translate(${cx}, 930)`}>
               {/* Section Subtitle */}
-              <text x={0} y={-50} textAnchor="middle" fill="#94A3B8" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.1em">
+              <text x={0} y={-50} textAnchor="middle" fill="#64748B" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.1em">
                 IDENTIFYING LEXICAL BOUNDARIES // WORD DECOMPOSITION
               </text>
 
-              {/* Laser Scanner Line */}
-              <line x1={scanX - cx} y1={-30} x2={scanX - cx} y2={70} stroke="#F59E0B" strokeWidth={3} filter="url(#amberGlow)" />
+              {/* Laser Scanner Line in Amber */}
+              <line x1={scanX - cx} y1={-32} x2={scanX - cx} y2={74} stroke="#D97706" strokeWidth={2.5} filter="url(#softAmberGlow)" />
 
               {/* Exploded Word Chips */}
               {words.map((w, i) => {
-                const totalW = words.reduce((acc, item) => acc + item.w + 16, -16);
+                const totalW = words.reduce((acc, item) => acc + item.w + 18, -18);
                 let startX = -totalW / 2;
                 for (let k = 0; k < i; k++) {
-                  startX += words[k].w + 16;
+                  startX += words[k].w + 18;
                 }
-                const chipX = startX + w.w / 2 + (i - 2) * shatterProgress * 18;
+                const chipX = startX + w.w / 2 + (i - 2) * shatterProgress * 20;
                 const chipY = Math.sin(p * Math.PI * 2 + i) * 6;
                 const isHighlighted = p > 0.2 + i * 0.12;
 
@@ -181,21 +184,21 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                   <g key={`word-${i}`} transform={`translate(${chipX}, ${chipY})`}>
                     <rect
                       x={-w.w / 2}
-                      y={-28}
+                      y={-30}
                       width={w.w}
-                      height={56}
-                      rx={12}
-                      fill={isHighlighted ? '#1E293B' : '#0F172A'}
-                      stroke={isHighlighted ? '#F59E0B' : '#475569'}
+                      height={60}
+                      rx={14}
+                      fill={isHighlighted ? '#FEF3C7' : '#FFFFFF'}
+                      stroke={isHighlighted ? '#D97706' : '#E5E7EB'}
                       strokeWidth={isHighlighted ? 2.5 : 1.5}
-                      filter={isHighlighted ? 'url(#amberGlow)' : undefined}
+                      filter="url(#claudeCardShadow)"
                     />
                     <text
                       x={0}
-                      y={7}
+                      y={8}
                       textAnchor="middle"
-                      fill={isHighlighted ? '#FFFFFF' : '#94A3B8'}
-                      fontSize={20}
+                      fill={isHighlighted ? '#92400E' : '#1A1917'}
+                      fontSize={21}
                       fontFamily="monospace"
                       fontWeight={900}
                     >
@@ -206,11 +209,11 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
               })}
             </g>
 
-            {/* Bottom Ingestion Conduits */}
-            <g transform={`translate(${cx}, 1140)`}>
-              <line x1={-300} y1={0} x2={300} y2={0} stroke="#334155" strokeWidth={2} strokeDasharray="8 6" />
-              <rect x={-180} y={20} width={360} height={42} rx={10} fill="#0F172A" stroke="#38BDF8" strokeWidth={1.5} />
-              <text x={0} y={47} textAnchor="middle" fill="#38BDF8" fontSize={14} fontFamily="monospace" fontWeight={800}>
+            {/* Bottom Pipeline Conduit */}
+            <g transform={`translate(${cx}, 1150)`}>
+              <line x1={-300} y1={0} x2={300} y2={0} stroke="#E2E8F0" strokeWidth={2} strokeDasharray="8 6" />
+              <rect x={-190} y={20} width={380} height={44} rx={12} fill="#FFFFFF" stroke="#2563EB" strokeWidth={1.5} filter="url(#claudeCardShadow)" />
+              <text x={0} y={48} textAnchor="middle" fill="#2563EB" fontSize={14} fontFamily="monospace" fontWeight={800}>
                 READY FOR NUMERICAL TOKENIZATION ↓
               </text>
             </g>
@@ -221,14 +224,16 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
 
     // -------------------------------------------------------------------------
     // AI SCENE 02 (00:03 - 00:09): TOKENIZATION
-    // Words exploding into numeric ID chips ([2044], #99301, [124], [4512]) that
-    // cascade into a 3D matrix coordinate space.
+    // Crisp white token cards floating above a light gray vector matrix grid.
+    // Token IDs ([2044], #99301, [124], [4512]) render in Cobalt Blue (#2563EB)
+    // inside small neutral-gray pills (#F1F5F9).
+    // -------------------------------------------------------------------------
     if (sc.includes('scene_02') || sc.includes('sec_02') || (!sc.includes('scene_01') && !sc.includes('scene_03') && !sc.includes('scene_04') && !sc.includes('scene_05') && sub.includes('token'))) {
       const tokens = [
-        {word: 'How', id: '[2044]', color: '#10B981', targetX: 200, targetY: 960},
-        {word: 'AI', id: '#99301', color: '#06B6D4', targetX: 420, targetY: 920},
-        {word: 'understands', id: '[124]', color: '#F59E0B', targetX: 660, targetY: 920},
-        {word: 'language', id: '[4512]', color: '#38BDF8', targetX: 880, targetY: 960},
+        {word: 'How', id: '[2044]', hexId: '0x07FC', targetX: 200, targetY: 960},
+        {word: 'AI', id: '#99301', hexId: '0x183E', targetX: 420, targetY: 920},
+        {word: 'understands', id: '[124]', hexId: '0x007C', targetX: 660, targetY: 920},
+        {word: 'language', id: '[4512]', hexId: '0x11A0', targetX: 880, targetY: 960},
       ];
 
       const cascadeProgress = Math.min(1, p * 1.3);
@@ -237,36 +242,35 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
         <AbsoluteFill style={{pointerEvents: 'none'}}>
           <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
             <defs>
-              <filter id="tokenGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="8" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              <filter id="claudeCardShadow2" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="12" floodColor="#000000" floodOpacity="0.06" />
               </filter>
             </defs>
 
-            {/* Header Telemetry */}
-            <g transform={`translate(${cx}, 360)`}>
-              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#0F172A" stroke="#10B981" strokeWidth={1.5} />
-              <circle cx={-230} cy={0} r={6} fill="#10B981" filter="url(#tokenGlow)" />
-              <text x={-210} y={6} fill="#F8FAFC" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
-                BYTE-PAIR ENCODING // NUMERICAL SHATTERING
+            {/* Header Zone: Technical State Tag */}
+            <g transform={`translate(${cx}, 320)`}>
+              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow2)" />
+              <circle cx={-230} cy={0} r={6} fill="#2563EB" />
+              <text x={-210} y={6} fill="#1A1917" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
+                TOKENIZATION PIPELINE // STEP 02
               </text>
             </g>
 
-            {/* Top Source String Container (Disintegrating) */}
-            <g transform={`translate(${cx}, 500)`}>
-              <rect x={-360} y={-35} width={720} height={70} rx={14} fill="#08131E" stroke="#334155" strokeWidth={2} />
-              <text x={0} y={6} textAnchor="middle" fill="#94A3B8" fontSize={22} fontFamily="monospace" fontWeight={700}>
+            {/* Top Source String Container (Pure White Card) */}
+            <g transform={`translate(${cx}, 470)`}>
+              <rect x={-380} y={-36} width={760} height={72} rx={16} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={2} filter="url(#claudeCardShadow2)" />
+              <text x={0} y={6} textAnchor="middle" fill="#1A1917" fontSize={24} fontFamily="monospace" fontWeight={800}>
                 &lt;STREAM&gt; "How AI understands language" &lt;/STREAM&gt;
               </text>
-              <text x={0} y={55} textAnchor="middle" fill="#10B981" fontSize={13} fontFamily="monospace" fontWeight={800}>
+              <text x={0} y={56} textAnchor="middle" fill="#2563EB" fontSize={13} fontFamily="monospace" fontWeight={800}>
                 CONVERTING TO DISCRETE VOCABULARY INDICES ↓
               </text>
             </g>
 
-            {/* Downward Cascading Motion Trails */}
+            {/* Downward Cascading Motion Trails (Cobalt & Amber) */}
             {tokens.map((t, i) => {
               const startX = 260 + i * 180;
-              const startY = 535;
+              const startY = 506;
               const curX = startX + (t.targetX - startX) * cascadeProgress;
               const curY = startY + (t.targetY - startY) * cascadeProgress;
 
@@ -277,60 +281,65 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                     y1={startY}
                     x2={curX}
                     y2={curY}
-                    stroke={t.color}
+                    stroke={i % 2 === 0 ? '#1E40AF' : '#D97706'}
                     strokeWidth={2}
                     strokeDasharray="6 4"
-                    opacity={0.6}
+                    opacity={0.65}
                   />
-                  {/* Trailing sparks */}
-                  <circle cx={curX} cy={curY - 30} r={3} fill={t.color} opacity={0.8} />
-                  <circle cx={curX} cy={curY - 60} r={2} fill={t.color} opacity={0.5} />
+                  {/* Rule B: Dynamic Data Flow Pulse Particle */}
+                  <circle
+                    cx={startX + (curX - startX) * ((p * 3 + i * 0.25) % 1)}
+                    cy={startY + (curY - startY) * ((p * 3 + i * 0.25) % 1)}
+                    r={4}
+                    fill={i % 2 === 0 ? '#1E40AF' : '#D97706'}
+                  />
+                  <circle cx={curX} cy={curY - 30} r={3} fill={i % 2 === 0 ? '#1E40AF' : '#D97706'} opacity={0.8} />
                 </g>
               );
             })}
 
-            {/* Cascading Holographic Numeric Token Chips */}
+            {/* Cascading Crisp White Token Cards (+30% Scaled for Mobile Readability) */}
             {tokens.map((t, i) => {
               const startX = 260 + i * 180;
-              const startY = 535;
+              const startY = 506;
               const curX = startX + (t.targetX - startX) * cascadeProgress;
               const curY = startY + (t.targetY - startY) * cascadeProgress + Math.sin(p * Math.PI * 3 + i) * 8;
 
               return (
                 <g key={`tok-${i}`} transform={`translate(${curX}, ${curY})`}>
-                  {/* Outer Hologram Pill */}
+                  {/* Outer Crisp White Card */}
                   <rect
-                    x={-90}
-                    y={-50}
-                    width={180}
-                    height={100}
-                    rx={16}
-                    fill="#0F172A"
-                    stroke={t.color}
-                    strokeWidth={2.5}
-                    filter="url(#tokenGlow)"
+                    x={-100}
+                    y={-55}
+                    width={200}
+                    height={110}
+                    rx={18}
+                    fill="#FFFFFF"
+                    stroke="#E5E7EB"
+                    strokeWidth={2}
+                    filter="url(#claudeCardShadow2)"
                   />
-                  {/* Word badge */}
-                  <rect x={-75} y={-40} width={150} height={28} rx={6} fill="#1E293B" />
-                  <text x={0} y={-21} textAnchor="middle" fill="#FFFFFF" fontSize={16} fontFamily="monospace" fontWeight={800}>
+                  {/* Word Header */}
+                  <text x={0} y={-24} textAnchor="middle" fill="#1A1917" fontSize={18} fontFamily="monospace" fontWeight={800}>
                     "{t.word}"
                   </text>
-                  {/* Large Numeric ID */}
-                  <text x={0} y={15} textAnchor="middle" fill={t.color} fontSize={22} fontFamily="monospace" fontWeight={900}>
+                  {/* Neutral-Gray Pill housing Cobalt Blue Token ID */}
+                  <rect x={-65} y={-3} width={130} height={34} rx={8} fill="#F1F5F9" stroke="#E2E8F0" strokeWidth={1} />
+                  <text x={0} y={21} textAnchor="middle" fill="#2563EB" fontSize={22} fontFamily="monospace" fontWeight={900}>
                     {t.id}
                   </text>
-                  {/* Binary Sub-annotation */}
-                  <text x={0} y={38} textAnchor="middle" fill="#64748B" fontSize={11} fontFamily="monospace" fontWeight={700}>
-                    VOCAB_IDX // 0x{(2044 + i * 1337).toString(16).toUpperCase()}
+                  {/* Metadata Sub-annotation */}
+                  <text x={0} y={44} textAnchor="middle" fill="#64748B" fontSize={11} fontFamily="monospace" fontWeight={700}>
+                    VOCAB_IDX // {t.hexId}
                   </text>
                 </g>
               );
             })}
 
-            {/* 3D Matrix Coordinate Grid at Bottom */}
-            <g transform={`translate(${cx}, 1220)`}>
+            {/* 3D Matrix Coordinate Grid at Bottom (Light Slate Blueprint Lines) */}
+            <g transform={`translate(${cx}, 1200)`}>
               {/* Perspective Horizon Line */}
-              <line x1={-440} y1={0} x2={440} y2={0} stroke="#334155" strokeWidth={2} />
+              <line x1={-440} y1={0} x2={440} y2={0} stroke="#E2E8F0" strokeWidth={2} />
               
               {/* Matrix Grid Perspective Lines */}
               {[-360, -180, 0, 180, 360].map((gx, idx) => (
@@ -340,8 +349,8 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                   y1={0}
                   x2={gx}
                   y2={220}
-                  stroke="#1E293B"
-                  strokeWidth={2}
+                  stroke="#E2E8F0"
+                  strokeWidth={1.5}
                   strokeDasharray="4 4"
                 />
               ))}
@@ -354,18 +363,18 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                   y1={ry}
                   x2={360 * (0.4 + idx * 0.25)}
                   y2={ry}
-                  stroke="#1E293B"
+                  stroke="#E2E8F0"
                   strokeWidth={1.5}
                 />
               ))}
 
-              {/* 3D Coordinate Space Slot Indicators */}
+              {/* Coordinate Space Slot Indicators */}
               {tokens.map((t, i) => {
                 const slotX = -270 + i * 180;
                 return (
                   <g key={`slot-${i}`} transform={`translate(${slotX}, 130)`}>
-                    <ellipse cx={0} cy={0} rx={70} ry={22} fill="none" stroke={t.color} strokeWidth={2} strokeDasharray="4 4" />
-                    <text x={0} y={35} textAnchor="middle" fill={t.color} fontSize={13} fontFamily="monospace" fontWeight={800}>
+                    <ellipse cx={0} cy={0} rx={75} ry={24} fill="#FFFFFF" stroke="#2563EB" strokeWidth={1.5} strokeDasharray="4 4" />
+                    <text x={0} y={38} textAnchor="middle" fill="#2563EB" fontSize={13} fontFamily="monospace" fontWeight={800}>
                       SLOT #{i} [DIM: 768]
                     </text>
                   </g>
@@ -373,9 +382,9 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
               })}
 
               {/* Tensor Spec Card */}
-              <g transform="translate(0, 240)">
-                <rect x={-240} y={-22} width={480} height={44} rx={10} fill="#0F172A" stroke="#10B981" strokeWidth={1.5} />
-                <text x={0} y={6} textAnchor="middle" fill="#F8FAFC" fontSize={15} fontFamily="monospace" fontWeight={800}>
+              <g transform="translate(0, 230)">
+                <rect x={-260} y={-22} width={520} height={44} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow2)" />
+                <text x={0} y={6} textAnchor="middle" fill="#2563EB" fontSize={15} fontFamily="monospace" fontWeight={800}>
                   TENSOR SHAPE: [1, 4, 768] // DENSE VECTOR MATRIX
                 </text>
               </g>
@@ -386,26 +395,27 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
     }
 
     // -------------------------------------------------------------------------
-    // AI SCENE 03 (00:10 - 00:16): SELF-ATTENTION
-    // Interactive neural graph network where token nodes connect to each other
-    // via dynamic glowing lines (attention weights). Lines thicken and brighten
-    // based on attention strength.
+    // AI SCENE 03 (00:10 - 00:16): ATTENTION WEIGHT GRAPH
+    // Word nodes represented as clean white badges with charcoal text (#1A1917).
+    // Attention lines animate as Terracotta/Amber (#D97706) vector arcs with
+    // subtle weight values hovering along the lines.
+    // -------------------------------------------------------------------------
     if (sc.includes('scene_03') || sc.includes('sec_03') || (!sc.includes('scene_01') && !sc.includes('scene_02') && !sc.includes('scene_04') && !sc.includes('scene_05') && sub.includes('attention'))) {
       const nodes = [
-        {id: 'ai', text: 'AI', x: 280, y: 720, color: '#F97316'},
-        {id: 'understands', text: 'understands', x: 800, y: 720, color: '#C084FC'},
-        {id: 'human', text: 'human', x: 280, y: 1140, color: '#38BDF8'},
-        {id: 'language', text: 'language', x: 800, y: 1140, color: '#F97316'},
+        {id: 'ai', text: 'AI', x: 260, y: 720, color: '#D97706'},
+        {id: 'understands', text: 'understands', x: 820, y: 720, color: '#2563EB'},
+        {id: 'human', text: 'human', x: 260, y: 1140, color: '#0D9488'},
+        {id: 'language', text: 'language', x: 820, y: 1140, color: '#D97706'},
       ];
 
       // Attention connection weights
       const edges = [
-        {from: 0, to: 3, weight: 0.94, label: 'α=0.94 [KEY DEPENDENCY]', color: '#F97316', width: 7},
-        {from: 1, to: 3, weight: 0.82, label: 'α=0.82', color: '#C084FC', width: 5},
-        {from: 2, to: 3, weight: 0.74, label: 'α=0.74', color: '#38BDF8', width: 4},
-        {from: 0, to: 1, weight: 0.45, label: 'α=0.45', color: '#64748B', width: 2},
-        {from: 0, to: 2, weight: 0.28, label: 'α=0.28', color: '#334155', width: 1.5},
-        {from: 1, to: 2, weight: 0.32, label: 'α=0.32', color: '#334155', width: 1.5},
+        {from: 0, to: 3, weight: 0.94, label: 'α=0.94 [KEY DEPENDENCY]', color: '#D97706', width: 6.5},
+        {from: 1, to: 3, weight: 0.82, label: 'α=0.82', color: '#2563EB', width: 4.5},
+        {from: 2, to: 3, weight: 0.74, label: 'α=0.74', color: '#0D9488', width: 3.5},
+        {from: 0, to: 1, weight: 0.45, label: 'α=0.45', color: '#94A3B8', width: 2},
+        {from: 0, to: 2, weight: 0.28, label: 'α=0.28', color: '#CBD5E1', width: 1.5},
+        {from: 1, to: 2, weight: 0.32, label: 'α=0.32', color: '#CBD5E1', width: 1.5},
       ];
 
       const dashOffset = -p * 180;
@@ -414,46 +424,41 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
         <AbsoluteFill style={{pointerEvents: 'none'}}>
           <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
             <defs>
-              <filter id="attGlowPurple" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="8" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-              </filter>
-              <filter id="attGlowOrange" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="10" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              <filter id="claudeCardShadow3" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="12" floodColor="#000000" floodOpacity="0.06" />
               </filter>
             </defs>
 
-            {/* Top Header Card */}
-            <g transform={`translate(${cx}, 360)`}>
-              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#0F0C1B" stroke="#A855F7" strokeWidth={1.5} />
-              <circle cx={-230} cy={0} r={6} fill="#F97316" filter="url(#attGlowOrange)" />
-              <text x={-210} y={6} fill="#F8FAFC" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
+            {/* Header Zone: Technical State Tag */}
+            <g transform={`translate(${cx}, 320)`}>
+              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow3)" />
+              <circle cx={-230} cy={0} r={6} fill="#D97706" />
+              <text x={-210} y={6} fill="#1A1917" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
                 MULTI-HEAD SELF-ATTENTION // 8 HEADS
               </text>
             </g>
 
-            {/* Formula Banner */}
-            <g transform={`translate(${cx}, 480)`}>
-              <rect x={-320} y={-30} width={640} height={60} rx={14} fill="#0F0C1B" stroke="#334155" strokeWidth={2} />
-              <text x={0} y={8} textAnchor="middle" fill="#F8FAFC" fontSize={18} fontFamily="monospace" fontWeight={800}>
+            {/* Formula Banner (Clean White Card) */}
+            <g transform={`translate(${cx}, 440)`}>
+              <rect x={-340} y={-32} width={680} height={64} rx={16} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow3)" />
+              <text x={0} y={8} textAnchor="middle" fill="#1A1917" fontSize={19} fontFamily="monospace" fontWeight={800}>
                 Attention(Q, K, V) = softmax(Q K^T / √d_k) · V
               </text>
             </g>
 
             {/* Central Attention Mechanism Core Hub */}
             <g transform={`translate(${cx}, 930)`}>
-              <circle cx={0} cy={0} r={70 + Math.sin(p * Math.PI * 4) * 8} fill="none" stroke="#A855F7" strokeWidth={2} strokeDasharray="6 4" />
-              <circle cx={0} cy={0} r={55} fill="#180D2B" stroke="#F97316" strokeWidth={2.5} filter="url(#attGlowOrange)" />
-              <text x={0} y={-6} textAnchor="middle" fill="#FFFFFF" fontSize={14} fontFamily="monospace" fontWeight={900}>
+              <circle cx={0} cy={0} r={72 + Math.sin(p * Math.PI * 4) * 6} fill="none" stroke="#D97706" strokeWidth={2} strokeDasharray="6 4" opacity={0.6} />
+              <circle cx={0} cy={0} r={56} fill="#FFFFFF" stroke="#D97706" strokeWidth={2.5} filter="url(#claudeCardShadow3)" />
+              <text x={0} y={-6} textAnchor="middle" fill="#1A1917" fontSize={14} fontFamily="monospace" fontWeight={900}>
                 ATTENTION
               </text>
-              <text x={0} y={16} textAnchor="middle" fill="#F97316" fontSize={12} fontFamily="monospace" fontWeight={800}>
+              <text x={0} y={16} textAnchor="middle" fill="#D97706" fontSize={12} fontFamily="monospace" fontWeight={800}>
                 HEAD #1
               </text>
             </g>
 
-            {/* Dynamic Attention Weight Connection Lines (Thick & Glowing) */}
+            {/* Dynamic Attention Weight Connection Lines (Line-drawing with strokeDashoffset) */}
             {edges.map((e, idx) => {
               const src = nodes[e.from];
               const tgt = nodes[e.to];
@@ -461,20 +466,6 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
 
               return (
                 <g key={`edge-${idx}`}>
-                  {/* Outer Glow Line */}
-                  {isPrimary ? (
-                    <line
-                      x1={src.x}
-                      y1={src.y}
-                      x2={tgt.x}
-                      y2={tgt.y}
-                      stroke={e.color}
-                      strokeWidth={e.width * 2}
-                      opacity={0.3}
-                      filter="url(#attGlowOrange)"
-                    />
-                  ) : null}
-
                   {/* Main Electrical Conduit Line */}
                   <line
                     x1={src.x}
@@ -485,14 +476,23 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                     strokeWidth={e.width}
                     strokeDasharray={isPrimary ? '12 8' : '6 6'}
                     strokeDashoffset={dashOffset}
-                    opacity={isPrimary ? 1 : 0.45}
+                    opacity={isPrimary ? 1 : 0.55}
+                  />
+
+                  {/* Rule B: Dynamic Data Flow Pulse Particle */}
+                  <circle
+                    cx={src.x + (tgt.x - src.x) * ((p * 2.8 + idx * 0.22) % 1)}
+                    cy={src.y + (tgt.y - src.y) * ((p * 2.8 + idx * 0.22) % 1)}
+                    r={isPrimary ? 5 : 3.5}
+                    fill={e.color}
+                    filter="url(#claudeCardShadow3)"
                   />
 
                   {/* Weight Callout Badge for Strong Connections */}
                   {isPrimary ? (
                     <g transform={`translate(${(src.x + tgt.x) / 2}, ${(src.y + tgt.y) / 2})`}>
-                      <rect x={-95} y={-16} width={190} height={32} rx={8} fill="#0F0C1B" stroke={e.color} strokeWidth={2} />
-                      <text x={0} y={5} textAnchor="middle" fill="#FFFFFF" fontSize={13} fontFamily="monospace" fontWeight={900}>
+                      <rect x={-95} y={-16} width={190} height={32} rx={8} fill="#FFFFFF" stroke={e.color} strokeWidth={1.5} filter="url(#claudeCardShadow3)" />
+                      <text x={0} y={5} textAnchor="middle" fill={e.color} fontSize={13} fontFamily="monospace" fontWeight={900}>
                         {e.label}
                       </text>
                     </g>
@@ -501,30 +501,30 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
               );
             })}
 
-            {/* Token Graph Nodes */}
+            {/* Token Graph Nodes: Clean White Badges with Charcoal Text */}
             {nodes.map((node, i) => {
-              const pulse = Math.sin(p * Math.PI * 4 + i) * 6;
+              const pulse = Math.sin(p * Math.PI * 4 + i) * 5;
               return (
                 <g key={`node-${i}`} transform={`translate(${node.x}, ${node.y})`}>
-                  {/* Concentric Glow Ring */}
-                  <circle cx={0} cy={0} r={58 + pulse} fill="none" stroke={node.color} strokeWidth={1.5} opacity={0.6} />
+                  {/* Subtle Focus Ring */}
+                  <circle cx={0} cy={0} r={62 + pulse} fill="none" stroke={node.color} strokeWidth={1.5} opacity={0.5} />
 
-                  {/* Main Node Card */}
+                  {/* Main Clean White Node Card */}
                   <rect
-                    x={-85}
-                    y={-40}
-                    width={170}
-                    height={80}
-                    rx={16}
-                    fill="#0F0C1B"
+                    x={-95}
+                    y={-45}
+                    width={190}
+                    height={90}
+                    rx={18}
+                    fill="#FFFFFF"
                     stroke={node.color}
-                    strokeWidth={2.5}
-                    filter={node.color === '#F97316' ? 'url(#attGlowOrange)' : 'url(#attGlowPurple)'}
+                    strokeWidth={2}
+                    filter="url(#claudeCardShadow3)"
                   />
-                  <text x={0} y={-4} textAnchor="middle" fill="#FFFFFF" fontSize={20} fontFamily="monospace" fontWeight={900}>
+                  <text x={0} y={-4} textAnchor="middle" fill="#1A1917" fontSize={24} fontFamily="monospace" fontWeight={900}>
                     "{node.text}"
                   </text>
-                  <text x={0} y={22} textAnchor="middle" fill={node.color} fontSize={12} fontFamily="monospace" fontWeight={800}>
+                  <text x={0} y={24} textAnchor="middle" fill={node.color} fontSize={13} fontFamily="monospace" fontWeight={800}>
                     TOKEN #{i} [Q_{i} · K_j]
                   </text>
                 </g>
@@ -533,8 +533,8 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
 
             {/* Bottom Telemetry Card */}
             <g transform={`translate(${cx}, 1320)`}>
-              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#0F0C1B" stroke="#334155" strokeWidth={1.5} />
-              <text x={0} y={6} textAnchor="middle" fill="#A855F7" fontSize={14} fontFamily="monospace" fontWeight={800}>
+              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow3)" />
+              <text x={0} y={6} textAnchor="middle" fill="#2563EB" fontSize={14} fontFamily="monospace" fontWeight={800}>
                 DYNAMIC ATTENTION WEIGHT MATRIX // 100% CONTEXTUALIZED
               </text>
             </g>
@@ -544,9 +544,10 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
     }
 
     // -------------------------------------------------------------------------
-    // AI SCENE 04 (00:17 - 00:23): EMBEDDING / VECTOR SPACE
-    // Rotating 3D vector point cloud showing cluster points floating in space
-    // with distance vectors connecting semantic neighbors.
+    // AI SCENE 04 (00:17 - 00:23): HIGH-DIMENSIONAL VECTOR SPACE
+    // Rotating 3D vector point cloud showing cluster points floating in warm
+    // light space with distance vectors connecting semantic neighbors.
+    // -------------------------------------------------------------------------
     if (sc.includes('scene_04') || sc.includes('sec_04') || (!sc.includes('scene_01') && !sc.includes('scene_02') && !sc.includes('scene_03') && !sc.includes('scene_05') && (sub.includes('vector') || sub.includes('embedding') || sub.includes('transformer')))) {
       // 3D Orbital Rotation Angles
       const rotY = p * Math.PI * 0.8 - 0.4;
@@ -555,21 +556,21 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
 
       // 3D Point Cloud Definition [x, y, z, label, cluster, color]
       const rawPoints = [
-        // Cluster A: Syntax & Representation (Cyan #06B6D4)
-        {x: -180, y: -90, z: -40, label: 'token', cluster: 'A', color: '#06B6D4'},
-        {x: -110, y: -150, z: 30, label: 'vector', cluster: 'A', color: '#06B6D4'},
-        {x: -220, y: -30, z: 70, label: 'word', cluster: 'A', color: '#06B6D4'},
-        {x: -150, y: 30, z: -50, label: 'symbol', cluster: 'A', color: '#06B6D4'},
+        // Cluster A: Syntax & Representation (Cobalt Blue #2563EB)
+        {x: -180, y: -90, z: -40, label: 'token', cluster: 'A', color: '#2563EB'},
+        {x: -110, y: -150, z: 30, label: 'vector', cluster: 'A', color: '#2563EB'},
+        {x: -220, y: -30, z: 70, label: 'word', cluster: 'A', color: '#2563EB'},
+        {x: -150, y: 30, z: -50, label: 'symbol', cluster: 'A', color: '#2563EB'},
 
-        // Cluster B: Semantics & Meaning (Gold #F59E0B)
-        {x: 160, y: -70, z: 50, label: 'meaning', cluster: 'B', color: '#F59E0B'},
-        {x: 210, y: -120, z: -30, label: 'context', cluster: 'B', color: '#F59E0B'},
-        {x: 130, y: 30, z: 80, label: 'attention', cluster: 'B', color: '#F59E0B'},
-        {x: 230, y: 20, z: -40, label: 'concept', cluster: 'B', color: '#F59E0B'},
+        // Cluster B: Semantics & Meaning (Terracotta / Amber #D97706)
+        {x: 160, y: -70, z: 50, label: 'meaning', cluster: 'B', color: '#D97706'},
+        {x: 210, y: -120, z: -30, label: 'context', cluster: 'B', color: '#D97706'},
+        {x: 130, y: 30, z: 80, label: 'attention', cluster: 'B', color: '#D97706'},
+        {x: 230, y: 20, z: -40, label: 'concept', cluster: 'B', color: '#D97706'},
 
-        // Cluster C: Neural Parameters (Mint #10B981)
-        {x: 0, y: 130, z: -40, label: 'weights', cluster: 'C', color: '#10B981'},
-        {x: 40, y: 180, z: 40, label: 'matrix', cluster: 'C', color: '#10B981'},
+        // Cluster C: Neural Parameters (Teal #0D9488)
+        {x: 0, y: 130, z: -40, label: 'weights', cluster: 'C', color: '#0D9488'},
+        {x: 40, y: 180, z: 40, label: 'matrix', cluster: 'C', color: '#0D9488'},
       ];
 
       // Perspective 3D Projection
@@ -596,51 +597,44 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
 
       // Semantic Neighbor Pairs
       const neighborPairs = [
-        {fromIdx: 0, toIdx: 1, dist: 'cos(θ)=0.962', color: '#06B6D4'},
-        {fromIdx: 4, toIdx: 5, dist: 'cos(θ)=0.941', color: '#F59E0B'},
-        {fromIdx: 6, toIdx: 7, dist: 'cos(θ)=0.895', color: '#F59E0B'},
-        {fromIdx: 8, toIdx: 9, dist: 'cos(θ)=0.912', color: '#10B981'},
-        {fromIdx: 1, toIdx: 4, dist: 'd=0.48 [CROSS]', color: '#475569'},
+        {fromIdx: 0, toIdx: 1, dist: 'cos(θ)=0.962', color: '#2563EB'},
+        {fromIdx: 4, toIdx: 5, dist: 'cos(θ)=0.941', color: '#D97706'},
+        {fromIdx: 6, toIdx: 7, dist: 'cos(θ)=0.895', color: '#D97706'},
+        {fromIdx: 8, toIdx: 9, dist: 'cos(θ)=0.912', color: '#0D9488'},
+        {fromIdx: 1, toIdx: 4, dist: 'd=0.48 [CROSS]', color: '#94A3B8'},
       ];
 
       return (
         <AbsoluteFill style={{pointerEvents: 'none'}}>
           <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
             <defs>
-              <filter id="vecGlowCyan" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="8" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-              </filter>
-              <filter id="vecGlowGold" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="8" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              <filter id="claudeCardShadow4" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="12" floodColor="#000000" floodOpacity="0.06" />
               </filter>
             </defs>
 
-            {/* Top Telemetry Header */}
-            <g transform={`translate(${cx}, 360)`}>
-              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#05070B" stroke="#06B6D4" strokeWidth={1.5} />
-              <circle cx={-230} cy={0} r={6} fill="#06B6D4" filter="url(#vecGlowCyan)" />
-              <text x={-210} y={6} fill="#F8FAFC" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
+            {/* Header Zone: Technical State Tag */}
+            <g transform={`translate(${cx}, 320)`}>
+              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow4)" />
+              <circle cx={-230} cy={0} r={6} fill="#2563EB" />
+              <text x={-210} y={6} fill="#1A1917" fontSize={14} fontFamily="monospace" fontWeight={800} letterSpacing="0.08em">
                 ROTATING 3D SEMANTIC VECTOR SPACE
               </text>
             </g>
 
             {/* Dimension Readout Sub-card */}
-            <g transform={`translate(${cx}, 480)`}>
-              <rect x={-280} y={-26} width={560} height={52} rx={12} fill="#0A101D" stroke="#334155" strokeWidth={1.5} />
-              <text x={0} y={6} textAnchor="middle" fill="#94A3B8" fontSize={15} fontFamily="monospace" fontWeight={800}>
+            <g transform={`translate(${cx}, 440)`}>
+              <rect x={-280} y={-26} width={560} height={52} rx={14} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow4)" />
+              <text x={0} y={6} textAnchor="middle" fill="#64748B" fontSize={15} fontFamily="monospace" fontWeight={800}>
                 HIGH-DIMENSIONAL EMBEDDING MANIFOLD [1,536-D]
               </text>
             </g>
 
-            {/* 3D Origin Axes Gimbal */}
+            {/* 3D Origin Axes Gimbal (Light Slate Blueprint Guides) */}
             <g transform={`translate(${cx}, ${cy3D})`}>
-              {/* 3D Coordinate Ellipses */}
-              <ellipse cx={0} cy={0} rx={280} ry={90} fill="none" stroke="#1E293B" strokeWidth={1.5} strokeDasharray="6 6" />
-              <ellipse cx={0} cy={0} rx={180} ry={240} fill="none" stroke="#1E293B" strokeWidth={1} strokeDasharray="4 6" opacity={0.5} />
-              {/* Origin Center Point */}
-              <circle cx={0} cy={0} r={5} fill="#334155" />
+              <ellipse cx={0} cy={0} rx={280} ry={90} fill="none" stroke="#E2E8F0" strokeWidth={1.5} strokeDasharray="6 6" />
+              <ellipse cx={0} cy={0} rx={180} ry={240} fill="none" stroke="#E2E8F0" strokeWidth={1} strokeDasharray="4 6" opacity={0.6} />
+              <circle cx={0} cy={0} r={5} fill="#CBD5E1" />
             </g>
 
             {/* Distance Vectors Connecting Semantic Neighbors */}
@@ -659,13 +653,13 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                     stroke={pair.color}
                     strokeWidth={isHighlight ? 2.5 : 1.5}
                     strokeDasharray={isHighlight ? '6 4' : '3 3'}
-                    opacity={isHighlight ? 0.9 : 0.4}
+                    opacity={isHighlight ? 0.9 : 0.45}
                   />
 
                   {/* Distance Cosine Callout Badge */}
                   {isHighlight ? (
                     <g transform={`translate(${(p1.projX + p2.projX) / 2}, ${(p1.projY + p2.projY) / 2 - 12})`}>
-                      <rect x={-65} y={-14} width={130} height={28} rx={6} fill="#05070B" stroke={pair.color} strokeWidth={1.5} />
+                      <rect x={-65} y={-14} width={130} height={28} rx={7} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow4)" />
                       <text x={0} y={5} textAnchor="middle" fill={pair.color} fontSize={12} fontFamily="monospace" fontWeight={800}>
                         {pair.dist}
                       </text>
@@ -680,15 +674,14 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
               .sort((a, b) => b.zDepth - a.zDepth) // Z-sort for true 3D depth
               .map((pt, i) => {
                 const radius = Math.max(5, 9 * pt.scale);
-                const glowFilter = pt.color === '#F59E0B' ? 'url(#vecGlowGold)' : 'url(#vecGlowCyan)';
 
                 return (
                   <g key={`pt-${i}`} transform={`translate(${pt.projX}, ${pt.projY})`}>
                     {/* Glowing Vector Point */}
-                    <circle cx={0} cy={0} r={radius + 4} fill="none" stroke={pt.color} strokeWidth={1.5} opacity={0.7} />
-                    <circle cx={0} cy={0} r={radius} fill={pt.color} filter={glowFilter} />
+                    <circle cx={0} cy={0} r={radius + 4} fill="none" stroke={pt.color} strokeWidth={1.5} opacity={0.5} />
+                    <circle cx={0} cy={0} r={radius} fill={pt.color} />
 
-                    {/* Semantic Label Badge */}
+                    {/* Semantic Label Badge: Clean White Card with Charcoal Text */}
                     <g transform={`translate(0, ${-radius - 22})`}>
                       <rect
                         x={-55 * pt.scale}
@@ -696,15 +689,16 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                         width={110 * pt.scale}
                         height={28 * pt.scale}
                         rx={6 * pt.scale}
-                        fill="#05070B"
-                        stroke={pt.color}
+                        fill="#FFFFFF"
+                        stroke="#E5E7EB"
                         strokeWidth={1.5}
+                        filter="url(#claudeCardShadow4)"
                       />
                       <text
                         x={0}
                         y={4 * pt.scale}
                         textAnchor="middle"
-                        fill="#FFFFFF"
+                        fill="#1A1917"
                         fontSize={Math.max(11, 14 * pt.scale)}
                         fontFamily="monospace"
                         fontWeight={900}
@@ -718,8 +712,8 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
 
             {/* Bottom HUD Telemetry Card */}
             <g transform={`translate(${cx}, 1320)`}>
-              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#05070B" stroke="#F59E0B" strokeWidth={1.5} />
-              <text x={0} y={6} textAnchor="middle" fill="#F8FAFC" fontSize={14} fontFamily="monospace" fontWeight={800}>
+              <rect x={-260} y={-24} width={520} height={48} rx={12} fill="#FFFFFF" stroke="#E5E7EB" strokeWidth={1.5} filter="url(#claudeCardShadow4)" />
+              <text x={0} y={6} textAnchor="middle" fill="#D97706" fontSize={14} fontFamily="monospace" fontWeight={800}>
                 COSINE CLUSTERING // SIMILAR CONCEPTS CONVERGE
               </text>
             </g>
@@ -1506,52 +1500,68 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
               <stop offset="100%" stopColor="#DC2626" />
             </linearGradient>
             <linearGradient id="logoBorderGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#06B6D4" />
-              <stop offset="50%" stopColor="#F59E0B" />
-              <stop offset="100%" stopColor="#06B6D4" />
+              <stop offset="0%" stopColor="#2563EB" />
+              <stop offset="50%" stopColor="#D97706" />
+              <stop offset="100%" stopColor="#2563EB" />
             </linearGradient>
+            <filter id="claudeOutroCardShadow" x="-15%" y="-15%" width="130%" height="130%">
+              <feDropShadow dx="0" dy="8" stdDeviation="16" floodColor="#000000" floodOpacity="0.07" />
+            </filter>
             <filter id="ytGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="8" result="blur" />
+              <feGaussianBlur stdDeviation="6" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
             <filter id="cursorShadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity="0.7" />
+              <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity="0.4" />
             </filter>
           </defs>
 
-          {/* Ambient Glow Aura behind logo */}
-          <circle cx={cx} cy={logoY} r={180} fill="#06B6D4" opacity={0.06} filter="url(#ytGlow)" />
-          <circle cx={cx} cy={logoY} r={100} fill="#F59E0B" opacity={0.08} filter="url(#ytGlow)" />
+          {/* Ambient Warm Atmosphere Glow behind card */}
+          <circle cx={cx} cy={logoY + 40} r={280} fill="#D97706" opacity={0.04} filter="url(#ytGlow)" />
+          <circle cx={cx} cy={logoY + 40} r={180} fill="#2563EB" opacity={0.03} filter="url(#ytGlow)" />
+
+          {/* Central Pure White Card Container (#FFFFFF, #E5E7EB border, soft drop shadow) */}
+          <rect
+            x={cx - 360}
+            y={logoY - 150}
+            width={720}
+            height={580}
+            rx={28}
+            fill="#FFFFFF"
+            stroke="#E5E7EB"
+            strokeWidth={2}
+            filter="url(#claudeOutroCardShadow)"
+          />
 
           {/* Clean Channel Logo (Zero Taglines) */}
-          <g transform={`translate(${cx}, ${logoY + floatY})`}>
+          <g transform={`translate(${cx}, ${logoY + floatY - 20})`}>
             {/* Hexagonal Outer Emblem */}
             <polygon
-              points="0,-95 82,-48 82,48 0,95 -82,48 -82,-48"
-              fill="#090D16"
+              points="0,-85 74,-42 74,42 0,85 -74,42 -74,-42"
+              fill="#FFFFFF"
               stroke="url(#logoBorderGrad)"
               strokeWidth={3.5}
             />
             {/* Inner Plate */}
             <polygon
-              points="0,-75 64,-38 64,38 0,75 -64,38 -64,-38"
-              fill="#111827"
-              stroke="#1F2937"
-              strokeWidth={2}
+              points="0,-68 58,-34 58,34 0,68 -58,34 -58,-34"
+              fill="#F8FAFC"
+              stroke="#E2E8F0"
+              strokeWidth={1.5}
             />
-            {/* Monogram */}
-            <text x={0} y={18} textAnchor="middle" fill="#FFFFFF" fontSize={46} fontFamily="sans-serif" fontWeight={900} letterSpacing="0.06em">
+            {/* Monogram in Charcoal Black */}
+            <text x={0} y={16} textAnchor="middle" fill="#1A1917" fontSize={42} fontFamily="sans-serif" fontWeight={900} letterSpacing="0.06em">
               AI
             </text>
 
-            {/* Brand Title (Clean, Bold, Zero Taglines) */}
-            <text x={0} y={150} textAnchor="middle" fill="#FFFFFF" fontSize={36} fontFamily="sans-serif" fontWeight={900} letterSpacing="0.05em">
+            {/* Brand Title (Clean, Bold Charcoal, Zero Taglines) */}
+            <text x={0} y={135} textAnchor="middle" fill="#1A1917" fontSize={36} fontFamily="sans-serif" fontWeight={900} letterSpacing="0.05em">
               AI SIMPLIFIED LAB
             </text>
           </g>
 
           {/* Animated YouTube Subscribe Interaction Container */}
-          <g transform={`translate(${cx}, ${subscribeY}) scale(${btnScale})`}>
+          <g transform={`translate(${cx}, ${subscribeY - 10}) scale(${btnScale})`}>
             {/* Click Ripple Effect */}
             {clickRipple > 0 ? (
               <rect
@@ -1561,7 +1571,7 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                 height={80 + clickRipple * 40}
                 rx={40 + clickRipple * 20}
                 fill="none"
-                stroke="#EF4444"
+                stroke="#D97706"
                 strokeWidth={3}
                 opacity={Math.max(0, 0.8 * (1 - clickRipple))}
               />
@@ -1575,9 +1585,9 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                 width={isClicked ? 310 : 380}
                 height={76}
                 rx={38}
-                fill={isClicked ? '#27272A' : 'url(#ytRedGrad)'}
-                stroke={isClicked ? '#3F3F46' : 'none'}
-                strokeWidth={isClicked ? 2 : 0}
+                fill={isClicked ? '#F1F5F9' : 'url(#ytRedGrad)'}
+                stroke={isClicked ? '#CBD5E1' : 'none'}
+                strokeWidth={isClicked ? 1.5 : 0}
                 filter={!isClicked ? 'url(#ytGlow)' : undefined}
               />
 
@@ -1591,11 +1601,11 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
                   </text>
                 </g>
               ) : (
-                // State B: SUBSCRIBED (Dark Slate with checkmark)
+                // State B: SUBSCRIBED (Neutral Slate with checkmark)
                 <g>
                   {/* Checkmark Icon */}
-                  <path d="M -125 0 L -115 10 L -102 -6" fill="none" stroke="#FFFFFF" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
-                  <text x={20} y={9} textAnchor="middle" fill="#F4F4F5" fontSize={22} fontFamily="sans-serif" fontWeight={800} letterSpacing="0.04em">
+                  <path d="M -125 0 L -115 10 L -102 -6" fill="none" stroke="#2563EB" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
+                  <text x={20} y={9} textAnchor="middle" fill="#1A1917" fontSize={22} fontFamily="sans-serif" fontWeight={800} letterSpacing="0.04em">
                     SUBSCRIBED
                   </text>
                 </g>
@@ -1606,24 +1616,24 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
             {isClicked ? (
               <g transform={`translate(160, 0) rotate(${bellRot})`}>
                 {/* Bell Circle Housing */}
-                <circle cx={0} cy={0} r={36} fill="#27272A" stroke="#3F3F46" strokeWidth={2} />
+                <circle cx={0} cy={0} r={36} fill="#FFFFFF" stroke="#CBD5E1" strokeWidth={1.5} filter="url(#claudeOutroCardShadow)" />
 
                 {/* Bell Ripple Waves */}
                 {bellRipple > 0 ? (
-                  <circle cx={0} cy={0} r={36 + bellRipple * 35} fill="none" stroke="#F59E0B" strokeWidth={2.5} opacity={Math.max(0, 0.8 * (1 - bellRipple))} />
+                  <circle cx={0} cy={0} r={36 + bellRipple * 35} fill="none" stroke="#D97706" strokeWidth={2.5} opacity={Math.max(0, 0.8 * (1 - bellRipple))} />
                 ) : null}
 
                 {/* Bell Vector Graphic */}
                 <path
                   d="M -11 6 C -11 -6 -6 -13 0 -14 C 6 -13 11 -6 11 6 L 14 10 L -14 10 Z"
-                  fill={isBellRung ? '#F59E0B' : '#FFFFFF'}
+                  fill={isBellRung ? '#D97706' : '#64748B'}
                 />
-                <circle cx={0} cy={14} r={3} fill={isBellRung ? '#F59E0B' : '#FFFFFF'} />
-                <circle cx={0} cy={-16} r={2} fill={isBellRung ? '#F59E0B' : '#FFFFFF'} />
+                <circle cx={0} cy={14} r={3} fill={isBellRung ? '#D97706' : '#64748B'} />
+                <circle cx={0} cy={-16} r={2} fill={isBellRung ? '#D97706' : '#64748B'} />
 
                 {/* Acoustic Sound Ring Waves when Bell Rings */}
                 {isBellRung ? (
-                  <g stroke="#F59E0B" strokeWidth={2.5} strokeLinecap="round" fill="none">
+                  <g stroke="#D97706" strokeWidth={2.5} strokeLinecap="round" fill="none">
                     <path d="M 18 -8 Q 23 0 18 8" />
                     <path d="M -18 -8 Q -23 0 -18 8" />
                   </g>
@@ -1635,7 +1645,7 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
           {/* Animated Mouse Cursor Pointer with Realistic Hover & Click */}
           {cursorOpacity > 0 ? (
             <g
-              transform={`translate(${cursorX}, ${cursorY}) scale(1.4)`}
+              transform={`translate(${cursorX}, ${cursorY - 10}) scale(1.4)`}
               opacity={cursorOpacity}
               filter="url(#cursorShadow)"
             >
