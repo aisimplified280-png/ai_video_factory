@@ -1545,8 +1545,8 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
             </text>
 
             {/* Brand Title (Clean, Bold, Zero Taglines) */}
-            <text x={0} y={150} textAnchor="middle" fill="#FFFFFF" fontSize={38} fontFamily="sans-serif" fontWeight={900} letterSpacing="0.04em">
-              AI SIMPLIFIED
+            <text x={0} y={150} textAnchor="middle" fill="#FFFFFF" fontSize={36} fontFamily="sans-serif" fontWeight={900} letterSpacing="0.05em">
+              AI SIMPLIFIED LAB
             </text>
           </g>
 
