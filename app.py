@@ -61,17 +61,14 @@ def _run_job(job_id: str, topic: str, style: str, notes: str, duration: float = 
         prod_id = f"proj_{uuid.uuid4().hex[:8]}"
         topic_slug = _slugify(topic)
 
-        prog(0.15, "Executing Phase 10 Live Research...")
         args = argparse.Namespace(
             topic=topic,
             production=prod_id,
             provider="all",
             freshness="7d"
         )
-        prog(0.35, "Synthesizing Script & Generating Natural Speech...")
-        prog(0.60, "Rendering with Remotion Light Mode & Karaoke Subtitle Engine...")
 
-        exit_code = cmd_produce(args)
+        exit_code = cmd_produce(args, progress_cb=prog)
         if exit_code != 0:
             raise RuntimeError(f"Factory production failed with exit code {exit_code}")
 

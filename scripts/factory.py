@@ -70,7 +70,14 @@ def _slugify(text: str) -> str:
     return re.sub(r"[-\s]+", "_", s)
 
 
-def cmd_produce(args: argparse.Namespace) -> int:
+def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
+    def _prog(frac: float, msg: str):
+        if progress_cb:
+            try:
+                progress_cb(frac, msg)
+            except Exception:
+                pass
+
     topic = args.topic.strip()
     production_id = args.production
     topic_slug = _slugify(topic)
@@ -79,6 +86,7 @@ def cmd_produce(args: argparse.Namespace) -> int:
     store = ArtifactStore(PROJECTS_DIR)
     learning_sys = get_learning_system()
 
+    _prog(0.05, "Initializing Autonomous Factory Engine...")
     print("======================================================================")
     print("           AUTONOMOUS VIDEO FACTORY — PRODUCTION RUN                  ")
     print("======================================================================")
@@ -89,6 +97,7 @@ def cmd_produce(args: argparse.Namespace) -> int:
     print("======================================================================\n")
 
     # 1. RESEARCH
+    _prog(0.12, "[1/8] Executing Live Research Engine (Phase 10)...")
     print("[1/8] EXECUTING RESEARCH ENGINE (PHASE 10)...")
     research_dir = project_root / "research"
     research_dir.mkdir(parents=True, exist_ok=True)
@@ -104,6 +113,7 @@ def cmd_produce(args: argparse.Namespace) -> int:
         print(f"  -> Top story: {research_pack.stories[0].headline}")
 
     # 2. SCRIPT INTELLIGENCE
+    _prog(0.25, "[2/8] Synthesizing Natural Script & Voiceover (Phase 11)...")
     print("\n[2/8] SYNTHESIZING NATURAL SCRIPT (PHASE 11)...")
     script_shorts = generate_shorts_script(topic, research_pack)
     script_longform = generate_longform_script(topic, research_pack)
@@ -125,6 +135,7 @@ def cmd_produce(args: argparse.Namespace) -> int:
     print(f"  -> Persisted canonical script: script.v{script_envelope.artifact_version:03d}.json")
 
     # 3. PACKAGING INTELLIGENCE + LEARNING BOOSTS
+    _prog(0.38, "[3/8] Packaging Intelligence & Title Optimization (Phase 12)...")
     print("\n[3/8] PACKAGING INTELLIGENCE & FACTORY LEARNING (PHASE 12 + 14)...")
     topic_package = generate_packaging(
         topic,
@@ -153,6 +164,7 @@ def cmd_produce(args: argparse.Namespace) -> int:
     pkg_file.write_text(json.dumps(topic_package.to_dict(), indent=2), "utf-8")
 
     # 4. SEMANTIC VISUAL PLANNING & DESIGN SYSTEM (PHASE 16)
+    _prog(0.50, "[4/8] Semantic Visual Planning & Claim Grounding (Phase 15/16)...")
     print("\n[4/8] SEMANTIC VISUAL PLANNING & EDITORIAL DESIGN SYSTEM (PHASE 16)...")
     prod_state_path = project_root / "production_state.json"
     prod_state = json.loads(prod_state_path.read_text("utf-8")) if prod_state_path.exists() else {}
@@ -251,7 +263,9 @@ def cmd_produce(args: argparse.Namespace) -> int:
         store.approve("proposal_packet", production_id, proposal_env.artifact_version)
     state.set_active_version("proposal_packet", proposal_env.artifact_version)
 
-    # Generate real TTS audio for narration
+    # 5. NEURAL TTS & EDIT TIMELINE (PHASE 17)
+    _prog(0.65, "[5/8] Generating Neural TTS & Multi-Layer Timeline (Phase 17)...")
+    print("\n[5/8] GENERATING NEURAL TTS & MULTI-LAYER TIMELINE (PHASE 17)...")
     audio_dir = project_root / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
     import edge_tts, asyncio
@@ -444,6 +458,7 @@ def cmd_produce(args: argparse.Namespace) -> int:
     print(f"  -> Persisted edit_decisions.v{edit_envelope.artifact_version:03d}.json & synchronized Remotion artifacts (Phase 17 Depth Enabled).")
 
     # 6. COMPOSITION & RENDER
+    _prog(0.78, "[6/8] Remotion Engine: Rendering Video & Kinetic Subtitles...")
     print("\n[6/8] REMOTION COMPOSITION & RENDER (PHASE 9.3)...")
     render_code = cmd_render(production_id)
     if render_code != 0:
@@ -459,6 +474,7 @@ def cmd_produce(args: argparse.Namespace) -> int:
     print(f"  -> Rendered MP4: {rendered_mp4.name} ({rendered_mp4.stat().st_size / (1024*1024):.1f} MB)")
 
     # 7. AUTOMATED QA GATES & HUMAN VISUAL RELEVANCE EVALUATION
+    _prog(0.90, "[7/8] Verifying Automated QA Gates & Visual Scorecards...")
     print("\n[7/8] VERIFYING AUTOMATED QA GATES & HUMAN VISUAL RELEVANCE (PHASE 16)...")
     qa_code = cmd_qa(production_id)
     if qa_code != 0:
@@ -543,6 +559,7 @@ def cmd_produce(args: argparse.Namespace) -> int:
     (qa_frames_dir / "visual_language_qa_report.json").write_text(json.dumps(vl_eval.to_dict(), indent=2), "utf-8")
 
     # 8. MULTI-FACTOR EDITORIAL SCORING & RELEASE ASSEMBLY
+    _prog(0.98, "[8/8] Assembling Final Package into output/...")
     print("\n[8/8] EDITORIAL SCORING & OUTPUT PACKAGE ASSEMBLY...")
     score_txt = generate_editorial_score(qa_data, mapped_data)
     score_file = project_root / "qa" / f"editorial_score_v{edit_envelope.artifact_version:03d}.txt"
@@ -575,6 +592,11 @@ def cmd_produce(args: argparse.Namespace) -> int:
     (release_dir / "description.txt").write_text(topic_package.description, "utf-8")
     (release_dir / "thumbnail_text.txt").write_text(topic_package.thumbnail_text, "utf-8")
     (release_dir / "thumbnail_prompt.txt").write_text(topic_package.thumbnail_prompt, "utf-8")
+    vo_script_content = "\n\n".join(
+        f"[{sec.get('role', 'SCENE').upper()}]: {sec.get('spoken_text', '')}"
+        for sec in canonical_script.get("sections", [])
+    )
+    (release_dir / "vo_script.txt").write_text(vo_script_content, "utf-8")
 
     factory_manifest = {
         "topic": topic,
@@ -609,6 +631,7 @@ def cmd_produce(args: argparse.Namespace) -> int:
     }
     (release_dir / "manifest.json").write_text(json.dumps(legacy_manifest, indent=2), "utf-8")
 
+    _prog(1.0, "Production Complete")
     print(f"\n======================================================================")
     print(f"   AUTONOMOUS FACTORY PRODUCTION COMPLETE: 100% READY FOR RELEASE     ")
     print(f"======================================================================")
