@@ -214,7 +214,8 @@ def cmd_qa(production_id: str) -> int:
     except ValueError:
         pass
     from composition.remotion.runtime import declared_remotion_version as _declared_version
-    audio_present = report["measured"].get("streams", 1) > 1
+    info = ffprobe_info(video)
+    audio_present = any(s.get("codec_type") == "audio" for s in info.get("streams", []))
     payload = build_render_report(
         job={"runtime_id": edit.data["render_runtime"],
              "edit_artifact_version": edit.artifact_version,
@@ -231,20 +232,26 @@ def cmd_qa(production_id: str) -> int:
     from schemas.models.common import ArtifactStatus as _Status, ProducerKind as _Kind
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc)
-    envelope = _Envelope(artifact_type="render_report", artifact_version=1, production_id=production_id,
-                         stage="compose", status=_Status.READY, created_at=now, updated_at=now,
-                         producer=_Producer(kind=_Kind.SYSTEM, provider="phase8_local_render"),
-                         content_hash=_Store.compute_hash(payload), data=payload,
-                         parent_artifacts=[_Ref(artifact_type="edit_decisions", version=edit.artifact_version,
-                                                content_hash=edit.content_hash)])
-    store = controller.artifact_store
+    envelope = store.create(
+        artifact_type="render_report",
+        production_id=production_id,
+        stage="compose",
+        data=payload,
+        producer=_Producer(kind=_Kind.SYSTEM, provider="remotion_render_qa"),
+        parent_artifacts=[_Ref(
+            artifact_type="edit_decisions",
+            version=edit.artifact_version,
+            content_hash=edit.content_hash,
+        )],
+    )
+    envelope.status = _Status.READY
     store.save(envelope)
     (ROOT / "projects" / production_id / "qa" / "qa_report.json").write_text(
         json.dumps(report, indent=2), encoding="utf-8")
     print(f"[{'OK' if not failures else 'FAIL'}] QA: {len(report['checks']) - len(failures)}/{len(report['checks'])} checks passed")
     for name in failures:
         print(f"  FAIL {name}: {report['checks'][name]['evidence']}")
-    print(f"[OK] render_report persisted: render_report.v001.json")
+    print(f"[OK] render_report persisted: render_report.v{envelope.artifact_version:03d}.json")
     return 0 if not failures else 1
 
 

@@ -50,6 +50,7 @@ envfile.load_dotenv()
 from production.artifact_store import ArtifactStore
 from production.phase9.planner import generate_plan
 from production.phase9.mapper import map_edit_decisions
+from production.phase17.transition_director import assign_boundary_transitions, validate_transition_integrity
 from production.phase9.scoring import generate_editorial_score
 from production.phase10.models import ResearchPack, ResearchMode
 from production.phase10.researcher import research
@@ -290,6 +291,13 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     narration_tracks = []
     caption_tracks = []
     current_time = 0.0
+    boundary_transitions = assign_boundary_transitions(sections)
+    transition_ok, transition_errors = validate_transition_integrity(boundary_transitions)
+    if not transition_ok:
+        print("  [ERROR] Invalid transition contract:")
+        for err in transition_errors:
+            print(f"    - {err}")
+        return 1
     for idx, sec in enumerate(sections):
         sc_id = f"scene_{idx+1:02d}"
         audio_f = audio_dir / f"narration_{sc_id}.mp3"
@@ -315,8 +323,8 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
             "framing": c.get("shot_type", "medium_shot"),
             "camera_intent": c.get("camera_intent", "approach_subject"),
             "motion_intent": c.get("motion_intent", "assemble"),
-            "transition_in": "hard_cut" if idx == 0 else c.get("transition_in", "zoom_transition"),
-            "transition_out": "hard_cut",
+            "transition_in": boundary_transitions[idx - 1].transition_intent if idx > 0 else None,
+            "transition_out": boundary_transitions[idx].transition_intent if idx < len(boundary_transitions) else None,
             "caption_ref": f"caption_{sc_id}",
             "audio_ref": f"narration_{sc_id}",
         })
@@ -477,9 +485,10 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     _prog(0.90, "[7/8] Verifying Automated QA Gates & Visual Scorecards...")
     print("\n[7/8] VERIFYING AUTOMATED QA GATES & HUMAN VISUAL RELEVANCE (PHASE 16)...")
     qa_code = cmd_qa(production_id)
-    if qa_code != 0:
-        print("  [WARN] Technical QA gate returned advisories; proceeding with release package.")
     qa_report_path = project_root / "qa" / "qa_report.json"
+    if qa_code != 0:
+        print("  [BLOCKED] Technical QA failed. Release package will not be assembled.")
+        return 1
     qa_data = json.loads(qa_report_path.read_text("utf-8")) if qa_report_path.exists() else {}
     passed_checks = sum(1 for c in qa_data.get("checks", {}).values() if c.get("passed"))
     total_checks = len(qa_data.get("checks", {}))
@@ -557,6 +566,13 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     qa_data["visual_language_scorecard"] = vl_eval.to_dict()
     qa_report_path.write_text(json.dumps(qa_data, indent=2), "utf-8")
     (qa_frames_dir / "visual_language_qa_report.json").write_text(json.dumps(vl_eval.to_dict(), indent=2), "utf-8")
+
+    if not visual_scorecard.passed:
+        print(f"  [BLOCKED] Claim/visual QA failed: {visual_scorecard.rejection_reason or 'visual score below gate'}")
+        return 1
+    if not vl_eval.passed:
+        print("  [BLOCKED] Phase 17 visual-language QA failed. Release package will not be assembled.")
+        return 1
 
     # 8. MULTI-FACTOR EDITORIAL SCORING & RELEASE ASSEMBLY
     _prog(0.98, "[8/8] Assembling Final Package into output/...")
