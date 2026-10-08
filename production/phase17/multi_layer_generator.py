@@ -12,7 +12,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from .style_systems import StyleSystem, get_style_system
-from .environment_generator import generate_environment_for_scene
+from .environment_generator import generate_environment_for_scene, classify_topic_domain, TopicDomain
 
 
 def _get_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -45,7 +45,7 @@ def _draw_titanium_gripper(
     accent_rgb: tuple[int, int, int] = (217, 119, 54),
     border_rgb: tuple[int, int, int] = (45, 55, 72),
 ):
-    """Canonical titanium gripper mechanism for cross-scene object continuity."""
+    """Canonical titanium gripper mechanism for physical robotics continuity."""
     uw = int(140 * scale)
     uh = int(70 * scale)
     draw_ctx.rectangle(
@@ -102,9 +102,19 @@ def generate_scene_layers(
     style: StyleSystem | None = None,
     width: int = 1080,
     height: int = 1920,
+    topic: str = "",
+    subject: str = "",
+    visual_purpose: str = "",
+    visual_metaphor: str = "",
+    narrative_role: str = "",
 ) -> dict[str, Path]:
     """Generates and saves the 3 distinct depth layers for a scene:
-    Returns dict: {"bg": path, "mid": path, "fg": path}
+    Returns dict: {"bg": path, "mid": path, "fg": path, "primary": path}
+    
+    Adheres strictly to:
+    1. Topic-aligned semantics: Software/cloud topics NEVER render physical robotics arms.
+    2. Mobile Readability: Max 3 core cards per scene, headline fonts increased by >= 35%.
+    3. Safe Zone Layout: All graphics fit in top 75% of canvas (above y=1440), leaving strict 20% bottom margin.
     """
     st = style or get_style_system()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -114,13 +124,24 @@ def generate_scene_layers(
     muted_rgb = _hex_to_rgb(st.secondary_text)
     surface_rgb = st.surface_rgb() if hasattr(st, "surface_rgb") else (255, 255, 255)
 
-    font_title = _get_font(42, bold=True)
-    font_sub = _get_font(24)
-    font_badge = _get_font(18, bold=True)
-    font_mono = _get_font(20)
+    # +35-45% font sizes for mobile readability
+    font_title = _get_font(56, bold=True)
+    font_sub = _get_font(32)
+    font_badge = _get_font(26, bold=True)
+    font_mono = _get_font(28)
 
-    # 1. BACKGROUND LAYER (z_index: 0)
-    bg_img = generate_environment_for_scene(scene_index, width, height, st)
+    # 1. BACKGROUND LAYER (z_index: 0) - Topic-derived environment
+    bg_img = generate_environment_for_scene(
+        scene_index=scene_index,
+        width=width,
+        height=height,
+        style=st,
+        topic=topic,
+        subject=subject,
+        visual_purpose=visual_purpose,
+        visual_metaphor=visual_metaphor,
+        narrative_role=narrative_role,
+    )
     bg_path = output_dir / f"bg_{scene_id}.png"
     bg_img.save(bg_path, "PNG")
 
@@ -132,63 +153,82 @@ def generate_scene_layers(
     fg_img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     fg_draw = ImageDraw.Draw(fg_img)
 
-    # ---------------------------------------------------------------------
-    # MEANINGFUL MULTI-LAYER DEPTH ARCHITECTURE (ISSUE #3)
-    # Background (z=0): Architectural environment and perspective floor.
-    # Midground (z=10): Real subject geometry (nodes, conduits, data streams).
-    # Foreground (z=20): Floating telemetry tags and camera framing registration.
-    # ---------------------------------------------------------------------
+    # Safe Zone: Offset all core geometry upward by 10-15% (all graphics stay in top 75%, y <= 1400)
     cx = width // 2
+    domain = classify_topic_domain(topic=topic, subject=subject, visual_purpose=visual_purpose)
 
-    if scene_index == 0:
-        # Scene 1: Central Architecture Gateway Bridge Plate
-        mid_draw.rounded_rectangle([(cx - 320, 620), (cx + 320, 840)], radius=18, fill=(*surface_rgb, 235), outline=(*border_rgb, 255), width=2)
-        mid_draw.line([(cx - 280, 730), (cx + 280, 730)], fill=(*accent_rgb, 255), width=3)
-        mid_draw.ellipse([(cx - 16, 714), (cx + 16, 746)], fill=(*accent_rgb, 255))
-        mid_draw.text((cx - 220, 650), "ENTERPRISE ARCHITECTURE BRIDGE", fill=(*text_rgb, 255), font=font_mono)
-        # Foreground: Top status tag
-        fg_draw.rounded_rectangle([(100, 310), (380, 360)], radius=10, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
-        fg_draw.text((120, 324), "TELEMETRY // PROD-US-EAST", fill=(*muted_rgb, 255), font=font_badge)
-
-    elif scene_index == 1:
-        # Scene 2: Production Data Pipeline Stage Channels
-        for off, label in [(-260, "DATA INGESTION"), (0, "ETL PIPELINE"), (260, "VECTOR STORE")]:
-            mid_draw.rounded_rectangle([(cx + off - 110, 600), (cx + off + 110, 860)], radius=14, fill=(*surface_rgb, 230), outline=(*border_rgb, 255), width=2)
-            mid_draw.line([(cx + off, 520), (cx + off, 600)], fill=(*accent_rgb, 255), width=3)
-            mid_draw.text((cx + off - 80, 710), label, fill=(*text_rgb, 255), font=font_badge)
-        # Foreground: Floating throughput pill
-        fg_draw.rounded_rectangle([(width - 380, 310), (width - 100, 360)], radius=10, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=1)
-        fg_draw.text((width - 360, 324), "THROUGHPUT: 1.4M T/S", fill=(*accent_rgb, 255), font=font_badge)
-
-    elif scene_index == 2:
-        # Scene 3: Multi-Agent Coordination Mesh
-        mid_draw.ellipse([(cx - 70, 710), (cx + 70, 850)], fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
-        mid_draw.line([(cx - 240, 640), (cx, 780)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx + 240, 640), (cx, 780)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx - 240, 920), (cx, 780)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx + 240, 920), (cx, 780)], fill=(*accent_rgb, 255), width=2)
-        mid_draw.text((cx - 50, 765), "AGENTS", fill=(*text_rgb, 255), font=font_badge)
-        # Foreground: Agent concurrency tag
-        fg_draw.rounded_rectangle([(100, 310), (360, 360)], radius=10, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
-        fg_draw.text((120, 324), "CONCURRENCY: 16 THREADS", fill=(*muted_rgb, 255), font=font_badge)
-
-    elif scene_index == 3:
-        # Scene 4: Enterprise Performance Metrics Card
-        mid_draw.rounded_rectangle([(cx - 360, 580), (cx + 360, 920)], radius=20, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
-        mid_draw.line([(cx - 320, 740), (cx + 320, 740)], fill=(*border_rgb, 255), width=1)
-        mid_draw.text((cx - 320, 630), "DEPLOYMENT VELOCITY", fill=(*muted_rgb, 255), font=font_badge)
-        mid_draw.text((cx - 320, 670), "+340%", fill=(*accent_rgb, 255), font=font_title)
-        # Foreground: SLA badge
-        fg_draw.rounded_rectangle([(width - 340, 310), (width - 100, 360)], radius=10, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
-        fg_draw.text((width - 320, 324), "SLA: 99.99% UPTIME", fill=(*accent_rgb, 255), font=font_badge)
-
+    if domain == TopicDomain.ROBOTICS_HARDWARE:
+        # Physical Robotics Domain
+        if scene_index == 0:
+            # Macro Calibration Station
+            mid_draw.rounded_rectangle([(cx - 320, 520), (cx + 320, 760)], radius=20, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
+            mid_draw.text((cx - 240, 560), "SIX-AXIS KINEMATIC CELL", fill=(*text_rgb, 255), font=font_title)
+            fg_draw.rounded_rectangle([(100, 260), (440, 320)], radius=12, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
+            fg_draw.text((120, 276), "CALIBRATION // ZERO-POINT", fill=(*muted_rgb, 255), font=font_badge)
+        elif scene_index == 1:
+            # Gantry Industrial Gripper
+            _draw_titanium_gripper(mid_draw, cx, 660, scale=1.4, open_angle=25, accent_rgb=accent_rgb, border_rgb=border_rgb)
+            fg_draw.rounded_rectangle([(width - 440, 260), (width - 100, 320)], radius=12, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=1)
+            fg_draw.text((width - 410, 276), "CLAMP FORCE: 14.8 kN", fill=(*accent_rgb, 255), font=font_badge)
+        elif scene_index == 2:
+            # Tactical LiDAR Field
+            mid_draw.ellipse([(cx - 160, 540), (cx + 160, 860)], fill=(*surface_rgb, 240), outline=(*accent_rgb, 255), width=3)
+            mid_draw.text((cx - 110, 680), "TACTICAL SCAN", fill=(*text_rgb, 255), font=font_title)
+            fg_draw.rounded_rectangle([(100, 260), (400, 320)], radius=12, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
+            fg_draw.text((120, 276), "LIDAR POINT CLOUD", fill=(*muted_rgb, 255), font=font_badge)
+        elif scene_index == 3:
+            # High-Bay Warehouse AGV Rerouting Aisle
+            mid_draw.rounded_rectangle([(cx - 340, 540), (cx + 340, 820)], radius=20, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
+            mid_draw.text((cx - 260, 640), "AGV AISLE REROUTING", fill=(*text_rgb, 255), font=font_title)
+            fg_draw.rounded_rectangle([(width - 400, 260), (width - 100, 320)], radius=12, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
+            fg_draw.text((width - 370, 276), "THROUGHPUT: 98.4%", fill=(*accent_rgb, 255), font=font_badge)
+        else:
+            mid_draw.rounded_rectangle([(cx - 200, 540), (cx + 200, 780)], radius=24, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
+            mid_draw.text((cx - 45, 630), "AI", fill=(*text_rgb, 255), font=font_title)
     else:
-        # Scene 5: Monogram Emblem Plate
-        mid_draw.rounded_rectangle([(cx - 180, 620), (cx + 180, 840)], radius=24, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
-        mid_draw.text((cx - 45, 700), "AI", fill=(*text_rgb, 255), font=font_title)
-        # Foreground: Safe margin corner marks
-        fg_draw.line([(100, 320), (130, 320)], fill=(*accent_rgb, 255), width=2)
-        fg_draw.line([(100, 320), (100, 350)], fill=(*accent_rgb, 255), width=2)
+        # Software / AI / Cloud Domain (RAG, Bedrock, Agents, Pipelines)
+        if scene_index == 0:
+            # Scene 1: Central Architecture Gateway (Max 1 core card, large typography)
+            mid_draw.rounded_rectangle([(cx - 360, 520), (cx + 360, 780)], radius=22, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=2)
+            mid_draw.line([(cx - 320, 650), (cx + 320, 650)], fill=(*accent_rgb, 255), width=3)
+            mid_draw.ellipse([(cx - 18, 632), (cx + 18, 668)], fill=(*accent_rgb, 255))
+            mid_draw.text((cx - 310, 560), "ENTERPRISE ARCHITECTURE", fill=(*text_rgb, 255), font=font_title)
+            fg_draw.rounded_rectangle([(100, 260), (440, 320)], radius=12, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
+            fg_draw.text((120, 276), "GATEWAY // PROD-US-EAST", fill=(*muted_rgb, 255), font=font_badge)
+
+        elif scene_index == 1:
+            # Scene 2: Production Data Pipeline (Strictly max 3 core cards, bold typography)
+            for off, label in [(-280, "DATA INGESTION"), (0, "CONTEXT PIPELINE"), (280, "VECTOR STORE")]:
+                mid_draw.rounded_rectangle([(cx + off - 120, 520), (cx + off + 120, 780)], radius=18, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
+                mid_draw.line([(cx + off, 450), (cx + off, 520)], fill=(*accent_rgb, 255), width=3)
+                mid_draw.text((cx + off - 105, 635), label, fill=(*text_rgb, 255), font=font_badge)
+            fg_draw.rounded_rectangle([(width - 440, 260), (width - 100, 320)], radius=12, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=1)
+            fg_draw.text((width - 410, 276), "RAG LATENCY < 12MS", fill=(*accent_rgb, 255), font=font_badge)
+
+        elif scene_index == 2:
+            # Scene 3: Multi-Agent Orchestration Hub
+            mid_draw.ellipse([(cx - 90, 590), (cx + 90, 770)], fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
+            mid_draw.line([(cx - 280, 520), (cx, 680)], fill=(*accent_rgb, 255), width=2)
+            mid_draw.line([(cx + 280, 520), (cx, 680)], fill=(*accent_rgb, 255), width=2)
+            mid_draw.text((cx - 75, 665), "AGENTS", fill=(*text_rgb, 255), font=font_title)
+            fg_draw.rounded_rectangle([(100, 260), (440, 320)], radius=12, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
+            fg_draw.text((120, 276), "MULTI-AGENT ORCHESTRATOR", fill=(*muted_rgb, 255), font=font_badge)
+
+        elif scene_index == 3:
+            # Scene 4: Enterprise Performance Metrics Card (Max 2 cards)
+            mid_draw.rounded_rectangle([(cx - 360, 500), (cx + 360, 800)], radius=22, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
+            mid_draw.line([(cx - 320, 640), (cx + 320, 640)], fill=(*border_rgb, 255), width=1)
+            mid_draw.text((cx - 310, 540), "RETRIEVAL VELOCITY", fill=(*muted_rgb, 255), font=font_badge)
+            mid_draw.text((cx - 310, 680), "+340% SPEED", fill=(*accent_rgb, 255), font=font_title)
+            fg_draw.rounded_rectangle([(width - 380, 260), (width - 100, 320)], radius=12, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=1)
+            fg_draw.text((width - 350, 276), "SLA: 99.99%", fill=(*accent_rgb, 255), font=font_badge)
+
+        else:
+            # Scene 5: Clean Brand Emblem
+            mid_draw.rounded_rectangle([(cx - 200, 540), (cx + 200, 780)], radius=24, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
+            mid_draw.text((cx - 45, 630), "AI", fill=(*text_rgb, 255), font=font_title)
+            fg_draw.line([(100, 260), (140, 260)], fill=(*accent_rgb, 255), width=2)
+            fg_draw.line([(100, 260), (100, 300)], fill=(*accent_rgb, 255), width=2)
 
     mid_path = output_dir / f"mid_{scene_id}.png"
     mid_img.save(mid_path, "PNG")
@@ -196,7 +236,7 @@ def generate_scene_layers(
     fg_path = output_dir / f"fg_{scene_id}.png"
     fg_img.save(fg_path, "PNG")
 
-    # Also composite all 3 into the unified primary asset for backwards compatibility
+    # Composite into primary asset
     composite = Image.alpha_composite(bg_img.convert("RGBA"), mid_img)
     composite = Image.alpha_composite(composite, fg_img)
     primary_path = output_dir / f"ast_{scene_id}_primary.png"
@@ -208,3 +248,4 @@ def generate_scene_layers(
         "fg": fg_path,
         "primary": primary_path,
     }
+

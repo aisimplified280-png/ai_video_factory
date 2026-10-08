@@ -50,6 +50,21 @@ def test_style_systems_registration():
     assert apple.accent == "#2997FF"
 
 
+from production.phase17.environment_generator import (
+    generate_environment_for_scene,
+    classify_topic_domain,
+    resolve_environment_decision,
+    TopicDomain,
+    generate_macro_studio_bg,
+    generate_blueprint_cad_bg,
+    generate_tactical_radar_bg,
+    generate_cinematic_warehouse_bg,
+    generate_premium_brand_stage_bg,
+    generate_vector_latent_space_bg,
+    generate_cloud_topology_mesh_bg,
+)
+
+
 def test_environment_variety_no_background_over_8s():
     """Verify that all 5 scene environments are distinct and have unique pixel characteristics."""
     bgs = [generate_environment_for_scene(i, width=360, height=640) for i in range(5)]
@@ -57,8 +72,57 @@ def test_environment_variety_no_background_over_8s():
 
     # Check distinct average colors across environments
     averages = [img.resize((1, 1)).getpixel((0, 0)) for img in bgs]
-    # At least 4 distinct average hues / colors
+    # At least 3 distinct average hues / colors
     assert len(set(averages)) >= 3
+
+
+def test_topic_aligned_environment_generation_5_unrelated_topics():
+    """Verify benchmark across 5 unrelated topics:
+    Each topic resolves to its correct semantic domain, distinct structural archetypes,
+    and QA decision audit rationale.
+    """
+    benchmarks = [
+        ("Amazon Bedrock Native RAG", TopicDomain.SOFTWARE_AI, "Cloud Topology Mesh"),
+        ("Six-Axis Industrial Robotic Arm", TopicDomain.ROBOTICS_HARDWARE, "Blueprint CAD Drafting"),
+        ("CRISPR Cas9 Genomic Editing", TopicDomain.BIOTECH_SCIENCE, "Vector Latent Space"),
+        ("High Frequency Order Book Arbitrage", TopicDomain.FINANCE_MARKETS, "Isometric Dot Grid"),
+        ("Modern Quantum Computing System", TopicDomain.GENERAL_TECH, "Isometric Dot Grid"),
+    ]
+
+    for topic_name, expected_domain, expected_scene2_arch in benchmarks:
+        domain = classify_topic_domain(topic=topic_name)
+        assert domain == expected_domain, f"Topic '{topic_name}' expected domain {expected_domain}, got {domain}"
+
+        # Generate Scene 2 (index 1)
+        bg = generate_environment_for_scene(scene_index=1, width=360, height=640, topic=topic_name)
+        assert "environment_decision" in bg.info
+        decision = bg.info["environment_decision"]
+        assert decision["domain"] == expected_domain.value
+        assert decision["archetype"] == expected_scene2_arch
+        assert "rationale" in decision
+        assert len(decision["structural_features"]) >= 3
+
+
+def test_structural_difference_between_unrelated_topics():
+    """Verify that Software AI and Robotics topics have structural differences, not merely palette differences.
+    Scene 2 of Software RAG must NOT render a mechanical blueprint CAD grid.
+    """
+    rag_bg = generate_environment_for_scene(scene_index=1, width=360, height=640, topic="Amazon Bedrock Native RAG")
+    robot_bg = generate_environment_for_scene(scene_index=1, width=360, height=640, topic="Six-Axis Industrial Robotic Arm")
+
+    # Both images generated
+    assert rag_bg.size == robot_bg.size
+    # Decision check: software topic NEVER pulls CAD or mechanical warehouse
+    assert rag_bg.info["environment_decision"]["domain"] == "software_ai"
+    assert rag_bg.info["environment_decision"]["archetype"] == "Cloud Topology Mesh"
+    assert robot_bg.info["environment_decision"]["domain"] == "robotics_hardware"
+    assert robot_bg.info["environment_decision"]["archetype"] == "Blueprint CAD Drafting"
+
+    # Pixel difference verification: structural layout difference (RMS delta > 5.0)
+    from production.phase17.visual_qa import _frame_difference
+    delta = _frame_difference(rag_bg, robot_bg)
+    assert delta > 5.0, f"Expected structural difference between RAG and Robotics backgrounds, got delta {delta}"
+
 
 
 def test_multi_layer_depth_separation(tmp_path: Path):

@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill} from 'remotion';
+import {AbsoluteFill, staticFile} from 'remotion';
 import type {ThemeProps} from '../runtime/props';
 
 export interface ActionLayerProps {
@@ -55,22 +55,38 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
     vis.includes('transformer') ||
     vis.includes('prompt');
 
-  const isRobotics =
-    sub.includes('robot') ||
-    sub.includes('clamp') ||
-    sub.includes('manipulat') ||
-    sub.includes('arm') ||
-    sub.includes('kinematic') ||
-    sub.includes('actuator') ||
-    sub.includes('warehouse') ||
-    sub.includes('agv') ||
-    sub.includes('rover') ||
-    vis.includes('robot') ||
-    vis.includes('clamp') ||
-    vis.includes('arm') ||
-    vis.includes('agv');
+  // Strict category checks: AI/software topics must NEVER render mechanical/hardware graphics
+  const isSoftwareTopic =
+    isAITopic ||
+    sub.includes('rag') ||
+    sub.includes('bedrock') ||
+    sub.includes('amazon') ||
+    sub.includes('cloud') ||
+    sub.includes('software') ||
+    sub.includes('llm') ||
+    sub.includes('vector') ||
+    sub.includes('retrieval') ||
+    sub.includes('embedding') ||
+    sub.includes('token') ||
+    sub.includes('transformer') ||
+    sub.includes('neural') ||
+    sub.includes('agent') ||
+    sub.includes('database') ||
+    sub.includes('data warehouse') ||
+    sub.includes('pipeline') ||
+    sub.includes('api') ||
+    vis.includes('rag') ||
+    vis.includes('software') ||
+    vis.includes('schematic') ||
+    vis.includes('architecture') ||
+    vis.includes('pipeline');
 
-  const isEnterpriseFDE = !isNLPTerms && !isRobotics;
+  const isRobotics =
+    !isSoftwareTopic &&
+    (/\b(robot|robotic|gripper|clamp|actuator|kinematic|manipulator|six-axis|agv|rover|forklift)\b/i.test(sub) ||
+     /\b(robot|robotic|gripper|clamp|actuator|kinematic|manipulator|six-axis|agv)\b/i.test(vis));
+
+  const isEnterpriseFDE = isSoftwareTopic || (!isNLPTerms && !isRobotics);
 
   // ===========================================================================
   // DOMAIN C: FORWARD DEPLOYED ENGINEER & ENTERPRISE AI SYSTEMS PIPELINE
@@ -1961,6 +1977,9 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
             <filter id="cursorShadow" x="-30%" y="-30%" width="160%" height="160%">
               <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity="0.4" />
             </filter>
+            <clipPath id="logoCircleClip">
+              <circle cx="0" cy="0" r="54" />
+            </clipPath>
           </defs>
 
           {/* Ambient Warm Atmosphere Glow behind card */}
@@ -1980,29 +1999,22 @@ export const ActionLayer: React.FC<ActionLayerProps> = ({
             filter="url(#claudeOutroCardShadow)"
           />
 
-          {/* Clean Channel Logo (Zero Taglines) */}
+          {/* Royal Blue Robot Brand Logo */}
           <g transform={`translate(${cx}, ${logoY + floatY - 20})`}>
-            {/* Hexagonal Outer Emblem */}
-            <polygon
-              points="0,-85 74,-42 74,42 0,85 -74,42 -74,-42"
-              fill="#FFFFFF"
-              stroke="url(#logoBorderGrad)"
-              strokeWidth={3.5}
+            {/* Outer Circular Glow & Shield */}
+            <circle cx={0} cy={0} r={64} fill="#EFF6FF" stroke="#2563EB" strokeWidth={3} filter="url(#claudeOutroCardShadow)" />
+            {/* Image logo asset */}
+            <image
+              href={staticFile('assets/channel_logo.png')}
+              x={-54}
+              y={-54}
+              width={108}
+              height={108}
+              preserveAspectRatio="xMidYMid meet"
+              clipPath="url(#logoCircleClip)"
             />
-            {/* Inner Plate */}
-            <polygon
-              points="0,-68 58,-34 58,34 0,68 -58,34 -58,-34"
-              fill="#F8FAFC"
-              stroke="#E2E8F0"
-              strokeWidth={1.5}
-            />
-            {/* Monogram in Charcoal Black */}
-            <text x={0} y={16} textAnchor="middle" fill="#1A1917" fontSize={42} fontFamily="sans-serif" fontWeight={900} letterSpacing="0.06em">
-              AI
-            </text>
-
-            {/* Brand Title (Clean, Bold Charcoal, Zero Taglines) */}
-            <text x={0} y={135} textAnchor="middle" fill="#1A1917" fontSize={36} fontFamily="sans-serif" fontWeight={900} letterSpacing="0.05em">
+            {/* Brand Title (Clean, Bold Charcoal) */}
+            <text x={0} y={115} textAnchor="middle" fill="#0F172A" fontSize={34} fontFamily="sans-serif" fontWeight={900} letterSpacing="0.05em">
               AI SIMPLIFIED LAB
             </text>
           </g>

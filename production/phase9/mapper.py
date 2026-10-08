@@ -181,6 +181,11 @@ def map_edit_decisions(plan_data, v1_data, project_root):
             output_dir=target_png.parent,
             scene_id=scene_id,
             style=style,
+            topic=plan_data.get("topic", "") or v1_data.get("topic", ""),
+            subject=c.get("subject", ""),
+            visual_purpose=c.get("visual_purpose", ""),
+            visual_metaphor=c.get("visual_metaphor", ""),
+            narrative_role=c.get("narrative_role", ""),
         )
 
     # 2. Map Directorial Intent to Timeline Events

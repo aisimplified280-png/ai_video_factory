@@ -21,9 +21,18 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
   if (!active) {
     return null;
   }
-  // RULE C: Auto-hide subtitle renderer as soon as Scene 5 (Outro / CTA) triggers
+  // RULE C: Auto-hide subtitle renderer as soon as Scene 5 (Outro / CTA / Subscribe) triggers
   const scLower = (active.scene_id || '').toLowerCase();
-  if (scLower.includes('scene_05') || scLower.includes('sec_05') || scLower.includes('cta') || scLower.includes('outro')) {
+  const textLower = (active.textReference || '').toLowerCase();
+  if (
+    scLower.includes('scene_05') ||
+    scLower.includes('sec_05') ||
+    scLower.includes('cta') ||
+    scLower.includes('outro') ||
+    scLower.includes('brand') ||
+    textLower.includes('subscribe to ai simplified') ||
+    textLower.includes('subscribe to')
+  ) {
     return null;
   }
 
@@ -37,30 +46,33 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
   const currentProgress = Math.min(1, Math.max(0, (framesIntoScene - speechOnsetFrames) / totalSpeechFrames));
 
   return (
-    <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 220, pointerEvents: 'none'}}>
+    <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 200, pointerEvents: 'none'}}>
       <div
         style={{
-          background: 'rgba(255, 255, 255, 0.92)',
+          background: 'rgba(255, 255, 255, 0.94)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid #E2E8F0',
+          border: '1.5px solid #CBD5E1',
           boxShadow: '0 12px 32px rgba(30, 64, 175, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04)',
           borderRadius: 24,
-          padding: '16px 32px',
-          maxWidth: '88%',
+          padding: '14px 28px',
+          maxWidth: '82%',
           textAlign: 'center',
-          transform: 'translateY(0px)',
-          transition: 'transform 0.15s ease-out',
+          maxHeight: 120,
+          overflow: 'hidden',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
         }}
       >
         <div
           style={{
             fontFamily: theme.fontFamily || '-apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "Segoe UI", Roboto, sans-serif',
-            fontSize: Math.round(theme.bodySize * 1.12),
+            fontSize: Math.round(theme.bodySize * 1.15),
             fontWeight: 800,
             color: '#0F172A',
             letterSpacing: '-0.02em',
-            lineHeight: 1.4,
+            lineHeight: 1.35,
           }}
         >
           <KaraokeText
