@@ -90,6 +90,7 @@ export interface EditEventProps {
   transition_out: string | null;
   caption_ref: string | null;
   audio_ref: string | null;
+  overlay_disabled?: boolean;
 }
 
 export interface SceneProps {

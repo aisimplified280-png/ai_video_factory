@@ -1,71 +1,67 @@
-# ExplainShort Factory
+# AI Simplified Video Factory (v2)
 
-> The production pipeline now includes a Phase 6 renderer-neutral editorial edit plan.
-> See [Phase 6 Edit Decisions](docs/PHASE_6_EDIT_DECISIONS.md) for the artifact contract
-> and the smoke benchmark. It deliberately does not render or compose the final video.
+Autonomous, end-to-end video production factory producing 9:16 vertical shorts powered by multi-provider live research, neural voiceover, multi-layer depth generation, and the Remotion React composition engine.
 
-Create vertical, visual-first explainer Shorts in the style of the supplied hashing reference: bright diagram cards, large readable labels, arrows, a dark "practical payoff" scene, and an editable voice-over script. The output contains no narration or music.
+---
 
-## What it creates
+## Architecture Overview
 
-For every topic it creates a self-contained folder under `output/`:
+The factory executes an autonomous 8-stage production pipeline:
+1. **Live Web Research (Phase 10)**: Real-time query retrieval across Brave, Google News, Reddit, and official sources.
+2. **Script Intelligence & Neural TTS (Phase 11 & 17)**: Context-grounded tech scripts synthesized into Microsoft Edge JennyNeural audio with measured phoneme timing.
+3. **Packaging & Channel Memory (Phase 12 & 14)**: 10 psychological title candidates, curiosity scoring, thumbnail text/prompts, boosted by historical channel analytics.
+4. **Editorial Design System & Safe Zones (Phase 16)**: Strict 9:16 vertical layout (1080x1920), top 75% safe-zone for diagrams (y <= 1400), bottom 25% reserved for captions and CTA.
+5. **Dynamic Multi-Layer Scene Generation (Phase 17)**: 3-layer architecture (`bg`, `mid`, `fg`) with 3D parallax, topic-domain routing (software vs physical hardware separation), and dynamic entity extraction (zero static boilerplate).
+6. **Remotion Composition & Render (Phase 9.3)**: React/TypeScript composition bundle rendered via headless Chromium into broadcast-ready H.264 MP4.
+7. **Automated Evidence-Based QA (Phase 16 & 17)**: 12 technical gates (codecs, freeze detection, caption bounds, activity delta) and visual language QA.
+8. **Release Packaging**: Self-contained delivery bundles assembled in `output/<topic_slug>/`.
 
-- `visual_only.mp4` — a 720 × 1280, 9:16, no-audio video ready to stitch
-- `vo_script.txt` — timed narration script
-- `manifest.json` — scene order, timing, visual direction, and text
-- `scenes/*.png` — every editable visual card as a separate asset
+---
 
-## Requirements
+## Quick Start
 
-- Python 3.10+ with Pillow (`pip install Pillow`)
-- FFmpeg on your PATH
-
-Optional: add `--ai` and set `OPENAI_API_KEY` to have a model write a genuinely topic-specific six-scene storyboard. Without `--ai` the generator is entirely local, using a clear generic explainer structure based on the topic.
-
-## Run
-
-```powershell
-python create_short.py --topic "How does a VPN work?"
-```
-
-## One-topic browser UI (recommended)
-
+### 1. Web UI (Recommended)
 ```powershell
 python app.py
 ```
+Open **[http://127.0.0.1:5000](http://127.0.0.1:5000)** in your browser. Enter any topic (or paste a custom narration script) and click **Generate Short Video ⚡**.
 
-Open `http://127.0.0.1:5000`. Enter only a topic. The UI tries configured OpenAI models, then Gemini models, then a local Ollama host, and always finishes with the offline storyboard fallback. It displays key/provider availability only—never key values.
-
-Configure an alternative model order with comma-separated environment variables, for example `OPENAI_MODELS=gpt-5-mini,gpt-5.2` or `GEMINI_MODELS=gemini-3.8-flash,gemini-2.0-flash`. Add `OLLAMA_HOST=http://localhost:11434` to enable the local Ollama option.
-
-Add context if needed:
-
+### 2. Autonomous CLI
 ```powershell
-python create_short.py --topic "What is Docker?" --notes "Audience: beginner developers. Mention containers versus virtual machines."
+# Produce a full video end-to-end
+python scripts/factory.py produce --topic "Amazon Bedrock Native RAG Architecture"
+
+# Record publication metrics to train the factory memory
+python scripts/factory.py record-metrics --production proj_3e27bd7a --topic "..." --title "..." --views 45000 --ctr 8.2 --watch-pct 74.0
+
+# View aggregated channel insights
+python scripts/factory.py insights
 ```
 
-For a topic-specific AI storyboard (optional network call):
-
+### 3. Local Production Runner
 ```powershell
-$env:OPENAI_API_KEY = "your-key"
-python create_short.py --topic "How does a VPN work?" --ai
+# Validate, render, and QA a specific production project
+python scripts/run_local_production.py --production <production_id> --validate --render --qa
 ```
 
-The renderer uses only local Pillow drawing and FFmpeg. The optional storyboard call is the only network operation. It never uploads your generated images or videos.
+---
 
-## Editing / stitching
+## Output Structure
 
-Open `scenes/` in any editor, or use `manifest.json` as a shot list. `visual_only.mp4` has no audio track, so it can be dropped under your own voice-over without removing anything first. Match your narration to the time ranges printed in `vo_script.txt`.
+Each completed production produces a release package under `output/<topic_slug>/`:
+- `video.mp4` / `final_video.mp4`: 1080 × 1920, 30fps H.264 video with synchronized audio.
+- `title.txt`: Optimized YouTube title selected by channel memory.
+- `description.txt`: SEO-optimized description with chapters and hashtags.
+- `thumbnail_text.txt` & `thumbnail_prompt.txt`: High-CTR thumbnail copy and visual generation prompt.
+- `preview.png` / `contact_sheet.png`: 11-frame decile contact sheet verifying visual progression.
+- `visual_language_qa_report.json`: Evidence-based visual diversity and motion report.
+- `factory_manifest.json`: Full production lineage and QA scorecard.
 
-## Style controls
+---
 
-Use `--duration 30` (default) to change total length. The six-scene rhythm deliberately mirrors the reference:
+## Requirements
 
-1. Question / hook
-2. The thing or problem
-3. Step one
-4. Step two / flow
-5. Dark practical payoff
-6. Call to action
-
-This creates original diagrams and copy rather than copying the reference footage or its watermark.
+- **Python**: 3.10+ (`pip install -r requirements.txt`)
+- **Node.js**: v18+ (`npm install` inside `remotion-composer/`)
+- **FFmpeg**: Accessible on system `PATH`
+- **API Keys**: Configured in `.env` (`OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `BRAVE_API_KEY`)

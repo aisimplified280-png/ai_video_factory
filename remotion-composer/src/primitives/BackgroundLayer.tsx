@@ -37,29 +37,33 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
   let microTexture: 'tech_grid' | 'cyber_matrix' | 'neural_mesh' | 'starfield' | 'hazard_ember' | 'brand_vignette' = 'tech_grid';
   let accentGlow = '#1E40AF';   // Brand Royal Blue ambient glow
 
-  if (sc.includes('scene_05') || sc.includes('sec_05') || sc.includes('brand') || sc.includes('cta')) {
+  const isCTA = sub.includes('cta') || sub.includes('outro') || sub.includes('subscribe') || vis.includes('cta') || vis.includes('outro');
+
+  if (isCTA) {
     // 1. Outro / Brand Summary: Off-white canvas with royal blue ambient glow
     primaryBg = '#F8FAFC';
     secondaryTint = '#F1F5F9';
     accentGlow = '#1E40AF';
     microTexture = 'brand_vignette';
   } else if (
-    (isAITopic && (sc.includes('scene_04') || sc.includes('sec_04'))) ||
     sub.includes('vector') ||
     sub.includes('embedding') ||
     vis.includes('embedding') ||
-    vis.includes('cloud')
+    vis.includes('vector') ||
+    vis.includes('cloud') ||
+    sub.includes('retrieval')
   ) {
-    // 2. 3D Vector Space: Crisp Off-White with Royal Blue Tint
+    // 2. Vector Space & Retrieval: Crisp Off-White with Royal Blue Tint
     primaryBg = '#F8FAFC';
     secondaryTint = '#EDF2F7';
     accentGlow = '#1E40AF';
     microTexture = 'starfield';
   } else if (
-    (isAITopic && (sc.includes('scene_03') || sc.includes('sec_03'))) ||
     sub.includes('attention') ||
     vis.includes('attention') ||
-    sub.includes('weight')
+    sub.includes('weight') ||
+    sub.includes('neural') ||
+    sub.includes('agent')
   ) {
     // 3. Self-Attention / Neural Graph: Clean Off-White + Amber & Royal Blue Hue
     primaryBg = '#F8FAFC';
@@ -67,11 +71,11 @@ export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
     accentGlow = '#D97706';
     microTexture = 'neural_mesh';
   } else if (
-    (isAITopic && (sc.includes('scene_02') || sc.includes('sec_02'))) ||
     sub.includes('token') ||
     vis.includes('token') ||
     sub.includes('fragment') ||
-    sub.includes('matrix')
+    sub.includes('matrix') ||
+    sub.includes('code')
   ) {
     // 4. Numerical Tokenization: Clean Paper with Royal Blue Accent
     primaryBg = '#F8FAFC';

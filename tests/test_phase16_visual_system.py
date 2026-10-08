@@ -84,7 +84,7 @@ def test_human_visual_relevance(tmp_path: Path):
     assert qa_res.passed is True
     assert qa_res.human_visual_relevance_score >= 8.5
     assert qa_res.composite_visual_quality >= 8.0
-    assert "volumetric" in qa_res.what_viewer_sees.lower()
+    assert any(k in qa_res.what_viewer_sees.lower() for k in ["robotic", "manipulator", "arm"])
 
 
 def test_generic_ai_cliche_rejection():

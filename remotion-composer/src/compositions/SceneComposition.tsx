@@ -225,9 +225,6 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
         return <VideoLayer src={requireAssetUrl(asset)} />;
       }
       if (asset.kind === 'image-still') {
-        if (isAITopic) {
-          return null;
-        }
         // Declared video, delivered still: full camera motion, no playback.
         return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
       }
@@ -255,10 +252,6 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
       }
       if (spec.path || event.motion_intent === 'trace') {
         return <LineLayer width={width} height={height} reveal={trace(progress).reveal} color={theme.accent} path={spec.path} />;
-      }
-      if (isAITopic) {
-        // Procedural vector blueprint engine owns the visuals: suppress dark raster background images
-        return null;
       }
       return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
     }
@@ -416,26 +409,28 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
         );
       })}
 
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          transform: `scale(${1 + sceneProgress * 0.05})`,
-          transformOrigin: '50% 45%',
-          pointerEvents: 'none',
-        }}
-      >
-        <ActionLayer
-          sceneId={scene.scene_id}
-          subject={scene.subject}
-          visualPurpose={scene.visual_purpose}
-          progress={sceneProgress}
-          width={width}
-          height={height}
-          theme={theme}
-          isAITopic={isAITopic}
-        />
-      </div>
+      {!ordered.some((item) => item.event.role === 'primary_visual' && Boolean(item.event.asset_id) && !item.event.overlay_disabled) && (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            transform: `scale(${1 + sceneProgress * 0.05})`,
+            transformOrigin: '50% 45%',
+            pointerEvents: 'none',
+          }}
+        >
+          <ActionLayer
+            sceneId={scene.scene_id}
+            subject={scene.subject}
+            visualPurpose={scene.visual_purpose}
+            progress={sceneProgress}
+            width={width}
+            height={height}
+            theme={theme}
+            isAITopic={isAITopic}
+          />
+        </div>
+      )}
       {audio
         .filter((item) => item.clip.publicPath !== null)
         .map((item) => {

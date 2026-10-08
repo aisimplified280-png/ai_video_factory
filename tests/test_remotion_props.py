@@ -169,3 +169,31 @@ def test_theme_derives_from_art_direction_not_hardcoded(tmp_path):
         art_direction_data=art, script_data=script, platform_profile=PROFILE,
         projects_root=tmp_path / "projects", public_dir=tmp_path / "public")
     assert (props["theme"]["background"], props["theme"]["accent"]) == ("#111111", "#222222")
+
+
+def test_props_audio_clips_resolve_with_media_server_port(tmp_path, monkeypatch):
+    """Verify audio clips in edit_data are converted/staged and resolve port without NameError."""
+    _write_asset(tmp_path)
+    # Create fake audio asset
+    audio_dir = tmp_path / "projects" / "proj_props" / "audio"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    audio_file = audio_dir / "narration.wav"
+    audio_file.write_bytes(b"RIFF\x24\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00\x44\xac\x00\x00\x88\x58\x01\x00\x02\x00\x10\x00data\x00\x00\x00\x00")
+
+    monkeypatch.setenv("MEDIA_SERVER_PORT", "54321")
+    edit, scenes, manifest, art, script = _artifacts()
+    edit["audio_tracks"]["narration"] = [{
+        "event_id": "narr_01",
+        "audio_asset_id": "projects/proj_props/audio/narration.wav",
+        "start": 0.0,
+        "end": 3.0,
+        "audio_requirement": {"required": True, "spoken_text": "Narration text"},
+    }]
+    props, warnings = build_production_props(
+        edit_data=edit, scene_plan_data=scenes, manifest_data=manifest,
+        art_direction_data=art, script_data=script, platform_profile=PROFILE,
+        projects_root=tmp_path / "projects", public_dir=tmp_path / "public")
+
+    assert len(props["audio"]) == 1
+    assert props["audio"][0]["publicPath"] == "http://127.0.0.1:54321/narr_01.wav"
+
