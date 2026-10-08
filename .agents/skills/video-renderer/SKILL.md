@@ -1,9 +1,21 @@
 ---
 name: video-renderer
-description: Previews or dry-runs Video Factory rendering and frame inspection.
+description: Runs and inspects the current Remotion production path and validates actual encoded output.
 ---
-# Instructions
-When checking UI card animations or rendering progress:
-- Run `python create_short.py --topic "Test Generation" --duration 12` to run a headless test frame inspection.
-- Check the generated assets inside the `output/` subfolders or the root to verify dot grid, card alignments, and safe zones.
-- If you need a quick visual frame to verify coordinates, utilize `python -c "from animation import *; ..."` to draw to a static image and inspect.
+# Video Renderer
+
+Use the current canonical production path.
+
+Before rendering:
+- verify the active production/runtime lock
+- inspect edit_decisions, scene_plan, asset_manifest, and props lineage
+- verify no stale legacy renderer is selected
+
+After rendering:
+- run ffprobe against the encoded MP4
+- sample the full duration
+- generate a contact sheet
+- inspect actual frames for semantic relevance, composition, motion, depth, transitions, captions, and CTA
+- run the visual-judge ensemble
+
+Do not use create_short.py or legacy PIL renderer instructions unless explicitly auditing historical compatibility code.

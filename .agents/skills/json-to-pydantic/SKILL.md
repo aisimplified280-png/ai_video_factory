@@ -1,9 +1,18 @@
 ---
 name: json-to-pydantic
-description: Validates storyboard JSON schema strictly before code executes.
+description: Validates structured production JSON without rejecting the new topic-aware mascot system.
 ---
-# Instructions
-When checking JSON output from the AI models:
-- Verify that the output strictly adheres to the UI primitives specified in the Agent Video Engine Rules (e.g. `mac_window`, `decision_card`, `comparison_grid`).
-- Check that no legacy types (e.g. `avatar`, `character`) exist.
-- Ensure that `width`, `height`, and `enter_start` fields are correctly typed as `float` matching the schema before the procedural engine crashes.
+# JSON / Pydantic Contract Validation
+
+When validating AI-generated production JSON:
+
+- validate against the active schema, not stale examples
+- preserve unknown-field detection unless explicitly versioned
+- verify scene IDs are identifiers, never visual-template selectors
+- validate subject, action, visual_purpose, visual_metaphor, domain, environment, camera, motion, depth, transition, character role/action, and asset references when required
+- fictional topic-aware characters are valid; real-person likenesses and face-cams are not
+- verify width/height/timing fields against the active platform profile
+- reject legacy renderer/runtime values when the active pipeline has retired them
+- ensure schema validation does not accidentally strip semantic fields before rendering
+
+Never use historical create_short.py schemas or UI-primitives as the current source of truth.

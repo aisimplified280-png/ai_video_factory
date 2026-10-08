@@ -1,9 +1,19 @@
 ---
 name: whisper-aligner
-description: Automatically call local forced-alignment tools to generate TTS JSON timestamps.
+description: Validates word-level audio/caption timing against the current Remotion composition.
 ---
-# Instructions
-When checking or generating precise word-level synchronization for captions:
-- Utilize `edge-tts` to write subtitles to `.vtt`, then parse them (as already handled in `create_short.py:parse_vtt()`).
-- If absolute sub-second precision is required, fallback to running `ffmpeg` audio filters or `ffprobe` to verify track lengths.
-- Always check that `.vtt` output properly maps to the karaoke subtitle pill in the engine by evaluating `subs` dictionaries.
+# Audio / Caption Alignment
+
+Use the active voice pipeline and canonical audio asset references.
+
+Verify:
+- audio files exist
+- actual audio duration with ffprobe
+- caption timestamps cover spoken content
+- captions align with the encoded video
+- caption safe zones do not cover the focal subject or character action
+- scene timing comes from canonical edit decisions
+
+Do not rely on legacy create_short.py parsing paths.
+
+A timing field in metadata is not proof of visual sync; inspect representative encoded frames and audio duration.
