@@ -6,6 +6,9 @@ import {overlapFrames as fadeOverlap} from '../transitions/fade';
 import {overlapFrames as flashOverlap} from '../transitions/lightFlash';
 import {overlapFrames as wipeOverlap} from '../transitions/wipe';
 import {overlapFrames as zoomOverlap} from '../transitions/zoom';
+import {overlapFrames as objectOverlap} from '../transitions/objectTransition';
+import {overlapFrames as morphOverlap} from '../transitions/shapeMorph';
+import {overlapFrames as matchOverlap} from '../transitions/matchCut';
 import {eventFrames} from '../runtime/timeline';
 import {assertValidProps} from '../runtime/validators';
 import type {EditEventProps, ProductionCompositionProps} from '../runtime/props';
@@ -24,7 +27,12 @@ export function transitionOverlapFrames(intent: string | null, fps: number): num
       return flashOverlap(fps);
     case 'motionBlur':
       return blurOverlap(fps);
+    case 'objectTransition':
+      return objectOverlap(fps);
+    case 'shapeMorph':
+      return morphOverlap(fps);
     case 'matchCut':
+      return matchOverlap(fps);
     case 'hardCut':
     default:
       return 0;

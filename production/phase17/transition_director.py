@@ -23,6 +23,7 @@ ALLOWED_TRANSITIONS = [
     "object_transition",
     "motion_blur",
     "shape_morph",
+    "match_cut",
 ]
 
 
