@@ -259,9 +259,6 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
       return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
     }
     case 'character': {
-      if (asset) {
-        return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
-      }
       const charSpec = event.character_spec ?? scene.character_spec;
       if (charSpec) {
         return (
@@ -273,6 +270,9 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
             theme={theme}
           />
         );
+      }
+      if (asset) {
+        return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
       }
       return null;
     }
@@ -446,7 +446,7 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
         />
       )}
 
-      {!ordered.some((item) => item.event.role === 'primary_visual' && Boolean(item.event.asset_id) && !item.event.overlay_disabled) && (
+      {!ordered.some((item) => (item.event.role === 'primary_visual' || item.event.role === 'midground') && Boolean(item.event.asset_id) && !item.event.overlay_disabled) && (
         <div
           style={{
             width: '100%',

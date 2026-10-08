@@ -34,9 +34,11 @@ export function validateProductionProps(props: ProductionCompositionProps): stri
       errors.push(`event ${event.event_id} has no executable purpose`);
     }
   }
-  const primaries = props.events.filter((event) => event.role === 'primary_visual' || event.role === 'primary_composite');
+  const primaries = props.events.filter(
+    (event) => event.role === 'primary_visual' || event.role === 'primary_composite' || event.role === 'midground'
+  );
   if (primaries.length === 0) {
-    errors.push('timeline has no primary_visual events');
+    errors.push('timeline has no primary_visual or midground events');
   }
   const covered = new Set(props.events.map((event) => event.scene_id));
   for (const scene of props.scenes) {

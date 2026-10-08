@@ -95,19 +95,22 @@ def direct_production_scenes(
         end = round(current_time + dur, 2)
         current_time = end
 
-        # 3. Direct Character / Mascot
+        # 3. Explicit CTA narrative role for final scene
+        narrative_role = "cta" if (idx == total_scenes - 1) else sec.get("narrative_role", "context")
+
+        # 4. Direct Character / Mascot
         char_spec = direct_scene_character(
             scene_idx=idx,
             total_scenes=total_scenes,
-            narrative_role=sec.get("narrative_role", "context"),
+            narrative_role=narrative_role,
             subject=shot.subject,
             action=shot.action,
             topic=topic,
         )
 
-        # 4. Transformative Transitions
+        # 5. Transformative Transitions (No hard cuts on scene exits)
         trans_in = "hard_cut" if idx == 0 else (transitions[idx - 1] if (idx - 1 < len(transitions)) else "zoom_transition")
-        trans_out = "hard_cut"
+        trans_out = "fade" if idx == total_scenes - 1 else (transitions[idx] if idx < len(transitions) else "zoom_transition")
 
         # 5. Define Canonical 4-Layer Hierarchy
         layers = [

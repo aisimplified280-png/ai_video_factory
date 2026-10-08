@@ -69,56 +69,71 @@ def direct_scene_character(
             pose="welcoming_salute",
             action="gesturing towards subscriber briefing badge",
             target="AI Simplified Lab emblem",
-            scale=1.1,
+            scale=1.05,
             depth_plane="midground",
-            position={"x": 540.0, "y": 980.0},
+            position={"x": 540.0, "y": 1040.0},
             motion=MascotMotion.FLOAT,
             emotion="confident_inviting",
             tool_held="briefing_tablet",
         )
 
-    # 1. Hook (Scene 0) -> High-energy Scout / Explorer
+    # 1. Hook (Scene 0) -> Scout positioned beside the hero metric card pointing at the callout
     if scene_idx == 0 or narrative_role.lower() == "hook":
         return CharacterSpec(
             role=MascotRole.EXPLORER,
-            pose="dynamic_hover_tilt",
-            action="scanning entry threshold and pointing forward",
+            pose="pointing_at_metric",
+            action="pointing directly at core latency benchmark",
             target=subject,
-            scale=1.05,
+            scale=1.0,
             depth_plane="midground",
-            position={"x": 380.0, "y": 920.0},
+            position={"x": 780.0, "y": 740.0},
             motion=MascotMotion.FLOAT,
             emotion="intense_curious",
             tool_held="optical_scanner",
         )
 
-    # 2. Mechanism / Escalation -> Technical Builder / Engineer
-    if narrative_role.lower() in ("mechanism", "escalation") or any(k in comb for k in ["filter", "attention", "quantiz", "engine", "core"]):
+    # 2. Mechanism (Scene 1) -> Engineer positioned below Stage 2 node channeling data flow
+    if scene_idx == 1 or narrative_role.lower() == "mechanism":
         return CharacterSpec(
             role=MascotRole.ENGINEER,
-            pose="active_interaction",
-            action="tuning algorithmic node parameters with tactile feedback",
+            pose="pointing_upward",
+            action="routing vector tokens through active pipeline node",
             target=subject,
             scale=0.95,
             depth_plane="midground",
-            position={"x": 680.0, "y": 950.0},
+            position={"x": 540.0, "y": 980.0},
             motion=MascotMotion.INTERACT,
             emotion="analytical_focused",
-            tool_held="vector_token" if "vector" in comb else "quantum_stylus",
+            tool_held="vector_token",
         )
 
-    # 3. Scale / Implication -> Architecture Analyst
-    if narrative_role.lower() in ("implication", "scale") or any(k in comb for k in ["latency", "throughput", "scale", "million", "deploy"]):
+    # 3. Escalation / Comparison (Scene 2) -> Analyst on the optimized side highlighting delta
+    if scene_idx == 2 or narrative_role.lower() == "escalation":
         return CharacterSpec(
             role=MascotRole.ANALYST,
-            pose="benchmarking_overview",
-            action="monitoring high-velocity telemetry streams across deployment dashboard",
-            target="production telemetry",
-            scale=0.9,
+            pose="highlighting_optimization",
+            action="benchmarking 10x throughput against legacy scan",
+            target="optimized cluster",
+            scale=0.95,
             depth_plane="midground",
-            position={"x": 400.0, "y": 960.0},
+            position={"x": 780.0, "y": 980.0},
             motion=MascotMotion.STRIDE,
             emotion="impressed_authoritative",
+            tool_held="quantum_stylus",
+        )
+
+    # 4. Implication / Scale (Scene 3) -> Systems analyst beside the terminal window
+    if scene_idx == 3 or narrative_role.lower() in ("implication", "scale"):
+        return CharacterSpec(
+            role=MascotRole.ANALYST,
+            pose="monitoring_telemetry",
+            action="verifying cluster deployment logs",
+            target="production telemetry",
+            scale=0.92,
+            depth_plane="midground",
+            position={"x": 820.0, "y": 780.0},
+            motion=MascotMotion.FLOAT,
+            emotion="analytical_focused",
             tool_held="telemetry_hud_panel",
         )
 
@@ -130,7 +145,7 @@ def direct_scene_character(
         target=subject,
         scale=1.0,
         depth_plane="midground",
-        position={"x": 520.0, "y": 940.0},
+        position={"x": 540.0, "y": 960.0},
         motion=MascotMotion.FLOAT,
         emotion="neutral_intelligent",
         tool_held=None,

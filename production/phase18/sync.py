@@ -78,11 +78,20 @@ def sync_authoritative_artifacts(
     state.set_active_version("scene_plan", scene_env.artifact_version)
 
     # -------------------------------------------------------------
-    # 2. Authoritative ASSET_MANIFEST (Registers all 4 layers + primary)
+    # 2. Authoritative ASSET_MANIFEST (Empirically verified files)
     # -------------------------------------------------------------
     manifest_assets = []
+    all_ready = True
     for sc in visual_plan.scenes:
         for lyr in sc.layers:
+            full_path = Path(lyr.relative_path)
+            if not full_path.is_absolute():
+                full_path = projects_root.parent / lyr.relative_path
+            
+            is_valid = full_path.exists() and full_path.stat().st_size > 0
+            if not is_valid:
+                all_ready = False
+
             manifest_assets.append({
                 "asset_id": lyr.asset_id,
                 "scene_id": sc.scene_id,
@@ -91,7 +100,7 @@ def sync_authoritative_artifacts(
                 "z_index": lyr.z_index,
                 "type": "image",
                 "source": "generated",
-                "status": "ready",
+                "status": "ready" if is_valid else "pending",
                 "file_path": lyr.relative_path,
                 "diagram_spec": None,
             })
@@ -99,7 +108,7 @@ def sync_authoritative_artifacts(
     manifest_payload = {
         "assets": manifest_assets,
         "total_estimated_cost": 0.0,
-        "all_assets_ready": True,
+        "all_assets_ready": all_ready,
     }
 
     manifest_env = store.create(
@@ -150,6 +159,8 @@ def sync_authoritative_artifacts(
 
     # -------------------------------------------------------------
     # 4. Authoritative EDIT_DECISIONS (Multi-Layer Timeline)
+    # Strict 4-layer depth: bg, mid, char, fg.
+    # Primary composite is reserved for single-track fallback/exports only.
     # -------------------------------------------------------------
     timeline_events = []
     bg_track = []
@@ -161,7 +172,6 @@ def sync_authoritative_artifacts(
     caption_track = []
 
     for sc in visual_plan.scenes:
-        # 4 distinct visual layer events with explicit parallax depth
         for lyr in sc.layers:
             ev = {
                 "event_id": f"event_{lyr.asset_id}",
@@ -183,17 +193,20 @@ def sync_authoritative_artifacts(
                 "transition_out": sc.transition_out,
                 "character_spec": sc.character_spec.to_dict() if lyr.role == "character" else None,
             }
-            timeline_events.append(ev)
-            if lyr.role == "background":
-                bg_track.append(ev)
-            elif lyr.role == "midground":
-                mid_track.append(ev)
-            elif lyr.role == "character":
-                char_track.append(ev)
-            elif lyr.role == "foreground":
-                fg_track.append(ev)
-            elif lyr.role in ("primary_visual", "primary_composite"):
+            if lyr.role in ("primary_visual", "primary_composite"):
+                # Primary track only for fallback single-layer timeline
                 primary_track.append(ev)
+            else:
+                # Strictly 4 distinct depth layers in live Remotion multi_layer_timeline
+                timeline_events.append(ev)
+                if lyr.role == "background":
+                    bg_track.append(ev)
+                elif lyr.role == "midground":
+                    mid_track.append(ev)
+                elif lyr.role == "character":
+                    char_track.append(ev)
+                elif lyr.role == "foreground":
+                    fg_track.append(ev)
 
         # Narration track
         audio_file = f"projects/{production_id}/audio/narration_{sc.scene_id}.mp3"
@@ -222,6 +235,7 @@ def sync_authoritative_artifacts(
 
     total_dur = visual_plan.total_duration_seconds
     cta_sc = visual_plan.scenes[-1]
+    cta_audio_file = f"projects/{production_id}/audio/narration_{cta_sc.scene_id}.mp3"
 
     edit_payload = {
         "production_id": production_id,
@@ -249,13 +263,12 @@ def sync_authoritative_artifacts(
         "renderer_family": "explainer",
         "composition_mode": "atelier",
         "timeline": primary_track,  # primary track as baseline for backwards-compatible loaders
-        "multi_layer_timeline": timeline_events, # 4-layer events with z-index & parallax
+        "multi_layer_timeline": timeline_events, # Strictly 4-layer events with z-index & parallax (no duplicate primary)
         "video_tracks": {
             "video_bg": bg_track,
             "video_mid": mid_track,
             "video_char": char_track,
             "video_fg": fg_track,
-            "video_primary": primary_track,
         },
         "audio_tracks": {
             "narration": narration_track,
@@ -264,7 +277,7 @@ def sync_authoritative_artifacts(
         },
         "caption_track": caption_track,
         "tracks": {
-            "video": ["video_bg", "video_mid", "video_char", "video_fg", "video_primary"],
+            "video": ["video_bg", "video_mid", "video_char", "video_fg"],
             "narration": ["narration"],
             "music": ["music"],
             "captions": ["captions"],
@@ -276,10 +289,10 @@ def sync_authoritative_artifacts(
             "end": total_dur,
             "channel_branding": "AI Simplified Lab",
             "caption_event_id": f"caption_{cta_sc.scene_id}",
-            "audio_asset_id": None,
+            "audio_asset_id": cta_audio_file,
             "audio_requirement": {
                 "required": True,
-                "spoken_text": "Subscribe to AI Simplified Lab for daily frontier AI briefings.",
+                "spoken_text": cta_sc.spoken_text or "Subscribe to AI Simplified Lab for daily frontier AI briefings.",
             },
         },
         "validation": {

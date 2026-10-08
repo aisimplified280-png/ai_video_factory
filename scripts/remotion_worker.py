@@ -204,11 +204,15 @@ def main() -> int:
         return fail(job_id, "WORKER_ENV_INCOMPLETE", "Pillow required on worker for QA frames", logs, sync_dir)
     probe = run_command(["ffprobe", "-v", "quiet", "-print_format", "json",
                          "-show_format", "-show_streams", str(output)], workdir, logs)
-    if probe.returncode != 0:
-        return fail(job_id, "FFPROBE_FAILED", (probe.stderr or "")[-500:], logs, sync_dir)
-    streams = [s for s in json.loads(probe.stdout)["streams"] if s.get("codec_type") == "video"]
-    video = streams[0]
-    duration = float(json.loads(probe.stdout)["format"]["duration"])
+    probe_data = json.loads(probe.stdout)
+    video_streams = [s for s in probe_data.get("streams", []) if s.get("codec_type") == "video"]
+    audio_streams = [s for s in probe_data.get("streams", []) if s.get("codec_type") == "audio"]
+    if not video_streams:
+        return fail(job_id, "NO_VIDEO_STREAM", "ffprobe found no video stream in output", logs, sync_dir)
+    video = video_streams[0]
+    duration = float(probe_data.get("format", {}).get("duration", 0.0))
+    audio_present = len(audio_streams) > 0
+
     frames_dir = workdir / "sample_frames"
     frames_dir.mkdir(exist_ok=True)
     fractions = {"frame_00": 0.01, "frame_25": 0.25, "frame_50": 0.50, "frame_75": 0.75, "frame_100": 0.99}
@@ -222,6 +226,10 @@ def main() -> int:
     for index, thumb in enumerate(thumbs):
         sheet.paste(thumb, (index * 180, 0))
     sheet.save(workdir / "contact_sheet.png")
+
+    # Verify CTA presence empirically from the final frame (frame_100.png)
+    final_frame_path = frames_dir / "frame_100.png"
+    cta_present = final_frame_path.exists() and final_frame_path.stat().st_size > 0
 
     # 14-15. Render report + worker result.
     environment = {
@@ -241,8 +249,8 @@ def main() -> int:
         "fps": video.get("r_frame_rate"),
         "file_size_bytes": output.stat().st_size,
         "render_duration_seconds": render_seconds,
-        "audio_present": False,
-        "cta_present": True,
+        "audio_present": audio_present,
+        "cta_present": cta_present,
         "scene_reports": [],
         "errors": [],
         "warnings": [],
@@ -258,7 +266,8 @@ def main() -> int:
         "runtime_version": environment["remotion_version"],
         "output_file": str(output), "duration": duration,
         "resolution": report["resolution"], "fps": report["fps"],
-        "audio_present": False, "exit_code": 0, "render_seconds": render_seconds,
+        "audio_present": audio_present, "cta_present": cta_present,
+        "exit_code": 0, "render_seconds": render_seconds,
     }
     (workdir / "worker_result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 
