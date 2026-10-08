@@ -141,6 +141,9 @@ def main() -> int:
                   "dry_run": True, "exit_code": 0,
                   "output_file": None, "logs": logs[-40:]}
         print(json.dumps(result, indent=2))
+        if sync_dir is not None:
+            sync_dir.mkdir(parents=True, exist_ok=True)
+            (sync_dir / "worker_result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
         return 0
 
     # 8. Pinned dependencies (npm ci when locked, else install + record tree).
