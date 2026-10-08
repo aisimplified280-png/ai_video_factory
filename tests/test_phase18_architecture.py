@@ -57,7 +57,7 @@ def test_mascot_directorial_roles():
     )
     assert intro_spec.role == MascotRole.EXPLORER
     assert intro_spec.depth_plane == "midground"
-    assert intro_spec.motion == MascotMotion.FLOAT
+    assert intro_spec.motion == MascotMotion.STATIC
 
     # Mechanism / Runtime -> Engineer with tactile tool
     eng_spec = direct_scene_character(
@@ -70,7 +70,7 @@ def test_mascot_directorial_roles():
     )
     assert eng_spec.role == MascotRole.ENGINEER
     assert eng_spec.tool_held is not None
-    assert eng_spec.motion == MascotMotion.INTERACT
+    assert eng_spec.motion == MascotMotion.STATIC
 
     # Scale / Implication -> Analyst with HUD panel
     analyst_spec = direct_scene_character(
@@ -83,6 +83,7 @@ def test_mascot_directorial_roles():
     )
     assert analyst_spec.role == MascotRole.ANALYST
     assert analyst_spec.tool_held == "telemetry_hud_panel"
+    assert analyst_spec.motion == MascotMotion.STATIC
 
 
 def test_mascot_asset_rendering(tmp_path: Path):
@@ -489,7 +490,7 @@ def test_phase18_3_scene_graph_and_multimodal_judge(tmp_path: Path):
         visual_purpose="Convert raw documents into dense vector embeddings",
         spoken_text="Raw documents are chunked and converted into vector embeddings stored in a vector index.",
     )
-    assert sg_pipeline.topology == "pipeline"
+    assert sg_pipeline.topology in ("pipeline", "process_flow", "object_transformation")
     assert len(sg_pipeline.nodes) >= 2
     # Check that primary anchor exactly matches primary node bounds center
     pri_node = next(n for n in sg_pipeline.nodes if n.is_primary)
@@ -551,4 +552,91 @@ def test_phase18_3_scene_graph_and_multimodal_judge(tmp_path: Path):
     assert judgement.semantic_grounding_score >= 8.0
     assert "detected clusters" in judgement.visible_description
     assert "primary subject at" in judgement.visible_description
+
+
+def test_phase18_4_semantic_composition_rebuild():
+    """Verify Phase 18.4 Rebuild requirements:
+    1. Mascot motion is STATIC by default, zero idle oscillation.
+    2. Visual composition derived from semantics, not index modulo.
+    3. Distinct topics/claims yield materially different visual topologies.
+    4. Zero invented facts appear in scene graph nodes.
+    5. Mascot position dynamically avoids subject collisions.
+    """
+    from production.phase18.scene_graph import build_semantic_scene_graph
+
+    # 1. Mascot is static by default
+    spec = CharacterSpec()
+    assert spec.motion == MascotMotion.STATIC
+
+    # Verify CharacterLayer.tsx does not have floatOffset or idle bobbing
+    char_tsx = Path("remotion-composer/src/primitives/CharacterLayer.tsx").read_text("utf-8")
+    assert "Math.sin(frame / 12) * 14" not in char_tsx
+    assert "floatOffset" not in char_tsx
+    assert "floatTilt" not in char_tsx
+
+    # 2. Semantic Composition Diversity (Not repeating the same cards)
+    # Transformation scene: Documents -> Parser -> Vectors
+    sg_transform = build_semantic_scene_graph(
+        scene_id="sc_01",
+        scene_index=0,
+        total_scenes=5,
+        subject="Document Ingestion & Embedding",
+        spoken_text="Raw input documents are parsed and converted into vector embeddings.",
+        topic="Vector Databases",
+    )
+    assert sg_transform.topology == "object_transformation"
+    assert sg_transform.evidence_contract is not None
+    assert sg_transform.evidence_contract.composition_intent == "object_transformation"
+    assert len(sg_transform.nodes) == 3
+    assert sg_transform.nodes[1].shape_style == "transform_kernel"
+
+    # Layered architecture scene: Transformer Attention Stack
+    sg_stack = build_semantic_scene_graph(
+        scene_id="sc_02",
+        scene_index=1,
+        total_scenes=5,
+        subject="Transformer Self-Attention Matrix",
+        spoken_text="At the architectural core is the Transformer, using multi-head self-attention across layers.",
+        topic="Transformer Architecture",
+    )
+    assert sg_stack.topology == "layered_architecture"
+    assert sg_stack.evidence_contract.composition_intent == "layered_architecture"
+    assert sg_stack.nodes[1].shape_style == "matrix_grid"
+
+    # Contrast scene: Classification vs Synthesis
+    sg_bipartite = build_semantic_scene_graph(
+        scene_id="sc_03",
+        scene_index=2,
+        total_scenes=5,
+        subject="Synthesis versus Classification",
+        spoken_text="Unlike classical AI that only classifies data, generative models synthesize novel outputs.",
+        topic="Generative AI",
+    )
+    assert sg_bipartite.topology == "bipartite"
+    assert sg_bipartite.evidence_contract.composition_intent == "bipartite_comparison"
+
+    # 3. Zero Invented Facts
+    all_details = [d for n in sg_transform.nodes + sg_stack.nodes + sg_bipartite.nodes for d in n.details]
+    all_details_text = " ".join(all_details).lower()
+    assert "daemon.init()" not in all_details_text
+    assert "telemetry state verified" not in all_details_text
+    assert "single-turn prompt flow" not in all_details_text
+    assert "runtime error self-healing" not in all_details_text
+
+    # 4. Scene-Aware Mascot Position & Anchoring
+    # When primary node is in center, mascot stands at side corner to avoid collision
+    char_directed = direct_scene_character(
+        scene_idx=1,
+        total_scenes=5,
+        narrative_role="mechanism",
+        subject="Transformer Attention",
+        action="directing matrix",
+        topic="Generative AI",
+        scene_graph=sg_stack,
+    )
+    assert char_directed.position["x"] != 540.0, "Mascot must avoid center collision with hero node"
+    assert char_directed.motion == MascotMotion.STATIC
+    assert char_directed.target_anchor["x"] == sg_stack.primary_anchor[0]
+    assert char_directed.target_anchor["y"] == sg_stack.primary_anchor[1]
+
 

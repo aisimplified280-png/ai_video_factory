@@ -242,41 +242,10 @@ def _draw_foreground_depth_elements(
     muted_rgb: tuple[int, int, int],
     font_badge: ImageFont.FreeTypeFont | ImageFont.ImageFont,
 ):
-    """Draws substantial near-plane framing aperture, depth brackets, and monitor cards (occupancy >= 10%)."""
-    # 1. Lateral depth framing pillars on flanks (blur/aperture depth cues)
-    fg_draw.rounded_rectangle([(30, 240), (84, 1280)], radius=12, fill=(*surface_rgb, 110), outline=(*border_rgb, 160), width=2)
-    fg_draw.rounded_rectangle([(width - 84, 240), (width - 30, 1280)], radius=12, fill=(*surface_rgb, 110), outline=(*border_rgb, 160), width=2)
-
-    # 2. Camera framing registration brackets in near plane
-    bracket_len = 50
-    # Top-Left Bracket
-    fg_draw.line([(110, 240), (110 + bracket_len, 240)], fill=(*accent_rgb, 230), width=3)
-    fg_draw.line([(110, 240), (110, 240 + bracket_len)], fill=(*accent_rgb, 230), width=3)
-    # Top-Right Bracket
-    fg_draw.line([(width - 110 - bracket_len, 240), (width - 110, 240)], fill=(*accent_rgb, 230), width=3)
-    fg_draw.line([(width - 110, 240), (width - 110, 240 + bracket_len)], fill=(*accent_rgb, 230), width=3)
-
-    # 3. Dynamic near-plane contextual monitor card with high-contrast Dark Slate tag (#1E293B)
-    fg_draw.rounded_rectangle([(110, 250), (width - 110, 330)], radius=14, fill=(*surface_rgb, 248), outline=(*accent_rgb, 255), width=2)
-    fg_draw.ellipse([(135, 282), (151, 298)], fill=(*accent_rgb, 255))
-    tag_words = []
-    t_len = 0
-    for w in headline.split():
-        if t_len + len(w) + 1 <= 26:
-            tag_words.append(w)
-            t_len += len(w) + 1
-        else:
-            break
-    short_head = " ".join(tag_words) if tag_words else (headline.split()[0] if headline.split() else "ARCHITECTURE")
-    tag = f"{domain.value.upper()} // {short_head}"
-    # High-contrast dark slate color (#1E293B) for crystal-clear readability
-    dark_slate_tag = (30, 41, 59, 255)
-    fg_draw.text((165, 276), tag, fill=dark_slate_tag, font=font_badge)
-
-    # 4. Near-plane depth optical particle discs
-    spots = [(170, 1140, 36), (width - 180, 480, 42)]
-    for sx, sy, sr in spots:
-        fg_draw.ellipse([(sx - sr, sy - sr), (sx + sr, sy + sr)], fill=(*accent_rgb, 45), outline=(*accent_rgb, 120), width=2)
+    """Draws subtle near-plane optical framing without intrusive boilerplate cards."""
+    # Subtle lateral depth framing cues on extreme edges
+    fg_draw.rounded_rectangle([(24, 300), (52, 1200)], radius=8, fill=(*surface_rgb, 40), outline=(*border_rgb, 60), width=1)
+    fg_draw.rounded_rectangle([(width - 52, 300), (width - 24, 1200)], radius=8, fill=(*surface_rgb, 40), outline=(*border_rgb, 60), width=1)
 
 
 from production.phase18.scene_graph import (
@@ -301,24 +270,20 @@ def _draw_midground_subject(
     font_badge: ImageFont.FreeTypeFont | ImageFont.ImageFont,
 ):
     """Renders midground layer directly from compiled SemanticSceneGraph nodes and edges.
-    Composes visuals dynamically without fixed layout templates.
+    Composes visuals dynamically based on semantic topology (transformation, stack, bipartite, flow, focal, brand).
+    Zero fixed card templates and zero boilerplate header banners.
     """
     cx = width // 2
+    topology = getattr(scene_graph, "topology", "process_flow")
 
-    # 1. Top Header Banner
-    mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 545)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
-    _draw_fitted_text(mid_draw, headline, cx - 350, 465, 700, 65, fill=(255, 255, 255, 255), base_size=42, center=True)
-
-    # 2. Render Nodes from Scene Graph
-    for node in scene_graph.nodes:
-        x1, y1, x2, y2 = node.bounds
-
-        if node.node_type == SceneNodeType.BRAND:
+    # 1. TOPOLOGY: BRAND IDENTITY (CTA Only)
+    if topology == "brand":
+        for node in scene_graph.nodes:
             cy_logo = 710
-            # Outer Royal Blue Glow Ring
+            # Outer Glow Ring & Shield
             mid_draw.ellipse([(cx - 130, cy_logo - 130), (cx + 130, cy_logo + 130)], fill=(239, 246, 255, 250), outline=(37, 99, 235, 255), width=4)
             mid_draw.ellipse([(cx - 105, cy_logo - 105), (cx + 105, cy_logo + 105)], fill=(15, 23, 42, 255), outline=(217, 119, 6, 255), width=2)
-            # Robot Silhouette Emblem inside shield
+            # Robot Silhouette Emblem
             mid_draw.rounded_rectangle([(cx - 55, cy_logo - 60), (cx + 55, cy_logo + 10)], radius=20, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=2)
             mid_draw.rounded_rectangle([(cx - 40, cy_logo - 45), (cx + 40, cy_logo - 10)], radius=12, fill=(37, 99, 235, 255))
             mid_draw.ellipse([(cx - 24, cy_logo - 34), (cx - 12, cy_logo - 22)], fill=(255, 255, 255, 255))
@@ -328,54 +293,134 @@ def _draw_midground_subject(
 
             mid_draw.rounded_rectangle([(cx - 300, 870), (cx + 300, 930)], radius=14, fill=(241, 245, 249, 250), outline=(37, 99, 235, 255), width=2)
             _draw_fitted_text(mid_draw, node.details[0] if node.details else "AI SIMPLIFIED BRIEFINGS", cx - 280, 880, 560, 40, fill=(30, 41, 59, 255), base_size=24, bold=True, center=True)
+        return
 
-        elif node.node_type == SceneNodeType.TERMINAL:
-            # Dark Terminal Body
-            mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=18, fill=(15, 23, 42, 250), outline=(51, 65, 85, 255), width=2)
-            # Window Header
-            mid_draw.rounded_rectangle([(x1, y1), (x2, y1 + 44)], radius=18, fill=(30, 41, 59, 255))
-            mid_draw.rectangle([(x1, y1 + 24), (x2, y1 + 44)], fill=(30, 41, 59, 255))
-            mid_draw.ellipse([(x1 + 20, y1 + 14), (x1 + 34, y1 + 28)], fill=(239, 68, 68, 255))
-            mid_draw.ellipse([(x1 + 44, y1 + 14), (x1 + 58, y1 + 28)], fill=(245, 158, 11, 255))
-            mid_draw.ellipse([(x1 + 68, y1 + 14), (x1 + 82, y1 + 28)], fill=(16, 185, 129, 255))
-            mid_draw.text((x1 + 110, y1 + 12), node.label, fill=(148, 163, 184, 255), font=_get_font(18, bold=True))
+    # 2. TOPOLOGY: LAYERED ARCHITECTURE (Vertical Hierarchical Stack)
+    if topology == "layered_architecture":
+        for node in scene_graph.nodes:
+            x1, y1, x2, y2 = node.bounds
+            is_core = node.is_primary or node.shape_style == "matrix_grid"
+            n_fill = (15, 23, 42, 250) if is_core else (*surface_rgb, 245)
+            n_border = (*accent_rgb, 255) if is_core else (*border_rgb, 220)
+            n_text = (255, 255, 255, 255) if is_core else (*text_rgb, 255)
 
-            cols = [(52, 211, 153, 255), (226, 232, 240, 255), (56, 189, 248, 255), (251, 191, 36, 255), (16, 185, 129, 255)]
-            for idx, line_txt in enumerate(node.details):
-                mid_draw.text((x1 + 28, y1 + 60 + idx * 46), line_txt, fill=cols[idx % len(cols)], font=_get_font(22, bold=False))
+            mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=16, fill=n_fill, outline=n_border, width=2)
+            _draw_fitted_text(mid_draw, node.label, x1 + 20, y1 + 18, (x2 - x1) - 40, 38, fill=n_text, base_size=26, bold=True, center=True)
 
-        else:
-            # Entity / Process / Storage Card Container
-            n_fill = (15, 23, 42, 250) if node.is_primary and scene_graph.topology != "focal" else (*surface_rgb, 248)
-            n_border = (*accent_rgb, 255) if node.is_primary else (*border_rgb, 255)
-            n_text = (255, 255, 255, 255) if (node.is_primary and scene_graph.topology != "focal") else (*text_rgb, 255)
+            if is_core:
+                # Draw subtle attention matrix grid lines
+                grid_y = y1 + 65
+                grid_w = (x2 - x1) - 80
+                gx1 = x1 + 40
+                gx2 = gx1 + grid_w
+                mid_draw.line([(gx1, grid_y), (gx2, grid_y)], fill=(*accent_rgb, 120), width=1)
+                # Cell nodes
+                for ci in range(6):
+                    cx_pos = gx1 + int((ci + 0.5) * (grid_w / 6))
+                    mid_draw.ellipse([(cx_pos - 4, grid_y + 12), (cx_pos + 4, grid_y + 20)], fill=(*accent_rgb, 220))
+                if node.details:
+                    mid_draw.text((gx1 + 10, grid_y + 35), f"• {node.details[0][:40]}", fill=(203, 213, 225, 255), font=_get_font(20, bold=False))
+            else:
+                if node.details:
+                    mid_draw.text((x1 + 30, y1 + 58), f"• {node.details[0][:45]}", fill=(100, 116, 139, 255), font=_get_font(19, bold=False))
+
+        # Vertical flowing connectors
+        for edge in scene_graph.edges:
+            src = next((n for n in scene_graph.nodes if n.id == edge.from_node), None)
+            dst = next((n for n in scene_graph.nodes if n.id == edge.to_node), None)
+            if src and dst:
+                sy = src.bounds[3]
+                dy = dst.bounds[1]
+                mid_draw.line([(cx, sy), (cx, dy)], fill=(*accent_rgb, 220), width=3)
+                mid_draw.polygon([(cx - 6, dy - 8), (cx, dy), (cx + 6, dy - 8)], fill=(*accent_rgb, 220))
+        return
+
+    # 3. TOPOLOGY: OBJECT TRANSFORMATION (Source -> Transform Kernel -> Result)
+    if topology == "object_transformation":
+        for node in scene_graph.nodes:
+            x1, y1, x2, y2 = node.bounds
+            if node.shape_style == "transform_kernel":
+                # Prominent transformation core
+                mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=24, fill=(15, 23, 42, 255), outline=(*accent_rgb, 255), width=3)
+                # Transformation glyph symbol (Σ or →)
+                k_cx = (x1 + x2) // 2
+                mid_draw.ellipse([(k_cx - 42, y1 + 35), (k_cx + 42, y1 + 119)], fill=(30, 41, 59, 255), outline=(*accent_rgb, 180), width=2)
+                mid_draw.polygon([(k_cx - 14, y1 + 60), (k_cx + 16, y1 + 77), (k_cx - 14, y1 + 94)], fill=(*accent_rgb, 255))
+                # Label
+                _draw_fitted_text(mid_draw, node.label, x1 + 15, y1 + 140, (x2 - x1) - 30, 42, fill=(255, 255, 255, 255), base_size=24, bold=True, center=True)
+                if node.details:
+                    _draw_fitted_text(mid_draw, node.details[0], x1 + 15, y1 + 195, (x2 - x1) - 30, 50, fill=(203, 213, 225, 255), base_size=18, bold=False, center=True)
+            else:
+                # Source / Result Container
+                mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=18, fill=(*surface_rgb, 245), outline=(*border_rgb, 220), width=2)
+                _draw_fitted_text(mid_draw, node.label, x1 + 12, y1 + 22, (x2 - x1) - 24, 40, fill=(*text_rgb, 255), base_size=22, bold=True, center=True)
+                if node.details:
+                    mid_draw.text((x1 + 18, y1 + 80), f"• {node.details[0][:24]}", fill=(100, 116, 139, 255), font=_get_font(18, bold=False))
+
+        # Horizontal connectors
+        for edge in scene_graph.edges:
+            src = next((n for n in scene_graph.nodes if n.id == edge.from_node), None)
+            dst = next((n for n in scene_graph.nodes if n.id == edge.to_node), None)
+            if src and dst:
+                p1_x = src.bounds[2]
+                p2_x = dst.bounds[0]
+                py = (src.bounds[1] + src.bounds[3]) // 2
+                mid_draw.line([(p1_x, py), (p2_x, py)], fill=(*accent_rgb, 255), width=3)
+                mid_draw.polygon([(p2_x - 8, py - 6), (p2_x, py), (p2_x - 8, py + 6)], fill=(*accent_rgb, 255))
+        return
+
+    # 4. TOPOLOGY: BIPARTITE COMPARISON (Split Side-by-Side)
+    if topology == "bipartite":
+        for node in scene_graph.nodes:
+            x1, y1, x2, y2 = node.bounds
+            is_active = node.is_primary
+            n_fill = (15, 23, 42, 250) if is_active else (*surface_rgb, 245)
+            n_border = (*accent_rgb, 255) if is_active else (*border_rgb, 220)
+            n_text = (255, 255, 255, 255) if is_active else (*text_rgb, 255)
 
             mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=20, fill=n_fill, outline=n_border, width=2)
-            # Label
-            _draw_fitted_text(mid_draw, node.label, x1 + 15, y1 + 25, (x2 - x1) - 30, 45, fill=n_text, base_size=26, bold=True, center=True)
-            # Details / bullet facts
-            for d_idx, detail in enumerate(node.details):
-                dy = y1 + 85 + d_idx * 45
-                if dy + 35 <= y2:
-                    mid_draw.text((x1 + 20, dy), f"• {detail[:28]}", fill=(100, 116, 139, 255) if n_text != (255, 255, 255, 255) else (203, 213, 225, 255), font=_get_font(20, bold=False))
+            _draw_fitted_text(mid_draw, node.label, x1 + 16, y1 + 25, (x2 - x1) - 32, 45, fill=n_text, base_size=24, bold=True, center=True)
+            for d_idx, detail in enumerate(node.details[:3]):
+                dy = y1 + 95 + d_idx * 45
+                if dy + 30 <= y2:
+                    mid_draw.text((x1 + 22, dy), f"• {detail[:26]}", fill=(203, 213, 225, 255) if is_active else (100, 116, 139, 255), font=_get_font(19, bold=False))
 
-    # 3. Render Edges from Scene Graph
+        # Central "VS" badge
+        for edge in scene_graph.edges:
+            src = next((n for n in scene_graph.nodes if n.id == edge.from_node), None)
+            dst = next((n for n in scene_graph.nodes if n.id == edge.to_node), None)
+            if src and dst:
+                c_badge_x = (src.bounds[2] + dst.bounds[0]) // 2
+                c_badge_y = (src.bounds[1] + src.bounds[3]) // 2
+                mid_draw.ellipse([(c_badge_x - 28, c_badge_y - 28), (c_badge_x + 28, c_badge_y + 28)], fill=(15, 23, 42, 255), outline=(255, 255, 255, 255), width=2)
+                mid_draw.text((c_badge_x - 14, c_badge_y - 12), "VS", fill=(255, 255, 255, 255), font=_get_font(20, bold=True))
+        return
+
+    # 5. TOPOLOGY: PROCESS FLOW / FOCAL (Sequential pipeline or Hero Subject)
+    for node in scene_graph.nodes:
+        x1, y1, x2, y2 = node.bounds
+        is_p = node.is_primary
+        n_fill = (15, 23, 42, 250) if is_p else (*surface_rgb, 245)
+        n_border = (*accent_rgb, 255) if is_p else (*border_rgb, 220)
+        n_text = (255, 255, 255, 255) if is_p else (*text_rgb, 255)
+
+        mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=18, fill=n_fill, outline=n_border, width=2)
+        _draw_fitted_text(mid_draw, node.label, x1 + 16, y1 + 24, (x2 - x1) - 32, 42, fill=n_text, base_size=24, bold=True, center=True)
+        for d_idx, detail in enumerate(node.details[:3]):
+            dy = y1 + 85 + d_idx * 42
+            if dy + 30 <= y2:
+                mid_draw.text((x1 + 20, dy), f"• {detail[:30]}", fill=(203, 213, 225, 255) if is_p else (100, 116, 139, 255), font=_get_font(19, bold=False))
+
     for edge in scene_graph.edges:
         src = next((n for n in scene_graph.nodes if n.id == edge.from_node), None)
         dst = next((n for n in scene_graph.nodes if n.id == edge.to_node), None)
-        if not src or not dst:
-            continue
-        if edge.relationship == "flows_to":
+        if src and dst:
             p1_x = src.bounds[2]
             p2_x = dst.bounds[0]
             py = (src.bounds[1] + src.bounds[3]) // 2
-            mid_draw.line([(p1_x, py), (p2_x, py)], fill=(*accent_rgb, 255), width=4)
+            mid_draw.line([(p1_x, py), (p2_x, py)], fill=(*accent_rgb, 255), width=3)
             mid_draw.polygon([(p2_x - 8, py - 6), (p2_x, py), (p2_x - 8, py + 6)], fill=(*accent_rgb, 255))
-        elif edge.relationship == "contrasts_with":
-            c_badge_x = (src.bounds[2] + dst.bounds[0]) // 2
-            c_badge_y = (src.bounds[1] + src.bounds[3]) // 2
-            mid_draw.ellipse([(c_badge_x - 28, c_badge_y - 28), (c_badge_x + 28, c_badge_y + 28)], fill=(15, 23, 42, 255), outline=(255, 255, 255, 255), width=2)
-            mid_draw.text((c_badge_x - 14, c_badge_y - 12), "VS", fill=(255, 255, 255, 255), font=_get_font(20, bold=True))
+
 
 
 def generate_scene_layers(

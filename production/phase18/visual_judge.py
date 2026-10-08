@@ -279,12 +279,15 @@ def judge_scene_frames(
     if dist_to_anchor > 280:
         advisories.append(f"Mascot target vector offset ({dist_to_anchor:.1f}px) from primary visual subject centroid ({centroid_x}, {centroid_y})")
 
-    # 6. Expected vs Observed Visual Topology Verification
+    # 6. Expected vs Observed Visual Topology Verification & Evidence Contract
+    contract = getattr(scene_spec.scene_graph, "evidence_contract", None) if scene_spec.scene_graph else None
     if expected_topology and geom["observed_topology"] != "empty":
         if expected_topology == "brand" and geom["observed_topology"] not in ("brand", "focal"):
             advisories.append(f"Observed topology [{geom['observed_topology']}] deviates from expected brand crest")
-        elif expected_topology in ("pipeline", "bipartite") and geom["num_subject_clusters"] == 0:
+        elif expected_topology in ("pipeline", "process_flow", "bipartite", "object_transformation") and geom["num_subject_clusters"] == 0:
             fatal_reasons.append(f"Expected multi-node {expected_topology} topology but midground was empty")
+        elif expected_topology in ("object_transformation", "layered_architecture") and geom["num_clusters"] < 2:
+            advisories.append(f"Expected rich {expected_topology} structure but detected insufficient cluster separation ({geom['num_clusters']} clusters)")
 
     # Calculate empirical scores based on measured pixel metrics & detected geometry
     depth_score = min(10.0, max(5.0, 6.0 + metrics["lum_separation"] * 0.25))
@@ -302,11 +305,12 @@ def judge_scene_frames(
     else:
         base_grounding = 7.5
         align_mod = 1.0 if dist_to_anchor <= 140 else (0.5 if dist_to_anchor <= 220 else -0.5)
-        topo_mod = 1.0 if (not expected_topology or geom["observed_topology"] == expected_topology or (expected_topology in ("bipartite", "pipeline") and geom["num_subject_clusters"] >= 2)) else 0.4
+        multi_topos = ("bipartite", "pipeline", "process_flow", "object_transformation", "layered_architecture")
+        topo_mod = 1.0 if (not expected_topology or geom["observed_topology"] == expected_topology or (expected_topology in multi_topos and geom["num_subject_clusters"] >= 2)) else 0.4
         density_mod = min(0.8, metrics["edge_density"] * 0.2)
         semantic_score = min(10.0, max(5.0, round(base_grounding + align_mod + topo_mod + density_mod, 1)))
         if advisories:
-            semantic_score = max(5.0, semantic_score - 0.4)
+            semantic_score = max(5.0, semantic_score - 0.4 * len(advisories))
 
     composite = round(
         0.35 * semantic_score

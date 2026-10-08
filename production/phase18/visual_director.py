@@ -123,12 +123,13 @@ def direct_production_scenes(
             subject=shot.subject,
             action=shot.action,
             topic=topic,
+            scene_graph=scene_graph,
         )
-        # Authoritative target discovery: point directly at compiled primary subject center!
-        char_spec.target_anchor = {
-            "x": float(scene_graph.primary_anchor[0]),
-            "y": float(scene_graph.primary_anchor[1]),
-        }
+        if scene_graph and scene_graph.primary_anchor:
+            char_spec.target_anchor = {
+                "x": float(scene_graph.primary_anchor[0]),
+                "y": float(scene_graph.primary_anchor[1]),
+            }
 
         # 6. Transformative Transitions (No hard cuts on scene exits)
         trans_in = "hard_cut" if idx == 0 else (transitions[idx - 1] if (idx - 1 < len(transitions)) else "zoom_transition")

@@ -20,10 +20,6 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
 
-  // Floating anti-gravity bounce
-  const floatOffset = Math.sin(frame / 12) * 14;
-  const floatTilt = Math.sin(frame / 18) * 3; // subtle 3 degree tilt
-
   // Spring entrance
   const entrance = spring({
     frame,
@@ -36,7 +32,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
   });
 
   const posX = spec.position?.x ?? width * 0.5;
-  const posY = (spec.position?.y ?? height * 0.5) + floatOffset;
+  const posY = spec.position?.y ?? height * 0.5;
   const scale = (spec.scale ?? 1.0) * entrance;
 
   // Determine glow color based on role
@@ -64,7 +60,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
         position: 'absolute',
         left: posX,
         top: posY,
-        transform: `translate(-50%, -50%) scale(${scale}) rotate(${floatTilt}deg)`,
+        transform: `translate(-50%, -50%) scale(${scale})`,
         transformOrigin: '50% 50%',
         pointerEvents: 'none',
         zIndex: 15,
@@ -85,11 +81,11 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
           filter: `drop-shadow(0 20px 30px rgba(30, 64, 175, 0.25))`,
         }}
       >
-        {/* Anti-Gravity Thruster Glow */}
+        {/* Anti-Gravity Thruster Glow (Stable, zero oscillation) */}
         <ellipse
           cx="110"
           cy="235"
-          rx={28 + Math.sin(frame / 6) * 6}
+          rx="28"
           ry="8"
           fill={visorColor}
           opacity="0.6"
@@ -134,8 +130,8 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
           fill="#0F172A"
         />
 
-        {/* Dynamic Glowing Visor Eye / Expression */}
-        <g style={{transform: `translateX(${Math.sin(frame / 20) * 4}px)`}}>
+        {/* Glowing Visor Eye / Expression (Stable gaze, zero jitter) */}
+        <g>
           <rect
             x="76"
             y="78"
@@ -192,8 +188,8 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
         />
         <circle cx="110" cy="166" r="4" fill={visorColor} />
 
-        {/* Left Floating Arm / Hand */}
-        <g style={{transform: `translate(${Math.sin(frame / 10) * 3}px, ${Math.cos(frame / 10) * 4}px)`}}>
+        {/* Left Arm / Hand (Stable pose, zero arm wiggle) */}
+        <g>
           <rect
             x="24"
             y="125"
@@ -207,10 +203,10 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
           <circle cx="36" cy="162" r="5" fill={visorColor} opacity="0.8" />
         </g>
 
-        {/* Right Floating Arm (Dynamic Pointing or Tool Manipulation) */}
+        {/* Right Arm (Dynamic Pointing or Tool Manipulation, zero shake) */}
         {spec.pose?.includes('point') || spec.action?.includes('point') ? (
           <g>
-            <g style={{transform: `translate(${-Math.sin(frame / 12) * 2}px, ${Math.cos(frame / 12) * 2}px)`}}>
+            <g>
               <rect
                 x="172"
                 y="110"
@@ -231,27 +227,27 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
               stroke={visorColor}
               strokeWidth={2.5}
               strokeDasharray="4 4"
-              opacity={0.7 + Math.sin(frame / 4) * 0.3}
+              opacity={0.85}
             />
             <circle
               cx={targetSvgX}
               cy={targetSvgY}
-              r={7 + Math.sin(frame / 6) * 2}
+              r={8}
               fill="none"
               stroke={visorColor}
               strokeWidth={2}
-              opacity={0.85}
+              opacity={0.9}
             />
             <circle
               cx={targetSvgX}
               cy={targetSvgY}
               r={3}
               fill={visorColor}
-              opacity={0.9}
+              opacity={0.95}
             />
           </g>
         ) : (
-          <g style={{transform: `translate(${-Math.sin(frame / 10) * 3}px, ${-Math.cos(frame / 10) * 4}px)`}}>
+          <g>
             <rect
               x="172"
               y="120"

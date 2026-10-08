@@ -23,9 +23,10 @@ class MascotRole(str, Enum):
 
 
 class MascotMotion(str, Enum):
-    FLOAT = "float"             # Gentle anti-gravity hovering with thruster micro-pulses
-    STRIDE = "stride"           # Forward or lateral motion across architectural grid
-    INTERACT = "interact"       # Kinetic manipulation with virtual tool or data token
+    STATIC = "static"           # Visually stable, zero idle oscillation (default)
+    FLOAT = "float"             # Gentle hover
+    STRIDE = "stride"           # Lateral stride
+    INTERACT = "interact"       # Kinetic manipulation
     INSPECT = "inspect"         # Leaning in with scanner beam examining detail
 
 
@@ -40,7 +41,7 @@ class CharacterSpec(BaseModel):
     depth_plane: str = "midground"  # "midground" (z=15) or "foreground" (z=25)
     position: dict[str, float] = Field(default_factory=lambda: {"x": 540.0, "y": 1050.0}) # Canvas coordinates (1080x1920)
     target_anchor: Optional[dict[str, float]] = None # Screen target coordinates (x, y)
-    motion: MascotMotion = MascotMotion.FLOAT
+    motion: MascotMotion = MascotMotion.STATIC
     emotion: str = "focused_curious"
     tool_held: Optional[str] = None  # e.g., "data_tablet", "laser_caliper", "vector_token", "wrench"
 
@@ -55,18 +56,54 @@ def direct_scene_character(
     subject: str,
     action: str,
     topic: str,
+    scene_graph: Optional[Any] = None,
 ) -> CharacterSpec:
-    """Direct contextual character presence and behavior aligned with narrative role.
-    Anchors mascot to dedicated empty zones (y = 1040..1060) to eliminate collisions
-    with primary cards, gauges, and terminal windows.
+    """Direct contextual character presence and behavior derived strictly from scene meaning.
+    Eliminates scene-index modulo rotation. Computes collision-free scene-aware position.
     """
     topic_lower = topic.lower()
     subj_lower = subject.lower()
     act_lower = action.lower()
-    comb = f"{topic_lower} {subj_lower} {act_lower}"
+    role_lower = narrative_role.lower()
+    combined_ctx = f"{topic_lower} {subj_lower} {act_lower} {role_lower}"
 
-    is_cta = (scene_idx == total_scenes - 1) or narrative_role.lower() in ("cta", "outro")
+    clean_subj = subject.strip() if subject.strip() else topic.strip()
+    if len(clean_subj) > 35:
+        clean_subj = clean_subj[:35].rsplit(" ", 1)[0]
 
+    is_cta = (scene_idx == total_scenes - 1) or role_lower in ("cta", "outro") or "subscribe" in combined_ctx
+
+    # 1. Determine safe scene-aware position & real subject anchor
+    pos_x, pos_y = 540.0, 1050.0
+    anchor_x, anchor_y = 540.0, 720.0
+
+    if scene_graph is not None and hasattr(scene_graph, "nodes") and scene_graph.nodes:
+        # Find primary node or first significant node
+        primary_node = next((n for n in scene_graph.nodes if getattr(n, "is_primary", False)), scene_graph.nodes[0])
+        b = getattr(primary_node, "bounds", (0, 0, 0, 0))
+        if b != (0, 0, 0, 0):
+            node_cx = (b[0] + b[2]) / 2.0
+            node_cy = (b[1] + b[3]) / 2.0
+            anchor_x, anchor_y = float(node_cx), float(node_cy)
+
+            # Calculate safe mascot placement away from node
+            if node_cx < 460:
+                pos_x, pos_y = 820.0, 1020.0  # Subject on left -> mascot on right
+            elif node_cx > 620:
+                pos_x, pos_y = 260.0, 1020.0  # Subject on right -> mascot on left
+            else:
+                # Subject in center -> mascot placed at lower right corner
+                pos_x, pos_y = 780.0, 1040.0
+    elif hasattr(scene_graph, "primary_anchor") and scene_graph.primary_anchor:
+        anchor_x, anchor_y = float(scene_graph.primary_anchor[0]), float(scene_graph.primary_anchor[1])
+        if anchor_x < 460:
+            pos_x, pos_y = 820.0, 1020.0
+        elif anchor_x > 620:
+            pos_x, pos_y = 260.0, 1020.0
+        else:
+            pos_x, pos_y = 780.0, 1040.0
+
+    # 2. Derive Character Role, Pose, and Tool strictly from Scene Meaning
     if is_cta:
         return CharacterSpec(
             role=MascotRole.GUIDE,
@@ -77,88 +114,104 @@ def direct_scene_character(
             depth_plane="midground",
             position={"x": 540.0, "y": 1050.0},
             target_anchor={"x": 540.0, "y": 710.0},
-            motion=MascotMotion.FLOAT,
+            motion=MascotMotion.STATIC,
             emotion="confident_inviting",
             tool_held="briefing_tablet",
         )
 
-    # 1. Hook (Scene 0) -> Explorer positioned below hero metric card pointing up at callout
-    if scene_idx == 0 or narrative_role.lower() == "hook":
+    # Hook / Topic Introduction -> Explorer
+    if role_lower in ("hook", "intro") or (scene_idx == 0 and not any(k in act_lower for k in ["tune", "debug", "benchmark", "vs"])):
         return CharacterSpec(
             role=MascotRole.EXPLORER,
-            pose="pointing_upward",
-            action="pointing directly at core production benchmark",
-            target=subject,
+            pose="presenting_forward",
+            action=f"exploring {clean_subj}",
+            target=clean_subj,
             scale=1.0,
             depth_plane="midground",
-            position={"x": 540.0, "y": 1050.0},
-            target_anchor={"x": 540.0, "y": 720.0},
-            motion=MascotMotion.FLOAT,
+            position={"x": pos_x, "y": pos_y},
+            target_anchor={"x": anchor_x, "y": anchor_y},
+            motion=MascotMotion.STATIC,
             emotion="intense_curious",
             tool_held="optical_scanner",
         )
 
-    # 2. Mechanism (Scene 1) -> Engineer positioned below Stage 2 node channeling data flow
-    if scene_idx == 1 or narrative_role.lower() == "mechanism":
+    # Parsing, tokenizing, embedding, data vectors, pipeline flow
+    if any(k in combined_ctx for k in ["token", "embed", "vector", "pipeline", "ingest", "parse", "dimension", "data"]):
         return CharacterSpec(
             role=MascotRole.ENGINEER,
-            pose="pointing_upward",
-            action="routing vector tokens through active pipeline node",
-            target=subject,
+            pose="directing_flow",
+            action=f"directing {clean_subj} flow",
+            target=clean_subj,
             scale=0.95,
             depth_plane="midground",
-            position={"x": 540.0, "y": 1050.0},
-            target_anchor={"x": 540.0, "y": 730.0},
-            motion=MascotMotion.INTERACT,
+            position={"x": pos_x, "y": pos_y},
+            target_anchor={"x": anchor_x, "y": anchor_y},
+            motion=MascotMotion.STATIC,
             emotion="analytical_focused",
             tool_held="vector_token",
         )
 
-    # 3. Escalation / Comparison (Scene 2) -> Analyst below the optimized side highlighting delta
-    if scene_idx == 2 or narrative_role.lower() == "escalation":
+    # Telemetry, latency, throughput, benchmarking, comparison, contrast
+    if any(k in combined_ctx for k in ["latency", "throughput", "telemetry", "metric", "cluster", "benchmark", "contrast", "vs", "versus", "legacy", "compute", "flops", "accelerator"]):
         return CharacterSpec(
             role=MascotRole.ANALYST,
-            pose="highlighting_optimization",
-            action="benchmarking pipeline throughput against legacy scan",
-            target="optimized cluster",
-            scale=0.95,
-            depth_plane="midground",
-            position={"x": 720.0, "y": 1040.0},
-            target_anchor={"x": 720.0, "y": 730.0},
-            motion=MascotMotion.STRIDE,
-            emotion="impressed_authoritative",
-            tool_held="quantum_stylus",
-        )
-
-    # 4. Implication / Scale (Scene 3) -> Systems analyst below terminal window
-    if scene_idx == 3 or narrative_role.lower() in ("implication", "scale"):
-        return CharacterSpec(
-            role=MascotRole.ANALYST,
-            pose="monitoring_telemetry",
-            action="verifying cluster deployment logs",
-            target="production telemetry",
+            pose="inspecting_detail",
+            action=f"verifying {clean_subj} execution",
+            target=clean_subj,
             scale=0.92,
             depth_plane="midground",
-            position={"x": 540.0, "y": 1040.0},
-            target_anchor={"x": 540.0, "y": 740.0},
-            motion=MascotMotion.FLOAT,
+            position={"x": pos_x, "y": pos_y},
+            target_anchor={"x": anchor_x, "y": anchor_y},
+            motion=MascotMotion.STATIC,
             emotion="analytical_focused",
             tool_held="telemetry_hud_panel",
         )
 
-    # Default -> Contextual Guide in dedicated lower zone
+    # Transformers, self-attention, neural models, architecture matrix
+    if any(k in combined_ctx for k in ["transformer", "attention", "neural", "weight", "matrix", "architecture", "model", "layer"]):
+        return CharacterSpec(
+            role=MascotRole.BUILDER,
+            pose="mapping_structure",
+            action=f"orchestrating {clean_subj} architecture",
+            target=clean_subj,
+            scale=0.95,
+            depth_plane="midground",
+            position={"x": pos_x, "y": pos_y},
+            target_anchor={"x": anchor_x, "y": anchor_y},
+            motion=MascotMotion.STATIC,
+            emotion="focused_curious",
+            tool_held="quantum_stylus",
+        )
+
+    # Image diffusion, denoising, generative algorithms, physics
+    if any(k in combined_ctx for k in ["diffusion", "denois", "image", "gaussian", "u-net", "generative", "synthesis"]):
+        return CharacterSpec(
+            role=MascotRole.EXPLORER,
+            pose="observing_system",
+            action=f"examining {clean_subj} process",
+            target=clean_subj,
+            scale=0.95,
+            depth_plane="midground",
+            position={"x": pos_x, "y": pos_y},
+            target_anchor={"x": anchor_x, "y": anchor_y},
+            motion=MascotMotion.STATIC,
+            emotion="intense_curious",
+            tool_held="optical_scanner",
+        )
+
+    # Default: Grounded Explorer/Guide for concept introduction
     return CharacterSpec(
         role=MascotRole.GUIDE,
-        pose="balanced_observer",
-        action=f"guiding focus toward {subject[:40]}",
-        target=subject,
+        pose="presenting_forward",
+        action=f"guiding focus toward {clean_subj}",
+        target=clean_subj,
         scale=1.0,
         depth_plane="midground",
-        position={"x": 540.0, "y": 1050.0},
-        target_anchor={"x": 540.0, "y": 720.0},
-        motion=MascotMotion.FLOAT,
+        position={"x": pos_x, "y": pos_y},
+        target_anchor={"x": anchor_x, "y": anchor_y},
+        motion=MascotMotion.STATIC,
         emotion="neutral_intelligent",
-        tool_held=None,
+        tool_held="optical_scanner",
     )
 
 

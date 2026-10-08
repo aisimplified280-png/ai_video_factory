@@ -432,10 +432,26 @@ class ShotDirector:
                                for k in ["robot", "gripper", "actuator", "gear", "transmission", "harmonic", "rover", "warehouse", "conveyor", "pallet"])
                 ]
 
-            cameras = ["tracking", "push_in", "slow_pan", "crane_pull_out"]
-            compositions = ["balanced_rule_of_thirds", "layered_depth", "wide_isometric_plane", "center_focus"]
-            cam_idx = scene_idx % len(cameras)
-            comp_idx = scene_idx % len(compositions)
+            # Derive camera motion and composition semantically from action, entities, and relationship
+            act_lower = (claim_plan.action + " " + claim_plan.relationship + " " + " ".join(claim_plan.entities)).lower()
+            if any(k in act_lower for k in ["flow", "route", "token", "transform", "pipeline", "stream", "pass"]):
+                sem_camera = "tracking"
+                sem_composition = "process_flow"
+            elif any(k in act_lower for k in ["cluster", "scale", "gpu", "accelerator", "infrastructure", "fleet", "hardware"]):
+                sem_camera = "crane_pull_out"
+                sem_composition = "wide_isometric_plane"
+            elif any(k in act_lower for k in ["matrix", "attention", "transformer", "embedding", "vector", "layer", "latent", "space"]):
+                sem_camera = "slow_pan"
+                sem_composition = "layered_depth"
+            elif any(k in act_lower for k in ["contrast", "vs", "versus", "comparison", "difference", "delta"]):
+                sem_camera = "static"
+                sem_composition = "split_comparison"
+            elif chosen_mode == VisualMode.BRAND_CTA:
+                sem_camera = "slow_pan"
+                sem_composition = "center_focus"
+            else:
+                sem_camera = "push_in"
+                sem_composition = "center_focus"
 
             if chosen_mode == VisualMode.BRAND_CTA:
                 custom_shot_type = "clean_minimalist_studio"
@@ -452,9 +468,9 @@ class ShotDirector:
 
             custom_opt = {
                 "shot_type": custom_shot_type,
-                "camera_motion": "push_in" if scene_idx == 0 else cameras[cam_idx],
+                "camera_motion": "push_in" if scene_idx == 0 else sem_camera,
                 "camera_angle": "macro_probe_level" if (scene_idx == 0 and is_rob) else "eye_level_three_quarter",
-                "composition": "tight_macro_crop" if (scene_idx == 0 and is_rob) else compositions[comp_idx],
+                "composition": "tight_macro_crop" if (scene_idx == 0 and is_rob) else sem_composition,
                 "subject": ", ".join(claim_plan.entities) or intent.what_is_said,
                 "action": claim_plan.action,
                 "environment": claim_plan.environment,
