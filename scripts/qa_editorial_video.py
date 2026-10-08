@@ -19,17 +19,79 @@ CONTACT_WIDTH = 300
 CONTACT_HEIGHT = 533
 
 
-def compute_sample_times(duration: float, step: float = 3.0) -> list[float]:
-    """Generate sample timestamps covering the entire video from 0 to duration."""
-    times = []
+def compute_sample_times(
+    duration: float,
+    scenes: list[dict] | None = None,
+    cta_window: tuple[float, float] | None = None,
+    step: float = 3.0,
+) -> list[float]:
+    """Generate comprehensive sample timestamps covering the entire video from 0% to 100%.
+    
+    Guarantees full coverage derived from actual duration:
+    - Decile checkpoints: 0%, 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%, 100%
+    - Regular periodic steps (every `step` seconds, across the full duration)
+    - Every scene boundary (start and end)
+    - Every transition window (boundary +/- 0.25s)
+    - CTA window (start and midpoint of CTA)
+    - Final frames (near duration - 0.05s)
+    Never applies a fixed-duration ceiling; late-video sampling is strictly guaranteed.
+    """
+    if duration <= 0:
+        return [0.0]
+
+    timestamps: set[float] = set()
+
+    # 1. Exact decile checkpoints across entire duration: 0%, 10%, ..., 100%
+    for pct in range(0, 11):
+        t = round((pct / 10.0) * duration, 2)
+        if t >= duration:
+            t = max(0.0, round(duration - 0.05, 2))
+        timestamps.add(t)
+
+    # 2. Regular periodic step sampling (0 to duration)
     t = 0.0
-    while t < duration - 1.0:
-        times.append(round(t, 2))
+    while t < duration:
+        timestamps.add(round(t, 2))
         t += step
+
+    # 3. Scene boundaries and transition windows
+    if scenes:
+        for sc in scenes:
+            start = sc.get("start_seconds") if "start_seconds" in sc else sc.get("start")
+            end = sc.get("end_seconds") if "end_seconds" in sc else sc.get("end")
+            if start is not None:
+                s_val = float(start)
+                if 0 <= s_val <= duration:
+                    timestamps.add(round(min(s_val, duration - 0.05), 2))
+                    # Transition window samples
+                    if s_val + 0.25 < duration:
+                        timestamps.add(round(s_val + 0.25, 2))
+                    if s_val - 0.25 > 0:
+                        timestamps.add(round(s_val - 0.25, 2))
+            if end is not None:
+                e_val = float(end)
+                if 0 <= e_val <= duration:
+                    timestamps.add(round(min(e_val, duration - 0.05), 2))
+
+    # 4. CTA Window
+    if cta_window:
+        cta_start, cta_end = cta_window
+        timestamps.add(round(min(cta_start, duration - 0.05), 2))
+        timestamps.add(round(min((cta_start + cta_end) / 2.0, duration - 0.05), 2))
+    elif scenes and len(scenes) > 1:
+        last_scene = scenes[-1]
+        last_start = last_scene.get("start_seconds") if "start_seconds" in last_scene else last_scene.get("start")
+        if last_start is not None and float(last_start) < duration:
+            mid_cta = (float(last_start) + duration) / 2.0
+            timestamps.add(round(min(mid_cta, duration - 0.05), 2))
+
+    # 5. Final frame
     final_time = max(0.0, round(duration - 0.05, 2))
-    if not times or (final_time - times[-1]) >= 0.5:
-        times.append(final_time)
-    return times
+    timestamps.add(final_time)
+
+    # Return sorted unique times bounded by [0, duration]
+    return sorted(t for t in timestamps if 0.0 <= t <= duration)
+
 
 
 def _run(command):
@@ -132,7 +194,7 @@ def analyze_generation(output_dir: Path):
     frame_dir.mkdir(parents=True, exist_ok=True)
 
     sample_records = []
-    sampling_schedule = compute_sample_times(duration)
+    sampling_schedule = compute_sample_times(duration, scenes=manifest.get("scenes", []))
     for idx, timestamp in enumerate(sampling_schedule):
         actual_time = min(float(timestamp), max(0.0, duration - 0.05))
         frame_path = frame_dir / f"frame_{idx:02d}_{int(actual_time):02d}s.png"
