@@ -29,6 +29,7 @@ import {incomingStyle as morphIn, outgoingStyle as morphOut} from '../transition
 import {incomingStyle as matchIn, outgoingStyle as matchOut} from '../transitions/matchCut';
 import {ActionLayer} from '../primitives/ActionLayer';
 import {BackgroundLayer} from '../primitives/BackgroundLayer';
+import {CharacterLayer} from '../primitives/CharacterLayer';
 import {ChartLayer} from '../primitives/ChartLayer';
 import {DiagramLayer} from '../primitives/DiagramLayer';
 import {ImageLayer} from '../primitives/ImageLayer';
@@ -210,6 +211,8 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
   const asset = assetById(assets, event.asset_id);
   switch (event.role) {
     case 'primary_visual':
+    case 'primary_composite':
+    case 'midground':
     case 'secondary_visual': {
       if (!asset) {
         throw new Error(`Event ${event.event_id} requires an asset but references none.`);
@@ -254,6 +257,30 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
         return <LineLayer width={width} height={height} reveal={trace(progress).reveal} color={theme.accent} path={spec.path} />;
       }
       return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
+    }
+    case 'character': {
+      if (asset) {
+        return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
+      }
+      const charSpec = event.character_spec ?? scene.character_spec;
+      if (charSpec) {
+        return (
+          <CharacterLayer
+            spec={charSpec}
+            progress={progress}
+            width={width}
+            height={height}
+            theme={theme}
+          />
+        );
+      }
+      return null;
+    }
+    case 'foreground': {
+      if (asset) {
+        return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
+      }
+      return null;
     }
     case 'diagram': {
       if (!asset) {
@@ -409,6 +436,16 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
         );
       })}
 
+      {scene.character_spec && !ordered.some((item) => item.event.role === 'character') && (
+        <CharacterLayer
+          spec={scene.character_spec}
+          progress={sceneProgress}
+          width={width}
+          height={height}
+          theme={theme}
+        />
+      )}
+
       {!ordered.some((item) => item.event.role === 'primary_visual' && Boolean(item.event.asset_id) && !item.event.overlay_disabled) && (
         <div
           style={{
@@ -429,6 +466,92 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
             theme={theme}
             isAITopic={isAITopic}
           />
+        </div>
+      )}
+
+      {(scene.narrative_role?.toLowerCase() === 'cta' || scene.scene_id?.toLowerCase().includes('cta')) && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 220,
+            left: 80,
+            right: 80,
+            padding: '36px 44px',
+            backgroundColor: 'rgba(15, 23, 42, 0.94)',
+            borderRadius: 28,
+            border: '2px solid rgba(59, 130, 246, 0.5)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 40px rgba(37, 99, 235, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 16,
+            zIndex: 100,
+            transform: `translateY(${Math.max(0, 1 - sceneProgress * 2.5) * 50}px)`,
+            opacity: Math.min(1, sceneProgress * 3.0),
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                backgroundColor: '#3B82F6',
+                boxShadow: '0 0 12px #3B82F6',
+              }}
+            />
+            <span
+              style={{
+                fontFamily: theme.fontFamily,
+                fontSize: 26,
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                color: '#F8FAFC',
+                textTransform: 'uppercase',
+              }}
+            >
+              {ctaBranding || 'AI SIMPLIFIED LAB'}
+            </span>
+          </div>
+
+          <div
+            style={{
+              fontFamily: theme.fontFamily,
+              fontSize: 20,
+              color: '#94A3B8',
+              letterSpacing: '0.04em',
+              textAlign: 'center',
+            }}
+          >
+            Daily Frontier AI Architecture Briefings
+          </div>
+
+          <div
+            style={{
+              marginTop: 6,
+              padding: '12px 36px',
+              backgroundColor: '#2563EB',
+              borderRadius: 999,
+              color: '#FFFFFF',
+              fontFamily: theme.fontFamily,
+              fontSize: 22,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              boxShadow: '0 8px 24px rgba(37, 99, 235, 0.45)',
+            }}
+          >
+            <span>SUBSCRIBE</span>
+            <span style={{fontSize: 18}}>🔔</span>
+          </div>
         </div>
       )}
       {audio

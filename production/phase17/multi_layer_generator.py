@@ -380,15 +380,15 @@ def _draw_midground_subject(
 
     elif any(k in metaphor_lower for k in ["metric", "speed", "velocity", "benchmark", "latency", "scale"]):
         # Hero Metric Velocity Layout
-        mid_draw.rounded_rectangle([(cx - 380, 480), (cx + 380, 820)], radius=24, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=2)
-        mid_draw.line([(cx - 340, 630), (cx + 340, 630)], fill=(*border_rgb, 255), width=2)
-        mid_draw.text((cx - 330, 525), headline, fill=(*text_rgb, 255), font=font_title)
-        mid_draw.text((cx - 330, 670), metric, fill=(*accent_rgb, 255), font=font_title)
+        mid_draw.rounded_rectangle([(cx - 380, 480), (cx + 380, 820)], radius=24, fill=(15, 23, 42, 245), outline=(*accent_rgb, 255), width=2)
+        mid_draw.line([(cx - 340, 630), (cx + 340, 630)], fill=(*accent_rgb, 255), width=2)
+        mid_draw.text((cx - 330, 525), headline, fill=(255, 255, 255, 255), font=font_title)
+        mid_draw.text((cx - 330, 670), metric, fill=(245, 158, 11, 255), font=font_title)
 
     elif any(k in metaphor_lower for k in ["agent", "network", "node", "cluster", "lattice"]):
         # Dynamic Node Hub Layout
-        mid_draw.ellipse([(cx - 120, 560), (cx + 120, 800)], fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
-        mid_draw.text((cx - 90, 660), cards[0], fill=(*text_rgb, 255), font=font_badge)
+        mid_draw.ellipse([(cx - 120, 560), (cx + 120, 800)], fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=3)
+        mid_draw.text((cx - 90, 660), cards[0], fill=(255, 255, 255, 255), font=font_badge)
         # Flanking connected nodes
         if len(cards) >= 2:
             mid_draw.rounded_rectangle([(cx - 380, 580), (cx - 180, 780)], radius=18, fill=(*surface_rgb, 235), outline=(*border_rgb, 255), width=2)
@@ -401,9 +401,9 @@ def _draw_midground_subject(
 
     else:
         # Default Multi-Stage Architecture Pipeline: Max 3 core cards for 9:16 mobile readability
-        # Hero Headline Card at top
-        mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 550)], radius=16, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=2)
-        mid_draw.text((cx - 340, 475), headline, fill=(*text_rgb, 255), font=font_title)
+        # High-Contrast Hero Headline Card at top
+        mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 550)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
+        mid_draw.text((cx - 340, 475), headline, fill=(255, 255, 255, 255), font=font_title)
 
         # 3 Clean Stage Cards below
         card_w = 210
@@ -413,12 +413,19 @@ def _draw_midground_subject(
 
         for i, card_text in enumerate(cards):
             bx = start_x + i * (card_w + gap)
-            card_outline = (*accent_rgb, 255) if i == 1 else (*border_rgb, 255)
-            mid_draw.rounded_rectangle([(bx, 600), (bx + card_w, 820)], radius=18, fill=(*surface_rgb, 240), outline=card_outline, width=2)
+            if i == 1:
+                card_fill = (15, 23, 42, 245)
+                card_text_color = (255, 255, 255, 255)
+                card_outline = (*accent_rgb, 255)
+            else:
+                card_fill = (*surface_rgb, 240)
+                card_text_color = (*text_rgb, 255)
+                card_outline = (*border_rgb, 255)
+            mid_draw.rounded_rectangle([(bx, 600), (bx + card_w, 820)], radius=18, fill=card_fill, outline=card_outline, width=2)
             # Top conduit connector
             mid_draw.line([(bx + card_w // 2, 550), (bx + card_w // 2, 600)], fill=(*accent_rgb, 255), width=3)
             # Label
-            mid_draw.text((bx + 20, 690), card_text, fill=(*text_rgb, 255), font=font_badge)
+            mid_draw.text((bx + 20, 690), card_text, fill=card_text_color, font=font_badge)
 
 
 

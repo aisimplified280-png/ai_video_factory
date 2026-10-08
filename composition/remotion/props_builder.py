@@ -125,7 +125,8 @@ def build_production_props(
         })
 
     props_events = []
-    for event in edit_data.get("timeline", []):
+    events_source = edit_data.get("multi_layer_timeline") or edit_data.get("timeline", [])
+    for event in events_source:
         if event.get("asset_id") and event["asset_id"] not in manifest_assets:
             raise PropsError(f"Event {event.get('event_id')} references unknown asset {event['asset_id']}.")
         if event.get("duration", 0) <= 0:
@@ -141,8 +142,9 @@ def build_production_props(
             "end": event.get("end"),
             "duration": event.get("duration"),
             "z_index": event.get("z_index", 0),
+            "parallax_factor": event.get("parallax_factor"),
             "purpose": event.get("purpose"),
-            "framing": event.get("crop"),
+            "framing": event.get("crop") or event.get("framing"),
             "camera_intent": event.get("camera_intent"),
             "motion_intent": event.get("motion_intent"),
             "transition_in": event.get("transition_in"),
@@ -150,11 +152,12 @@ def build_production_props(
             "caption_ref": event.get("caption_ref"),
             "audio_ref": event.get("audio_ref"),
             "overlay_disabled": bool(event.get("overlay_disabled", False)),
+            "character_spec": event.get("character_spec"),
         })
 
     props_scenes = []
     for scene_id, scene in scenes.items():
-        scene_events = [ev for ev in edit_data.get("timeline", []) if ev.get("scene_id") == scene_id]
+        scene_events = [ev for ev in events_source if ev.get("scene_id") == scene_id]
         sc_start = min((ev.get("start", 0.0) for ev in scene_events), default=scene.get("start_seconds", 0.0))
         sc_end = max((ev.get("end", 0.0) for ev in scene_events), default=scene.get("end_seconds", 0.0))
         props_scenes.append({
@@ -168,6 +171,7 @@ def build_production_props(
             "signature_device_usage": scene.get("signature_device_usage", "none"),
             "start": sc_start if sc_start is not None else scene.get("start_seconds"),
             "end": sc_end if sc_end is not None else scene.get("end_seconds"),
+            "character_spec": scene.get("character_spec"),
         })
 
     props_captions = []

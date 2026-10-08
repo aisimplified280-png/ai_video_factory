@@ -34,7 +34,7 @@ export function validateProductionProps(props: ProductionCompositionProps): stri
       errors.push(`event ${event.event_id} has no executable purpose`);
     }
   }
-  const primaries = props.events.filter((event) => event.role === 'primary_visual');
+  const primaries = props.events.filter((event) => event.role === 'primary_visual' || event.role === 'primary_composite');
   if (primaries.length === 0) {
     errors.push('timeline has no primary_visual events');
   }

@@ -8,6 +8,7 @@ remotion-composer/out/
 remotion-composer/public/*.wav
 remotion-composer/public/*.mp3
 remotion-composer/public/*.m4a
+remotion-composer/public/*.png
 remotion-composer/public/proj_*
 remotion-composer/public/assets/
 

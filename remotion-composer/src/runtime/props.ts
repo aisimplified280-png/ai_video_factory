@@ -71,6 +71,20 @@ export interface AudioRefProps {
   requirement: unknown;
 }
 
+export interface CharacterSpec {
+  identity: string;
+  role: string;
+  pose: string;
+  action: string;
+  target: string;
+  scale: number;
+  depth_plane: string;
+  position: { x: number; y: number };
+  motion: string;
+  emotion: string;
+  tool_held?: string | null;
+}
+
 export interface EditEventProps {
   event_id: string;
   scene_id: string;
@@ -82,6 +96,7 @@ export interface EditEventProps {
   end: number;
   duration: number;
   z_index: number;
+  parallax_factor?: number;
   purpose: string;
   framing: string | null;
   camera_intent: string | null;
@@ -91,6 +106,7 @@ export interface EditEventProps {
   caption_ref: string | null;
   audio_ref: string | null;
   overlay_disabled?: boolean;
+  character_spec?: CharacterSpec | null;
 }
 
 export interface SceneProps {
@@ -104,6 +120,7 @@ export interface SceneProps {
   signature_device_usage: string;
   start: number;
   end: number;
+  character_spec?: CharacterSpec | null;
 }
 
 export type ProductionCompositionProps = {

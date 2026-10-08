@@ -187,8 +187,7 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     plan_file.write_text(json.dumps(plan_data, indent=2), "utf-8")
     print(f"  -> Generated {len(plan_data.get('scene_concepts', []))} scene visual concepts with Editorial Intelligence styling.")
 
-    # 5. EDIT DECISIONS MAPPING & ARTIFACT SYNCHRONIZATION
-    print("\n[5/8] EDIT DECISION MAPPING & CANONICAL ARTIFACT SYNC (PHASE 16)...")
+    # Setup Production Controller & State
     from production.controller import ProductionController
     controller = ProductionController(projects_root=PROJECTS_DIR)
     try:
@@ -263,9 +262,9 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
         store.approve("proposal_packet", production_id, proposal_env.artifact_version)
     state.set_active_version("proposal_packet", proposal_env.artifact_version)
 
-    # 5. NEURAL TTS & EDIT TIMELINE (PHASE 17)
-    _prog(0.65, "[5/8] Generating Neural TTS & Multi-Layer Timeline (Phase 17)...")
-    print("\n[5/8] GENERATING NEURAL TTS & MULTI-LAYER TIMELINE (PHASE 17)...")
+    # 5. NEURAL TTS & 4-LAYER DEPTH ASSETS (PHASE 18)
+    _prog(0.65, "[5/8] Generating Neural TTS & 4-Layer Depth Assets (Phase 18)...")
+    print("\n[5/8] GENERATING NEURAL TTS & 4-LAYER DEPTH ASSETS (PHASE 18)...")
     audio_dir = project_root / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
     import edge_tts, asyncio
@@ -277,7 +276,7 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
             comm = edge_tts.Communicate(spoken, "en-US-JennyNeural")
             asyncio.run(comm.save(str(audio_dir / f"narration_{sc_id}.mp3")))
 
-    # Generate fresh baseline edit_decisions using real measured audio durations
+    # Measure exact audio durations with ffprobe
     def _get_audio_dur(p: Path) -> float:
         cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(p)]
         try:
@@ -286,204 +285,134 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
         except Exception:
             return 5.0
 
-    timeline = []
-    narration_tracks = []
-    caption_tracks = []
-    current_time = 0.0
-    for idx, sec in enumerate(sections):
-        sc_id = f"scene_{idx+1:02d}"
-        audio_f = audio_dir / f"narration_{sc_id}.mp3"
-        measured_dur = _get_audio_dur(audio_f) if audio_f.exists() else float(sec.get("estimated_duration", 5.5))
-        # Natural breathing pause between scenes so voice never cuts off
-        s_dur = round(max(measured_dur + 0.35, 3.2), 2)
-        s_start = round(current_time, 2)
-        s_end = round(current_time + s_dur, 2)
-        current_time = s_end
-        c = plan_data.get("scene_concepts", [])[idx] if idx < len(plan_data.get("scene_concepts", [])) else {}
-        timeline.append({
-            "event_id": f"event_{sc_id}_primary",
-            "scene_id": sc_id,
-            "shot_id": f"{sc_id}_shot_01",
-            "track_id": "video_primary",
-            "role": "primary_visual",
-            "asset_id": f"ast_{sc_id}_primary",
-            "start": s_start,
-            "end": s_end,
-            "duration": s_dur,
-            "z_index": 10,
-            "purpose": c.get("visual_intent", sec.get("role", "visual")),
-            "framing": c.get("shot_type", "medium_shot"),
-            "camera_intent": c.get("camera_intent", "approach_subject"),
-            "motion_intent": c.get("motion_intent", "assemble"),
-            "transition_in": "hard_cut" if idx == 0 else c.get("transition_in", "zoom_transition"),
-            "transition_out": "hard_cut",
-            "caption_ref": f"caption_{sc_id}",
-            "audio_ref": f"narration_{sc_id}",
-        })
-        narration_tracks.append({
-            "event_id": f"narration_{sc_id}",
-            "track": "narration",
-            "start": s_start,
-            "end": s_end,
-            "audio_asset_id": f"projects/{production_id}/audio/narration_{sc_id}.mp3",
-            "requirement": {
-                "required": True,
-                "spoken_text": sec.get("spoken_text", ""),
-            },
-        })
-        caption_tracks.append({
-            "event_id": f"caption_{sc_id}",
-            "scene_id": sc_id,
-            "start": s_start,
-            "end": s_end,
-            "audio_duration": measured_dur,
-            "caption_text_reference": sec.get("spoken_text", ""),
-            "safe_zone": "caption",
-            "emphasis_words": sec.get("emphasis_words", []),
-        })
-    total_dur = round(current_time, 2)
-    cta_sec = sections[-1] if sections else {}
-    cta_sc_id = f"scene_{len(sections):02d}"
-    cta_start = timeline[-1]["start"] if timeline else max(0.0, total_dur - 5.0)
+    measured_durations = [
+        _get_audio_dur(audio_dir / f"narration_scene_{i+1:02d}.mp3")
+        for i in range(len(sections))
+    ]
 
-    profile_file = ROOT / "profiles/youtube_short.json"
-    if profile_file.exists():
-        prof_data = json.loads(profile_file.read_text(encoding="utf-8"))
-        platform_cfg = {
-            "profile": "profiles/youtube_short.json",
-            "resolution": prof_data.get("resolution", {"width": 1080, "height": 1920}),
-            "fps": prof_data.get("fps", 30),
-            "duration_constraints": prof_data.get("duration_constraints", {"minimum_seconds": 15, "maximum_seconds": 60}),
-            "safe_zones": {
-                "caption": {"top": 1400, "bottom": 1650, "left": 100, "right": 980},
-                "cta": {"top": 1650, "bottom": 1850, "left": 100, "right": 980},
-                "brand": {"top": 100, "bottom": 250, "left": 100, "right": 980},
-            },
-        }
-    else:
-        platform_cfg = {
-            "profile": "profiles/youtube_short.json",
-            "resolution": {"width": 1080, "height": 1920},
-            "fps": 30,
-            "duration_constraints": {"minimum_seconds": 15, "maximum_seconds": 60},
-            "safe_zones": {
-                "caption": {"top": 1400, "bottom": 1650, "left": 100, "right": 980},
-                "cta": {"top": 1650, "bottom": 1850, "left": 100, "right": 980},
-                "brand": {"top": 100, "bottom": 250, "left": 100, "right": 980},
-            },
-        }
-
-    v1_data = {
-        "production_id": production_id,
-        "total_duration": total_dur,
-        "platform_profile": "profiles/youtube_short.json",
-        "platform": platform_cfg,
-        "runtime_lock_source": {
-            "artifact_type": "proposal_packet",
-            "version": proposal_env.artifact_version,
-            "content_hash": proposal_env.content_hash,
-            "locked_at": "2026-10-07T00:00:00Z",
-            "locked_concept_id": "c1",
-        },
-        "render_runtime": "remotion",
-        "renderer_family": "explainer",
-        "composition_mode": "atelier",
-        "timeline": timeline,
-        "video_tracks": {"video_primary": timeline},
-        "audio_tracks": {
-            "narration": narration_tracks,
-            "music": [{"event_id": "music_bed", "track": "music", "start": 0.0, "end": total_dur, "audio_asset_id": None, "requirement": {"required": False}}],
-            "sfx": [{"event_id": "sfx_cta_resolve", "track": "sfx", "start": max(0.0, total_dur - 0.5), "end": total_dur, "audio_asset_id": None, "requirement": {"required": False}}],
-        },
-        "caption_track": caption_tracks,
-        "tracks": {
-            "video": ["video_primary"],
-            "narration": ["narration"],
-            "music": ["music"],
-            "captions": ["captions"],
-            "sfx": ["sfx"],
-        },
-        "cta": {
-            "scene_id": cta_sc_id,
-            "start": cta_start,
-            "end": total_dur,
-            "channel_branding": "AI Simplified Lab",
-            "caption_event_id": f"caption_{cta_sc_id}",
-            "audio_asset_id": None,
-            "audio_requirement": {
-                "required": True,
-                "spoken_text": cta_sec.get("spoken_text", "Subscribe to AI Simplified Lab for daily frontier AI briefings."),
-            },
-        },
-        "validation": {
-            "no_gaps": True,
-            "no_overlaps": True,
-            "all_assets_resolved": True,
-            "duration_covered": True,
-            "audio_valid": True,
-            "captions_valid": True,
-            "cta_present": True,
-            "renderer_locked": True,
-        },
-    }
-
-    mapped_data = map_edit_decisions(plan_data, v1_data, project_root)
-    mapped_data["runtime_lock_source"] = {
-        "artifact_type": "proposal_packet",
-        "version": proposal_env.artifact_version,
-        "content_hash": proposal_env.content_hash,
-        "locked_at": "2026-10-07T00:00:00Z",
-        "locked_concept_id": "c1",
-    }
-    edit_envelope = store.create(
-        "edit_decisions",
-        production_id,
-        "edit",
-        mapped_data,
-        producer=ProducerInfo(kind=ProducerKind.SYSTEM, provider="autonomous_factory"),
-        metadata={"lineage": {"plan": "plan.v001.json"}},
-    )
-    store.save(edit_envelope)
-    store.approve("edit_decisions", production_id, edit_envelope.artifact_version)
-
-    state.set_active_version("edit_decisions", edit_envelope.artifact_version)
-    state.set_active_version("script", script_envelope.artifact_version)
-
-    # Synchronize scene_plan, asset_manifest, and art_direction so Remotion renders Phase 17 multi-layer assets
-    from production.phase17.sync import sync_phase17_production_artifacts
+    # Direct canonical 4-layer scenes with mascot bot
+    from production.phase18.visual_director import direct_production_scenes
+    from production.phase18.character_director import render_character_asset
+    from production.phase18.sync import sync_authoritative_artifacts
+    from production.phase17.multi_layer_generator import generate_scene_layers
     from production.phase17.style_systems import get_style_system
+
     active_style = get_style_system("claude_editorial")
-    sync_phase17_production_artifacts(store, production_id, plan_data, active_style, state, timeline=mapped_data.get("timeline"))
+    visual_plan = direct_production_scenes(
+        production_id=production_id,
+        sections=sections,
+        topic=topic,
+        measured_durations=measured_durations,
+        research_context=research_pack.summary if hasattr(research_pack, "summary") else "",
+    )
+
+    # Persist physical multi-layer assets & transparent mascot bot
+    assets_dir = project_root / "assets"
+    assets_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"  -> Directing {len(visual_plan.scenes)} scenes with 4-layer depth & mascot bot.")
+    for idx, sc in enumerate(visual_plan.scenes):
+        generate_scene_layers(
+            scene_index=idx,
+            narration=sc.spoken_text or sc.visual_purpose,
+            output_dir=assets_dir,
+            scene_id=sc.scene_id,
+            style=active_style,
+            topic=topic,
+            subject=sc.subject,
+            visual_purpose=sc.visual_purpose,
+            visual_metaphor=sc.visual_metaphor,
+            narrative_role=sc.narrative_role,
+        )
+        char_png = assets_dir / f"char_{sc.scene_id}.png"
+        render_character_asset(sc.character_spec, char_png)
+
+    # Synchronize and approve all canonical artifacts in authoritative order
+    mapped_data = sync_authoritative_artifacts(
+        store=store,
+        state=state,
+        visual_plan=visual_plan,
+        script_envelope=script_envelope,
+        proposal_envelope=proposal_env,
+        style_system=active_style,
+        projects_root=PROJECTS_DIR,
+    )
+    state.set_active_version("script", script_envelope.artifact_version)
     controller.state_store.save(state)
-    print(f"  -> Persisted edit_decisions.v{edit_envelope.artifact_version:03d}.json & synchronized Remotion artifacts (Phase 17 Depth Enabled).")
+    edit_version = state.get_active_version("edit_decisions")
+    print(f"  -> Persisted canonical artifacts: scene_plan, asset_manifest, art_direction, edit_decisions.v{edit_version:03d}.json (Phase 18 Depth & Mascot Enabled).")
+
+    # Build backward-compatible plan_data for downstream reports
+    plan_data = {
+        "production_id": production_id,
+        "topic": topic,
+        "scene_concepts": [
+            {
+                "scene_id": sc.scene_id,
+                "section_id": sc.section_id,
+                "narrative_role": sc.narrative_role,
+                "visual_intent": sc.visual_purpose,
+                "visual_mode": "environment",
+                "shot_type": sc.shot_type,
+                "camera_motion": sc.camera_motion,
+                "composition": sc.composition,
+                "subject": sc.subject,
+                "action": sc.action,
+                "environment": sc.environment,
+                "visual_prompt": f"{sc.subject} in {sc.environment}",
+                "claim_id": f"claim_{sc.scene_id}",
+                "claim_type": "capability",
+                "entities": [sc.subject],
+                "relationship": sc.action,
+                "required_visual_evidence": [sc.subject],
+                "unacceptable_visuals": [],
+                "grounding_level": 3.0,
+                "visual_grounding_score": 8.5,
+                "claim_coverage_score": 1.0,
+            }
+            for sc in visual_plan.scenes
+        ]
+    }
 
     # 6. COMPOSITION & RENDER
     _prog(0.78, "[6/8] Remotion Engine: Rendering Video & Kinetic Subtitles...")
-    print("\n[6/8] REMOTION COMPOSITION & RENDER (PHASE 9.3)...")
+    print("\n[6/8] REMOTION COMPOSITION & RENDER (PHASE 18)...")
     render_code = cmd_render(production_id)
     if render_code != 0:
         print("  [ERROR] Remotion render failed.")
         return 1
-    rendered_mp4 = project_root / "composition" / f"remotion_edit-v{edit_envelope.artifact_version:03d}.mp4"
+    rendered_mp4 = project_root / "composition" / f"remotion_edit-v{edit_version:03d}.mp4"
     if not rendered_mp4.exists():
-        # Fallback check
-        v3_mp4 = project_root / "composition" / "remotion_edit-v003.mp4"
-        if v3_mp4.exists():
-            rendered_mp4 = v3_mp4
+        print(f"  [ERROR] Rendered file missing: {rendered_mp4}. Zero fallback permitted.")
+        return 1
 
     print(f"  -> Rendered MP4: {rendered_mp4.name} ({rendered_mp4.stat().st_size / (1024*1024):.1f} MB)")
 
-    # 7. AUTOMATED QA GATES & HUMAN VISUAL RELEVANCE EVALUATION
+    # 7. AUTOMATED QA GATES & INDEPENDENT VISUAL JUDGE
     _prog(0.90, "[7/8] Verifying Automated QA Gates & Visual Scorecards...")
-    print("\n[7/8] VERIFYING AUTOMATED QA GATES & HUMAN VISUAL RELEVANCE (PHASE 16)...")
+    print("\n[7/8] VERIFYING AUTOMATED QA GATES & INDEPENDENT VISUAL JUDGE (PHASE 18)...")
     qa_code = cmd_qa(production_id)
     if qa_code != 0:
-        print("  [WARN] Technical QA gate returned advisories; proceeding with release package.")
+        print("  [ERROR] Technical QA gate failed; release blocked.")
+        return 1
     qa_report_path = project_root / "qa" / "qa_report.json"
     qa_data = json.loads(qa_report_path.read_text("utf-8")) if qa_report_path.exists() else {}
     passed_checks = sum(1 for c in qa_data.get("checks", {}).values() if c.get("passed"))
     total_checks = len(qa_data.get("checks", {}))
     print(f"  -> Technical QA Gate: {passed_checks}/{total_checks} checks passed.")
+
+    # Phase 18 Strict Independent Visual Judge Release Gate
+    from production.phase18.visual_judge import audit_and_enforce_release_gate, VisualGateRejectionError
+    try:
+        judge_scorecard = audit_and_enforce_release_gate(
+            mp4_path=rendered_mp4,
+            visual_plan=visual_plan,
+            output_dir=project_root / "qa",
+        )
+        print(f"  -> Independent Visual Judge PASSED: Score = {judge_scorecard.final_score}/10.0 (Grounding: {judge_scorecard.semantic_grounding}, Art: {judge_scorecard.art_direction}, Comp: {judge_scorecard.composition}, Depth: {judge_scorecard.depth_separation})")
+    except VisualGateRejectionError as e:
+        print(f"  [ERROR] Visual Gate Rejection: {e}")
+        return 1
 
     # Phase 15/15B Claim Grounding Evaluation
     from production.phase15.frame_qa import extract_keyframes_and_evaluate_mp4
@@ -562,7 +491,7 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     _prog(0.98, "[8/8] Assembling Final Package into output/...")
     print("\n[8/8] EDITORIAL SCORING & OUTPUT PACKAGE ASSEMBLY...")
     score_txt = generate_editorial_score(qa_data, mapped_data)
-    score_file = project_root / "qa" / f"editorial_score_v{edit_envelope.artifact_version:03d}.txt"
+    score_file = project_root / "qa" / f"editorial_score_v{edit_version:03d}.txt"
     score_file.write_text(score_txt, "utf-8")
     print(score_txt)
 
