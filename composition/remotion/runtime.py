@@ -17,6 +17,15 @@ COMPOSER_DIR = FACTORY_ROOT / "remotion-composer"
 _RENDER_TIMEOUT = 3600
 
 
+def find_free_ephemeral_port() -> int:
+    """Allocate a free ephemeral port safely from the operating system."""
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        s.listen(1)
+        return int(s.getsockname()[1])
+
+
 def declared_remotion_version() -> str | None:
     """Pinned Remotion version from package.json. No Node required to read it."""
     try:
@@ -119,37 +128,33 @@ class RemotionRuntime:
         workers = concurrency or int(os.getenv("RENDER_CONCURRENCY", "2"))
         
         server_process = None
+        media_port = None
         try:
-            import subprocess
+            import os
             import sys
+            import time
             workspace_root = FACTORY_ROOT
             server_script = workspace_root / "scripts" / "serve_public.py"
             assets_dir = public_dir / "assets"
             if server_script.is_file() and assets_dir.is_dir():
-                # Free port 8000 from any lingering zombie servers before starting
-                try:
-                    out = subprocess.check_output('netstat -ano | findstr :8000', shell=True, text=True, errors="ignore")
-                    for line in out.strip().splitlines():
-                        parts = line.split()
-                        if len(parts) >= 5 and "LISTENING" in parts:
-                            pid = parts[-1]
-                            if pid and pid != "0":
-                                subprocess.run(f"taskkill /F /PID {pid}", shell=True, capture_output=True)
-                except Exception:
-                    pass
-
+                media_port = find_free_ephemeral_port()
                 server_process = subprocess.Popen(
-                    [sys.executable, str(server_script), str(assets_dir)],
-                    cwd=str(workspace_root)
+                    [sys.executable, str(server_script), str(assets_dir), str(media_port)],
+                    cwd=str(workspace_root),
                 )
-                import time
-                time.sleep(1) # wait for server to start
+                time.sleep(0.5)
+
+            render_env = dict(os.environ)
+            if media_port is not None:
+                render_env["MEDIA_SERVER_PORT"] = str(media_port)
+                render_env["REMOTION_MEDIA_PORT"] = str(media_port)
 
             subprocess.run(
                 [*node, "scripts/render.mjs", "--props", str(props_path), "--output", str(output_path), "--public-dir", "public"]
                 + (["--manifest", str(manifest_path)] if manifest_path else [])
                 + ["--concurrency", str(workers)],
                 cwd=self.composer_dir, check=True, capture_output=True, encoding="utf-8", timeout=_RENDER_TIMEOUT,
+                env=render_env,
             )
         except subprocess.CalledProcessError as exc:
             err_msg = (exc.stderr or exc.stdout or str(exc))[-1500:]
@@ -157,12 +162,16 @@ class RemotionRuntime:
         except (OSError, subprocess.SubprocessError) as exc:
             return RenderResult(status="blocked", code="RENDER_FAILED", message=f"Remotion render failed: {exc}")
         finally:
-            if server_process:
+            if server_process is not None:
                 try:
-                    server_process.kill()
+                    server_process.terminate()
                     server_process.wait(timeout=2)
                 except Exception:
-                    pass
+                    try:
+                        server_process.kill()
+                        server_process.wait(timeout=1)
+                    except Exception:
+                        pass
         manifest = None
         if manifest_path and Path(manifest_path).is_file():
             manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))

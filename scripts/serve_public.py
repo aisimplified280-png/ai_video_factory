@@ -3,7 +3,7 @@ import socketserver
 import sys
 import os
 
-PORT = 8000
+PORT = int(sys.argv[2]) if len(sys.argv) > 2 else int(os.environ.get("MEDIA_SERVER_PORT", "8000"))
 DIRECTORY = sys.argv[1] if len(sys.argv) > 1 else "."
 
 class CORSRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -19,5 +19,6 @@ class CORSRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 socketserver.TCPServer.allow_reuse_address = True
 with socketserver.TCPServer(("", PORT), CORSRequestHandler) as httpd:
-    print(f"Serving {DIRECTORY} at http://127.0.0.1:{PORT}")
+    print(f"Serving {DIRECTORY} at http://127.0.0.1:{PORT}", flush=True)
     httpd.serve_forever()
+
