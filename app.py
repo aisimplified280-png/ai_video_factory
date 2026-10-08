@@ -65,7 +65,8 @@ def _run_job(job_id: str, topic: str, style: str, notes: str, duration: float = 
             topic=topic,
             production=prod_id,
             provider="all",
-            freshness="7d"
+            freshness="7d",
+            duration=duration,
         )
 
         exit_code = cmd_produce(args, progress_cb=prog)

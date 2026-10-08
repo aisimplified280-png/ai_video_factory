@@ -27,7 +27,7 @@ const DEV_PLACEHOLDER = {
     profile: 'profiles/youtube_short.json',
     resolution: {width: 1080, height: 1920},
     fps: 30,
-    duration_constraints: {minimum_seconds: 10, maximum_seconds: 60},
+    duration_constraints: {minimum_seconds: 10, maximum_seconds: 180},
     safe_zones: {caption: 'lower_center_safe', cta: 'center_safe', brand: 'bottom_safe'},
   },
   theme: {

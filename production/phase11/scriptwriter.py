@@ -202,14 +202,131 @@ Output MUST be a JSON object with this exact schema:
     return None
 
 
+def _generate_extended_duration_script(
+    topic: str,
+    research_pack: ResearchPack,
+    channel_name: str = "AI Simplified Lab",
+    target_duration: float = 120.0,
+) -> ScriptArtifact:
+    """Generate an extended YouTube Short (90s - 180s / up to 3 mins) with multi-scene technical depth."""
+    topic_clean = topic.strip()
+    topic_lower = topic_clean.lower()
+    sections: list[ScriptSection] = []
+
+    is_gen_ai = any(k in topic_lower for k in ("gen ai", "generative ai", "generative", "foundation model", "llm"))
+
+    if is_gen_ai:
+        scene_defs = [
+            ("sec_01", "scene_01", "hook",
+             "What is Generative AI, and how does it actually create brand new text, code, and images out of thin air?",
+             ["GENERATIVE", "CREATE", "IMAGES"], "emerge", "Generative AI Core Concept"),
+            ("sec_02", "scene_02", "lead_story",
+             "Unlike classical AI that only classifies existing data, generative models learn probability distributions to synthesize entirely novel outputs.",
+             ["CLASSIFIES", "PROBABILITY", "SYNTHESIZE"], "reveal", "Synthesis vs Classification"),
+            ("sec_03", "scene_03", "mechanism",
+             "At the architectural core is the Transformer, using multi-head self-attention to calculate mathematical relationships across entire sequences simultaneously.",
+             ["TRANSFORMER", "SELF_ATTENTION", "SEQUENCES"], "flow", "Transformer Attention Matrix"),
+            ("sec_04", "scene_04", "pipeline",
+             "Input prompts are tokenized into numerical IDs and mapped into dense vector embeddings within a continuous high-dimensional semantic space.",
+             ["TOKENIZED", "EMBEDDINGS", "VECTOR_SPACE"], "connect", "Vector Embedding Space"),
+            ("sec_05", "scene_05", "escalation",
+             "Generation proceeds by predicting probability logits for the next token, filtered through temperature parameters to balance creative variety with logical coherence.",
+             ["PREDICTING", "LOGITS", "TEMPERATURE"], "dramatic_cut", "Token Sampling & Temperature"),
+            ("sec_06", "scene_06", "mechanism",
+             "Beyond text, diffusion models power generative image creation by iteratively reversing gaussian noise through deep convolutional U-Net denoisers.",
+             ["DIFFUSION", "DENOISING", "GAUSSIAN"], "transform", "Diffusion Denoising Process"),
+            ("sec_07", "scene_07", "implication",
+             "Training frontier foundation models requires clusters of specialized tensor accelerators processing quadrillions of floating-point operations every second.",
+             ["CLUSTERS", "ACCELERATORS", "FLOPS"], "scale_up", "Compute & GPU Clusters"),
+            ("sec_08", "scene_08", "mechanism",
+             "In production architectures, generative models connect to vector databases via retrieval-augmented generation to ground answers in verified external truth.",
+             ["RETRIEVAL", "DATABASES", "GROUNDING"], "connect", "RAG & Vector Grounding"),
+            ("sec_09", "scene_09", "implication",
+             "The newest frontier introduces reasoning models that execute test-time compute to verify logic and solve complex multi-step problems autonomously.",
+             ["REASONING", "TEST_TIME", "AUTONOMOUS"], "focus", "Reasoning & Agent Architecture"),
+            ("sec_10", "scene_10", "cta",
+             f"This is fundamentally rewiring modern software development. Subscribe to {channel_name} for daily frontier AI architecture breakdowns.",
+             ["REWIRING", "SUBSCRIBE", "BREAKDOWNS"], "branded_callout", channel_name),
+        ]
+    else:
+        hook_story, stories = select_stories_for_script(research_pack, ScriptFormat.LONG_FORM)
+        scene_defs = [
+            ("sec_01", "scene_01", "hook",
+             f"Something extraordinary is happening in {topic_clean}, and engineers are rethinking the entire technology stack.",
+             ["EXTRAORDINARY", "RETHINKING", "STACK"], "emerge", topic_clean),
+            ("sec_02", "scene_02", "lead_story",
+             f"The latest engineering breakthroughs allow {topic_clean} systems to operate with unprecedented speed and precision.",
+             ["BREAKTHROUGHS", "PRECISION", "SPEED"], "reveal", f"{topic_clean} Advance"),
+            ("sec_03", "scene_03", "mechanism",
+             "Under the hood, specialized algorithmic pipelines eliminate legacy bottlenecks and optimize throughput across production clusters.",
+             ["ALGORITHMIC", "PIPELINES", "THROUGHPUT"], "flow", "Algorithmic Pipeline"),
+            ("sec_04", "scene_04", "pipeline",
+             "Data streams through high-concurrency ingestion layers that normalize and route inputs directly to target processing nodes.",
+             ["HIGH_CONCURRENCY", "NORMALIZATION", "ROUTING"], "connect", "Ingestion Fabric"),
+            ("sec_05", "scene_05", "escalation",
+             "Instead of fragile single-point architectures, modern deployments adapt dynamically to fluctuating loads and fault conditions.",
+             ["DYNAMIC", "DEPLOYMENTS", "FAULT_TOLERANT"], "dramatic_cut", "Adaptive Resilience"),
+            ("sec_06", "scene_06", "mechanism",
+             "Deep telemetry layers monitor internal states, ensuring low latency and deterministic execution in mission-critical environments.",
+             ["TELEMETRY", "LOW_LATENCY", "DETERMINISTIC"], "focus", "Runtime Telemetry"),
+            ("sec_07", "scene_07", "implication",
+             "This transition unlocks unprecedented computational efficiency, reducing operational overhead by orders of magnitude.",
+             ["EFFICIENCY", "REDUCING", "OVERHEAD"], "scale_up", "Operational Scale"),
+            ("sec_08", "scene_08", "mechanism",
+             "Integrated validation frameworks continuously inspect outputs, preventing silent regressions and guaranteeing system safety.",
+             ["VALIDATION", "REGRESSIONS", "SAFETY"], "connect", "Verification Mesh"),
+            ("sec_09", "scene_09", "implication",
+             "As frontier architectures mature, autonomous workflows are replacing static manual tooling across enterprise infrastructure.",
+             ["MATURE", "AUTONOMOUS", "WORKFLOWS"], "transform", "Autonomous Shift"),
+            ("sec_10", "scene_10", "cta",
+             f"And this is just the beginning of the platform shift. Subscribe to {channel_name} for daily deep-dive technical briefings.",
+             ["PLATFORM_SHIFT", "SUBSCRIBE", "BRIEFINGS"], "branded_callout", channel_name),
+        ]
+
+    for sec_id, sc_id, role, text, emphasis, intent, subj in scene_defs:
+        dur = _estimate_duration(text)
+        sections.append(ScriptSection(
+            section_id=sec_id,
+            scene_id=sc_id,
+            role=role,
+            spoken_text=text,
+            estimated_duration_seconds=dur,
+            word_count=len(text.split()),
+            emphasis_words=emphasis,
+            visual_intent=intent,
+            primary_subject=subj,
+            retention_trigger="fast_pacing",
+        ))
+
+    total_words = sum(s.word_count for s in sections)
+    total_dur = sum(s.estimated_duration_seconds for s in sections)
+    scoring = score_script(sections)
+
+    return ScriptArtifact(
+        topic=topic_clean,
+        format=ScriptFormat.SHORTS,
+        hook_story_id="story_01",
+        sections=sections,
+        total_duration_seconds=round(total_dur, 1),
+        total_word_count=total_words,
+        scoring=scoring,
+        grounded_claims=[s.headline for s in (research_pack.stories or [])[:3]],
+        channel_name=channel_name,
+    )
+
+
 def generate_shorts_script(
     topic: str,
     research_pack: ResearchPack,
     channel_name: str = "AI Simplified Lab",
+    target_duration: float = 30.0,
 ) -> ScriptArtifact:
-    """Generate a high-retention, 35-50s YouTube Shorts script in AI Simplified Lab voice."""
+    """Generate a high-retention YouTube Shorts script in AI Simplified Lab voice (supports up to 180s / 3 mins)."""
+    if target_duration >= 90.0:
+        return _generate_extended_duration_script(topic, research_pack, channel_name, target_duration=target_duration)
+
     # 1. Attempt authentic LLM synthesis first
-    llm_script = _llm_synthesize_shorts_script(topic, research_pack, channel_name)
+    llm_script = _llm_synthesize_shorts_script(topic, research_pack, channel_name, target_duration=target_duration)
     if llm_script:
         return llm_script
 

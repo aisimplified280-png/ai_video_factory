@@ -245,7 +245,7 @@ def sync_authoritative_artifacts(
             "profile": "profiles/youtube_short.json",
             "resolution": {"width": 1080, "height": 1920},
             "fps": 30,
-            "duration_constraints": {"minimum_seconds": 15, "maximum_seconds": 60},
+            "duration_constraints": {"minimum_seconds": 10, "maximum_seconds": 180},
             "safe_zones": {
                 "caption": {"top": 1400, "bottom": 1650, "left": 100, "right": 980},
                 "cta": {"top": 1650, "bottom": 1850, "left": 100, "right": 980},

@@ -78,8 +78,14 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
             except Exception:
                 pass
 
+    import uuid
     topic = args.topic.strip()
-    production_id = args.production
+    target_duration = getattr(args, "duration", 0.0) or 0.0
+    raw_prod = getattr(args, "production", None)
+    if raw_prod and raw_prod != "proj_3e27bd7a":
+        production_id = raw_prod
+    else:
+        production_id = f"proj_{uuid.uuid4().hex[:8]}"
     topic_slug = _slugify(topic)
     project_root = PROJECTS_DIR / production_id
     project_root.mkdir(parents=True, exist_ok=True)
@@ -115,7 +121,10 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     # 2. SCRIPT INTELLIGENCE
     _prog(0.25, "[2/8] Synthesizing Natural Script & Voiceover (Phase 11)...")
     print("\n[2/8] SYNTHESIZING NATURAL SCRIPT (PHASE 11)...")
-    script_shorts = generate_shorts_script(topic, research_pack)
+    if target_duration > 0:
+        script_shorts = generate_shorts_script(topic, research_pack, target_duration=target_duration)
+    else:
+        script_shorts = generate_shorts_script(topic, research_pack)
     script_longform = generate_longform_script(topic, research_pack)
 
     print(f"  -> Generated {len(script_shorts.sections)} sections ({script_shorts.total_word_count} words, ~{script_shorts.total_duration_seconds:.1f}s)")
@@ -497,37 +506,52 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     score_file.write_text(score_txt, "utf-8")
     print(score_txt)
 
-    # Assemble final release package into output/<topic_slug>/
-    release_dir = OUTPUT_DIR / topic_slug
+    # Assemble final release package into output/<topic_slug>_<YYYYMMDD_HHMMSS>/
+    now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    release_dir = OUTPUT_DIR / f"{topic_slug}_{now_str}"
     release_dir.mkdir(parents=True, exist_ok=True)
+    canonical_dir = OUTPUT_DIR / topic_slug
+    canonical_dir.mkdir(parents=True, exist_ok=True)
 
-    dest_mp4 = release_dir / "video.mp4"
+    dest_mp4 = release_dir / f"{topic_slug}_{now_str}.mp4"
     shutil.copy2(rendered_mp4, dest_mp4)
+    shutil.copy2(rendered_mp4, release_dir / "video.mp4")
     shutil.copy2(rendered_mp4, release_dir / "final_video.mp4")
+    shutil.copy2(rendered_mp4, canonical_dir / "video.mp4")
+    shutil.copy2(rendered_mp4, canonical_dir / "final_video.mp4")
+
     if contact_sheet.exists():
         shutil.copy2(contact_sheet, release_dir / "contact_sheet.png")
         shutil.copy2(contact_sheet, release_dir / "preview.png")
+        shutil.copy2(contact_sheet, canonical_dir / "contact_sheet.png")
+        shutil.copy2(contact_sheet, canonical_dir / "preview.png")
     qa_claim_file = qa_frames_dir / "claim_visual_qa_report.json"
     if qa_claim_file.exists():
         shutil.copy2(qa_claim_file, release_dir / "claim_visual_qa_report.json")
+        shutil.copy2(qa_claim_file, canonical_dir / "claim_visual_qa_report.json")
     human_qa_file = qa_frames_dir / "human_visual_qa_report.json"
     if human_qa_file.exists():
         shutil.copy2(human_qa_file, release_dir / "human_visual_qa_report.json")
+        shutil.copy2(human_qa_file, canonical_dir / "human_visual_qa_report.json")
     if bible_json.exists():
         shutil.copy2(bible_json, release_dir / "visual_style_bible.json")
+        shutil.copy2(bible_json, canonical_dir / "visual_style_bible.json")
     vl_qa_file = qa_frames_dir / "visual_language_qa_report.json"
     if vl_qa_file.exists():
         shutil.copy2(vl_qa_file, release_dir / "visual_language_qa_report.json")
+        shutil.copy2(vl_qa_file, canonical_dir / "visual_language_qa_report.json")
 
-    (release_dir / "title.txt").write_text(topic_package.selected_title, "utf-8")
-    (release_dir / "description.txt").write_text(topic_package.description, "utf-8")
-    (release_dir / "thumbnail_text.txt").write_text(topic_package.thumbnail_text, "utf-8")
-    (release_dir / "thumbnail_prompt.txt").write_text(topic_package.thumbnail_prompt, "utf-8")
+    for d in (release_dir, canonical_dir):
+        (d / "title.txt").write_text(topic_package.selected_title, "utf-8")
+        (d / "description.txt").write_text(topic_package.description, "utf-8")
+        (d / "thumbnail_text.txt").write_text(topic_package.thumbnail_text, "utf-8")
+        (d / "thumbnail_prompt.txt").write_text(topic_package.thumbnail_prompt, "utf-8")
     vo_script_content = "\n\n".join(
         f"[{sec.get('role', 'SCENE').upper()}]: {sec.get('spoken_text', '')}"
         for sec in canonical_script.get("sections", [])
     )
     (release_dir / "vo_script.txt").write_text(vo_script_content, "utf-8")
+    (canonical_dir / "vo_script.txt").write_text(vo_script_content, "utf-8")
 
     factory_manifest = {
         "topic": topic,
@@ -637,7 +661,8 @@ def main():
     # produce
     p_prod = subparsers.add_parser("produce", help="Run autonomous video production end-to-end")
     p_prod.add_argument("--topic", required=True, help="Video topic to research, script, package, and render")
-    p_prod.add_argument("--production", default="proj_3e27bd7a", help="Production ID (default: proj_3e27bd7a)")
+    p_prod.add_argument("--production", default=None, help="Production ID (default: auto-generated unique ID)")
+    p_prod.add_argument("--duration", type=float, default=0.0, help="Target duration in seconds (e.g. 120 for 2 mins, up to 180)")
     p_prod.add_argument("--provider", default="multi", choices=["all", "multi", "google_news", "official", "reddit", "brave"])
     p_prod.add_argument("--freshness", default="7d", choices=["1d", "7d", "30d", "1y"])
 
