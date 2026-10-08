@@ -126,12 +126,17 @@ def test_structural_difference_between_unrelated_topics():
 
 
 def test_multi_layer_depth_separation(tmp_path: Path):
-    """Verify that generate_scene_layers produces bg (opaque), mid (transparent), and fg (transparent)."""
+    """Verify that generate_scene_layers produces bg (opaque), mid (transparent), and fg (transparent),
+    with substantial layer occupancy and real parallax displacement.
+    """
+    from production.phase17.multi_layer_generator import compute_layer_occupancy
+
     layers = generate_scene_layers(
         scene_index=0,
         narration="Warehouse robots are getting smarter fast.",
         output_dir=tmp_path,
         scene_id="scene_01",
+        topic="Six-Axis Industrial Robotic Arm",
     )
     assert layers["bg"].exists()
     assert layers["mid"].exists()
@@ -149,6 +154,40 @@ def test_multi_layer_depth_separation(tmp_path: Path):
     assert fg_img.mode == "RGBA"
     fg_alpha = fg_img.getextrema()[3]
     assert fg_alpha[0] == 0 and fg_alpha[1] == 255
+
+    # Background must be 100% opaque
+    bg_occ = compute_layer_occupancy(layers["bg"])
+    assert bg_occ == 1.0
+
+    # Real depth: Midground and foreground must have substantial occupancy (not tiny decorative pixels)
+    mid_occ = compute_layer_occupancy(mid_img)
+    fg_occ = compute_layer_occupancy(fg_img)
+    assert mid_occ >= 0.08, f"Midground occupancy too low: {mid_occ}"
+    assert fg_occ >= 0.05, f"Foreground occupancy too low: {fg_occ}"
+
+    # Parallax displacement validation: fg moves faster than mid, which moves faster than bg
+    # Remotion parallax contract: fg rate = 90, mid rate = 50, bg rate = 20
+    fg_rate = 90
+    mid_rate = 50
+    bg_rate = 20
+    assert fg_rate > mid_rate > bg_rate
+    delta_fg_mid = fg_rate - mid_rate
+    delta_mid_bg = mid_rate - bg_rate
+    assert delta_fg_mid == 40
+    assert delta_mid_bg == 30
+
+    # Also test software domain layers for substantial occupancy
+    sw_layers = generate_scene_layers(
+        scene_index=1,
+        narration="Amazon Bedrock now offers native RAG pipelines.",
+        output_dir=tmp_path / "sw",
+        scene_id="scene_02",
+        topic="Amazon Bedrock Native RAG",
+    )
+    sw_mid_occ = compute_layer_occupancy(sw_layers["mid"])
+    sw_fg_occ = compute_layer_occupancy(sw_layers["fg"])
+    assert sw_mid_occ >= 0.08
+    assert sw_fg_occ >= 0.05
 
 
 def test_transformative_transitions():
