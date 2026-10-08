@@ -227,9 +227,24 @@ def main() -> int:
         sheet.paste(thumb, (index * 180, 0))
     sheet.save(workdir / "contact_sheet.png")
 
-    # Verify CTA presence empirically from the final frame (frame_100.png)
+    # Verify CTA presence empirically from the decoded final frame (frame_100.png)
     final_frame_path = frames_dir / "frame_100.png"
-    cta_present = final_frame_path.exists() and final_frame_path.stat().st_size > 0
+    cta_present = False
+    if final_frame_path.exists() and final_frame_path.stat().st_size > 0:
+        try:
+            im = Image.open(final_frame_path).convert("RGB")
+            iw, ih = im.size
+            # Inspect central & lower area where CTA brand crest and credentials reside
+            cta_zone = im.crop((int(iw * 0.15), int(ih * 0.30), int(iw * 0.85), int(ih * 0.85)))
+            from PIL import ImageFilter, ImageStat
+            edges = cta_zone.convert("L").filter(ImageFilter.FIND_EDGES)
+            edge_mean = ImageStat.Stat(edges).mean[0]
+            stat = ImageStat.Stat(cta_zone)
+            has_dynamic_contrast = any(mx - mn > 35 for mn, mx in stat.extrema)
+            # True CTA requires both edge activity (text/crest) and dynamic color contrast
+            cta_present = edge_mean > 0.8 and has_dynamic_contrast
+        except Exception:
+            cta_present = False
 
     # 14-15. Render report + worker result.
     environment = {

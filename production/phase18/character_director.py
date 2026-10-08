@@ -38,7 +38,8 @@ class CharacterSpec(BaseModel):
     target: str = "scene telemetry"
     scale: float = 1.0          # 0.7 (distant) to 1.3 (hero closeup)
     depth_plane: str = "midground"  # "midground" (z=15) or "foreground" (z=25)
-    position: dict[str, float] = Field(default_factory=lambda: {"x": 540.0, "y": 960.0}) # Canvas coordinates (1080x1920)
+    position: dict[str, float] = Field(default_factory=lambda: {"x": 540.0, "y": 1050.0}) # Canvas coordinates (1080x1920)
+    target_anchor: Optional[dict[str, float]] = None # Screen target coordinates (x, y)
     motion: MascotMotion = MascotMotion.FLOAT
     emotion: str = "focused_curious"
     tool_held: Optional[str] = None  # e.g., "data_tablet", "laser_caliper", "vector_token", "wrench"
@@ -55,13 +56,16 @@ def direct_scene_character(
     action: str,
     topic: str,
 ) -> CharacterSpec:
-    """Direct contextual character presence and behavior aligned with narrative role."""
+    """Direct contextual character presence and behavior aligned with narrative role.
+    Anchors mascot to dedicated empty zones (y = 1040..1060) to eliminate collisions
+    with primary cards, gauges, and terminal windows.
+    """
     topic_lower = topic.lower()
     subj_lower = subject.lower()
     act_lower = action.lower()
     comb = f"{topic_lower} {subj_lower} {act_lower}"
 
-    is_cta = (scene_idx == total_scenes - 1) or narrative_role.lower() == "cta"
+    is_cta = (scene_idx == total_scenes - 1) or narrative_role.lower() in ("cta", "outro")
 
     if is_cta:
         return CharacterSpec(
@@ -71,22 +75,24 @@ def direct_scene_character(
             target="AI Simplified Lab emblem",
             scale=1.05,
             depth_plane="midground",
-            position={"x": 540.0, "y": 1040.0},
+            position={"x": 540.0, "y": 1050.0},
+            target_anchor={"x": 540.0, "y": 710.0},
             motion=MascotMotion.FLOAT,
             emotion="confident_inviting",
             tool_held="briefing_tablet",
         )
 
-    # 1. Hook (Scene 0) -> Scout positioned beside the hero metric card pointing at the callout
+    # 1. Hook (Scene 0) -> Explorer positioned below hero metric card pointing up at callout
     if scene_idx == 0 or narrative_role.lower() == "hook":
         return CharacterSpec(
             role=MascotRole.EXPLORER,
-            pose="pointing_at_metric",
-            action="pointing directly at core latency benchmark",
+            pose="pointing_upward",
+            action="pointing directly at core production benchmark",
             target=subject,
             scale=1.0,
             depth_plane="midground",
-            position={"x": 780.0, "y": 740.0},
+            position={"x": 540.0, "y": 1050.0},
+            target_anchor={"x": 540.0, "y": 720.0},
             motion=MascotMotion.FLOAT,
             emotion="intense_curious",
             tool_held="optical_scanner",
@@ -101,28 +107,30 @@ def direct_scene_character(
             target=subject,
             scale=0.95,
             depth_plane="midground",
-            position={"x": 540.0, "y": 980.0},
+            position={"x": 540.0, "y": 1050.0},
+            target_anchor={"x": 540.0, "y": 730.0},
             motion=MascotMotion.INTERACT,
             emotion="analytical_focused",
             tool_held="vector_token",
         )
 
-    # 3. Escalation / Comparison (Scene 2) -> Analyst on the optimized side highlighting delta
+    # 3. Escalation / Comparison (Scene 2) -> Analyst below the optimized side highlighting delta
     if scene_idx == 2 or narrative_role.lower() == "escalation":
         return CharacterSpec(
             role=MascotRole.ANALYST,
             pose="highlighting_optimization",
-            action="benchmarking 10x throughput against legacy scan",
+            action="benchmarking pipeline throughput against legacy scan",
             target="optimized cluster",
             scale=0.95,
             depth_plane="midground",
-            position={"x": 780.0, "y": 980.0},
+            position={"x": 720.0, "y": 1040.0},
+            target_anchor={"x": 720.0, "y": 730.0},
             motion=MascotMotion.STRIDE,
             emotion="impressed_authoritative",
             tool_held="quantum_stylus",
         )
 
-    # 4. Implication / Scale (Scene 3) -> Systems analyst beside the terminal window
+    # 4. Implication / Scale (Scene 3) -> Systems analyst below terminal window
     if scene_idx == 3 or narrative_role.lower() in ("implication", "scale"):
         return CharacterSpec(
             role=MascotRole.ANALYST,
@@ -131,13 +139,14 @@ def direct_scene_character(
             target="production telemetry",
             scale=0.92,
             depth_plane="midground",
-            position={"x": 820.0, "y": 780.0},
+            position={"x": 540.0, "y": 1040.0},
+            target_anchor={"x": 540.0, "y": 740.0},
             motion=MascotMotion.FLOAT,
             emotion="analytical_focused",
             tool_held="telemetry_hud_panel",
         )
 
-    # Default -> Contextual Guide
+    # Default -> Contextual Guide in dedicated lower zone
     return CharacterSpec(
         role=MascotRole.GUIDE,
         pose="balanced_observer",
@@ -145,7 +154,8 @@ def direct_scene_character(
         target=subject,
         scale=1.0,
         depth_plane="midground",
-        position={"x": 540.0, "y": 960.0},
+        position={"x": 540.0, "y": 1050.0},
+        target_anchor={"x": 540.0, "y": 720.0},
         motion=MascotMotion.FLOAT,
         emotion="neutral_intelligent",
         tool_held=None,

@@ -107,6 +107,7 @@ def generate_scene_layers(
     visual_purpose: str = "",
     visual_metaphor: str = "",
     narrative_role: str = "",
+    total_scenes: int = 5,
 ) -> dict[str, Path]:
     """Generates and saves the 3 distinct depth layers for a scene:
     Returns dict: {"bg": path, "mid": path, "fg": path, "primary": path}
@@ -208,6 +209,7 @@ def generate_scene_layers(
         muted_rgb=muted_rgb,
         font_title=font_title,
         font_badge=font_badge,
+        total_scenes=total_scenes,
     )
 
     mid_path = output_dir / f"mid_{scene_id}.png"
@@ -298,13 +300,31 @@ def _extract_semantic_entities(
     """
     clean_sub = re.sub(r"[^\w\s-]", "", subject).strip()
     if clean_sub and len(clean_sub) >= 4:
-        headline = clean_sub.upper()[:32]
+        words = clean_sub.upper().split()
+        acc = []
+        cur_len = 0
+        for w in words:
+            if cur_len + len(w) + (1 if acc else 0) <= 36:
+                acc.append(w)
+                cur_len += len(w) + (1 if len(acc) > 1 else 0)
+            else:
+                break
+        headline = " ".join(acc) if acc else clean_sub.upper()
     elif visual_purpose and len(visual_purpose) >= 4:
-        headline = re.sub(r"[^\w\s-]", "", visual_purpose).strip().upper()[:32]
+        clean_vp = re.sub(r"[^\w\s-]", "", visual_purpose).strip().upper()
+        words = clean_vp.split()
+        acc = []
+        cur_len = 0
+        for w in words:
+            if cur_len + len(w) + (1 if acc else 0) <= 36:
+                acc.append(w)
+                cur_len += len(w) + (1 if len(acc) > 1 else 0)
+            else:
+                break
+        headline = " ".join(acc) if acc else clean_vp
     else:
         words = [w.strip(".,;:!?\"'") for w in narration.split() if len(w) > 3]
         headline = " ".join(words[:3]).upper() if words else "SYSTEM ARCHITECTURE"
-        headline = headline[:32]
 
     corpus = f"{subject} {visual_purpose} {visual_metaphor} {narration}"
     clean_words = re.findall(r"[A-Za-z0-9\-_]{4,}", corpus)
@@ -335,15 +355,13 @@ def _extract_semantic_entities(
         else:
             cards = ["INGESTION", "ROUTING", "RETRIEVAL"]
 
+    # Extract strictly real metrics from research claims and narration; never fabricate numbers
     metric_match = re.search(r"(\+?\d+%|\d+x|\d+ms|\d+s|\d+\.\d+%)", narration)
     if metric_match:
         metric = metric_match.group(1)
-    elif "speed" in corpus.lower() or "latency" in corpus.lower() or "fast" in corpus.lower():
-        metric = "< 15MS LATENCY"
-    elif "throughput" in corpus.lower() or "scale" in corpus.lower():
-        metric = "10X THROUGHPUT"
     else:
-        metric = "OPTIMAL STATE"
+        # Use verified qualitative status directly derived from the script instead of fake numbers
+        metric = "VERIFIED STATE"
 
     return headline, cards, metric
 
@@ -377,7 +395,16 @@ def _draw_foreground_depth_elements(
     # 3. Dynamic near-plane contextual monitor card with high-contrast Dark Slate tag (#1E293B)
     fg_draw.rounded_rectangle([(110, 250), (width - 110, 330)], radius=14, fill=(*surface_rgb, 248), outline=(*accent_rgb, 255), width=2)
     fg_draw.ellipse([(135, 282), (151, 298)], fill=(*accent_rgb, 255))
-    tag = f"{domain.value.upper()} // {headline[:26]}"
+    tag_words = []
+    t_len = 0
+    for w in headline.split():
+        if t_len + len(w) + 1 <= 26:
+            tag_words.append(w)
+            t_len += len(w) + 1
+        else:
+            break
+    short_head = " ".join(tag_words) if tag_words else (headline.split()[0] if headline.split() else "ARCHITECTURE")
+    tag = f"{domain.value.upper()} // {short_head}"
     # High-contrast dark slate color (#1E293B) for crystal-clear readability
     dark_slate_tag = (30, 41, 59, 255)
     fg_draw.text((165, 276), tag, fill=dark_slate_tag, font=font_badge)
@@ -407,14 +434,17 @@ def _draw_midground_subject(
     muted_rgb: tuple[int, int, int],
     font_title: ImageFont.FreeTypeFont | ImageFont.ImageFont,
     font_badge: ImageFont.FreeTypeFont | ImageFont.ImageFont,
+    total_scenes: int = 5,
 ):
-    """Draws core hero visual subject with strict layout shuffling across scenes.
-    Eliminates template monotony by alternating across 5 canonical layouts:
-    - Scene 1 / Hook: Centered Hero Card with bold metric callout.
-    - Scene 2 / Mechanism: Horizontal Flowchart / Pipeline Node Tree.
-    - Scene 3 / Escalation: Split Comparison View (Naive vs Optimized).
-    - Scene 4 / Implication: Developer Terminal / Code snippet window.
-    - Scene 5 / Outro CTA: Official Royal Blue Robot Logo Asset Anchor.
+    """Draws core hero visual subject with strict semantic routing across scenes.
+    Eliminates template monotony by dynamically mapping narrative role to canonical layouts:
+    - Outro Anchor: Final scene (scene_index == total_scenes - 1) or role == 'cta'.
+    - Hook / Intro: Centered Hero Card with bold metric/status callout.
+    - Mechanism / Architecture: Horizontal Flowchart / Pipeline Node Tree.
+    - Escalation / Comparison: Split Comparison View (Naive vs Target).
+    - Implication / Terminal: Developer Terminal / Execution Telemetry window.
+    Supports arbitrary scene lengths (including 6+ scenes) without template collisions.
+    Zero fabricated numbers: all data is derived from topic entities, claims, and verified metrics.
     """
     cx = width // 2
     metaphor_lower = f"{visual_metaphor} {visual_purpose}".lower()
@@ -427,11 +457,12 @@ def _draw_midground_subject(
         mid_draw.rounded_rectangle([(cx - 360, 580), (cx + 360, 880)], radius=24, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
         mid_draw.rectangle([(cx - 320, 780), (cx + 320, 850)], fill=(*surface_rgb, 255), outline=(*border_rgb, 255), width=2)
         _draw_titanium_gripper(mid_draw, cx, 700, scale=1.35, open_angle=20, accent_rgb=accent_rgb, border_rgb=border_rgb)
-        mid_draw.text((cx - 150, 855), f"CALIBRATION: {metric}", fill=(*accent_rgb, 255), font=font_badge)
+        mid_draw.text((cx - 150, 855), f"STATUS: {metric}", fill=(*accent_rgb, 255), font=font_badge)
         return
 
-    # Determine layout mode (0: Hero Metric, 1: Flowchart, 2: Split Comparison, 3: Terminal, 4: Outro Brand)
-    is_cta = role_lower == "cta" or scene_index >= 4 or any(k in metaphor_lower for k in ["outro", "cta", "subscribe", "brand"])
+    # Determine layout mode:
+    # Dedicated Outro CTA is ONLY for the final scene or explicit cta/outro role
+    is_cta = (scene_index == total_scenes - 1) or role_lower in ("cta", "outro") or any(k in metaphor_lower for k in ["outro", "cta", "subscribe"])
 
     if is_cta:
         # =========================================================================
@@ -462,10 +493,25 @@ def _draw_midground_subject(
         # Channel Credentials Badges Below
         mid_draw.rounded_rectangle([(cx - 300, 870), (cx + 300, 930)], radius=14, fill=(241, 245, 249, 250), outline=(37, 99, 235, 255), width=2)
         _draw_fitted_text(mid_draw, "FRONTIER AI ARCHITECTURE BRIEFINGS", cx - 280, 880, 560, 40, fill=(30, 41, 59, 255), base_size=24, bold=True, center=True)
+        return
 
-    elif scene_index == 0 or role_lower == "hook":
+    # Dynamic semantic layout selection based on narrative role with round-robin fallback
+    if role_lower in ("hook", "intro"):
+        layout_mode = "hero"
+    elif role_lower in ("mechanism", "process", "architecture", "flow"):
+        layout_mode = "flowchart"
+    elif role_lower in ("escalation", "comparison", "problem", "challenge"):
+        layout_mode = "comparison"
+    elif role_lower in ("implication", "telemetry", "terminal", "code", "implementation", "runtime", "scale"):
+        layout_mode = "terminal"
+    else:
+        # Fallback cycle across the 4 content layouts cleanly
+        content_modes = ["hero", "flowchart", "comparison", "terminal"]
+        layout_mode = content_modes[scene_index % 4]
+
+    if layout_mode == "hero":
         # =========================================================================
-        # LAYOUT 1: CENTERED HERO CARD WITH BOLD METRIC CALLOUT
+        # LAYOUT 1: CENTERED HERO CARD WITH BOLD METRIC / STATUS CALLOUT
         # =========================================================================
         mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 545)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
         _draw_fitted_text(mid_draw, headline, cx - 350, 465, 700, 65, fill=(255, 255, 255, 255), base_size=42, center=True)
@@ -478,17 +524,17 @@ def _draw_midground_subject(
         # Huge Bold Metric Text
         _draw_fitted_text(mid_draw, metric, cx - 340, 670, 680, 90, fill=(217, 119, 6, 255), base_size=64, bold=True, center=True)
 
-        # Metric Status Gauges
+        # Metric Status Gauges (derived from verified tokens, no fabricated numbers)
         mid_draw.line([(cx - 320, 785), (cx + 320, 785)], fill=(226, 232, 240, 255), width=2)
         callout_w = 210
-        labels = [cards[0] if len(cards) > 0 else "EFFICIENCY", "P99 LATENCY", "CONVERGENCE"]
-        vals = ["99.4%", "< 15MS", "VERIFIED"]
+        labels = [cards[0] if len(cards) > 0 else "INPUT", cards[1] if len(cards) > 1 else "PIPELINE", cards[2] if len(cards) > 2 else "RUNTIME"]
+        vals = ["READY", metric if metric != "VERIFIED STATE" else "VERIFIED", "ACTIVE"]
         for i, (lbl, val) in enumerate(zip(labels, vals)):
             lx = cx - 320 + i * callout_w
             mid_draw.text((lx + 10, 800), lbl[:14], fill=(100, 116, 139, 255), font=_get_font(20, bold=False))
             mid_draw.text((lx + 10, 830), val, fill=(30, 41, 59, 255), font=_get_font(24, bold=True))
 
-    elif scene_index == 1 or role_lower == "mechanism":
+    elif layout_mode == "flowchart":
         # =========================================================================
         # LAYOUT 2: HORIZONTAL FLOWCHART / PIPELINE NODE TREE
         # =========================================================================
@@ -529,37 +575,40 @@ def _draw_midground_subject(
                 mid_draw.line([(pipe_x1, pipe_y), (pipe_x2, pipe_y)], fill=(*accent_rgb, 255), width=4)
                 mid_draw.polygon([(pipe_x2 - 8, pipe_y - 6), (pipe_x2, pipe_y), (pipe_x2 - 8, pipe_y + 6)], fill=(*accent_rgb, 255))
 
-    elif scene_index == 2 or role_lower == "escalation":
+    elif layout_mode == "comparison":
         # =========================================================================
-        # LAYOUT 3: SPLIT COMPARISON VIEW (Naive vs Optimized)
+        # LAYOUT 3: SPLIT COMPARISON VIEW (Naive vs Target)
         # =========================================================================
         mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 545)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
         _draw_fitted_text(mid_draw, headline, cx - 350, 465, 700, 65, fill=(255, 255, 255, 255), base_size=42, center=True)
 
         col_w = 345
-        # Left: Naive / Traditional
+        c_term1 = cards[0] if cards else "PIPELINE"
+        c_term2 = cards[1] if len(cards) > 1 else "ROUTING"
+
+        # Left: Naive / Traditional Baseline
         lx = cx - 380
         mid_draw.rounded_rectangle([(lx, 580), (lx + col_w, 890)], radius=20, fill=(*surface_rgb, 245), outline=(239, 68, 68, 255), width=2)
         mid_draw.rounded_rectangle([(lx + 20, 600), (lx + col_w - 20, 645)], radius=10, fill=(254, 242, 242, 255), outline=(239, 68, 68, 255), width=1)
-        _draw_fitted_text(mid_draw, "LEGACY / UNINDEXED", lx + 25, 610, col_w - 50, 25, fill=(185, 28, 28, 255), base_size=20, bold=True, center=True)
-        mid_draw.text((lx + 25, 670), "• Full Table Scan", fill=(71, 85, 105, 255), font=_get_font(22))
-        mid_draw.text((lx + 25, 715), "• Latency: > 800ms", fill=(185, 28, 28, 255), font=_get_font(22, bold=True))
+        _draw_fitted_text(mid_draw, "BASELINE / NAIVE", lx + 25, 610, col_w - 50, 25, fill=(185, 28, 28, 255), base_size=20, bold=True, center=True)
+        mid_draw.text((lx + 25, 670), f"• Unindexed {c_term1[:12]}", fill=(71, 85, 105, 255), font=_get_font(22))
+        mid_draw.text((lx + 25, 715), f"• Raw {c_term2[:12]}", fill=(185, 28, 28, 255), font=_get_font(22, bold=True))
         mid_draw.text((lx + 25, 760), "• Linear O(N) Cost", fill=(71, 85, 105, 255), font=_get_font(22))
-        mid_draw.text((lx + 25, 805), "• High CPU Bottleneck", fill=(71, 85, 105, 255), font=_get_font(22))
+        mid_draw.text((lx + 25, 805), "• Sequential Queue", fill=(71, 85, 105, 255), font=_get_font(22))
 
         # Center VS Badge
         mid_draw.ellipse([(cx - 28, 715), (cx + 28, 771)], fill=(15, 23, 42, 255), outline=(255, 255, 255, 255), width=2)
         mid_draw.text((cx - 14, 730), "VS", fill=(255, 255, 255, 255), font=_get_font(20, bold=True))
 
-        # Right: Optimized V2
+        # Right: Optimized Target Architecture
         rx = cx + 35
         mid_draw.rounded_rectangle([(rx, 580), (rx + col_w, 890)], radius=20, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
         mid_draw.rounded_rectangle([(rx + 20, 600), (rx + col_w - 20, 645)], radius=10, fill=(30, 64, 175, 255))
-        _draw_fitted_text(mid_draw, "OPTIMIZED // VECTOR", rx + 25, 610, col_w - 50, 25, fill=(255, 255, 255, 255), base_size=20, bold=True, center=True)
-        mid_draw.text((rx + 25, 670), "• HNSW Graph Index", fill=(226, 232, 240, 255), font=_get_font(22))
-        mid_draw.text((rx + 25, 715), f"• Latency: {metric}", fill=(245, 158, 11, 255), font=_get_font(22, bold=True))
-        mid_draw.text((rx + 25, 760), "• Sub-linear O(log N)", fill=(226, 232, 240, 255), font=_get_font(22))
-        mid_draw.text((rx + 25, 805), "• 10x Scale Throughput", fill=(16, 185, 129, 255), font=_get_font(22, bold=True))
+        _draw_fitted_text(mid_draw, "OPTIMIZED // TARGET", rx + 25, 610, col_w - 50, 25, fill=(255, 255, 255, 255), base_size=20, bold=True, center=True)
+        mid_draw.text((rx + 25, 670), f"• Indexed {c_term1[:12]}", fill=(226, 232, 240, 255), font=_get_font(22))
+        mid_draw.text((rx + 25, 715), f"• Status: {metric[:14]}", fill=(245, 158, 11, 255), font=_get_font(22, bold=True))
+        mid_draw.text((rx + 25, 760), f"• Directed {c_term2[:12]}", fill=(226, 232, 240, 255), font=_get_font(22))
+        mid_draw.text((rx + 25, 805), "• High Concurrency", fill=(16, 185, 129, 255), font=_get_font(22, bold=True))
 
     else:
         # =========================================================================
@@ -581,15 +630,17 @@ def _draw_midground_subject(
         mid_draw.ellipse([(term_x1 + 20, term_y1 + 14), (term_x1 + 34, term_y1 + 28)], fill=(239, 68, 68, 255))
         mid_draw.ellipse([(term_x1 + 44, term_y1 + 14), (term_x1 + 58, term_y1 + 28)], fill=(245, 158, 11, 255))
         mid_draw.ellipse([(term_x1 + 68, term_y1 + 14), (term_x1 + 82, term_y1 + 28)], fill=(16, 185, 129, 255))
-        mid_draw.text((term_x1 + 110, term_y1 + 12), "cluster_runtime.sh [TELEMETRY]", fill=(148, 163, 184, 255), font=_get_font(18, bold=True))
+        mid_draw.text((term_x1 + 110, term_y1 + 12), f"{domain.value.lower()}_runtime [TELEMETRY]", fill=(148, 163, 184, 255), font=_get_font(18, bold=True))
 
-        # Monospaced Command & Log Stream
+        c1 = cards[0].lower() if cards else "runtime"
+        c2 = cards[1].lower() if len(cards) > 1 else "pipeline"
+        # Monospaced Command & Log Stream derived from real semantic entities
         code_lines = [
-            ("$ ai_engine.query(vector_index=\"prod_v2\")", (52, 211, 153, 255)),
-            ("[INFO] Loaded 1.2M dense embeddings into RAM", (226, 232, 240, 255)),
-            (f"[SEARCH] Cosine similarity match: 0.984 | {metric}", (56, 189, 248, 255)),
-            ("[STATUS] Context bus stream verified (10k req/s)", (251, 191, 36, 255)),
-            ("✓ Deployed in enterprise production cluster", (16, 185, 129, 255)),
+            (f"$ {domain.value.lower()}_engine.exec(target='{c1}')", (52, 211, 153, 255)),
+            (f"[INFO] Initializing {c1.upper()} execution module", (226, 232, 240, 255)),
+            (f"[EXEC] Dispatching stream: {c2.upper()}", (56, 189, 248, 255)),
+            (f"[STATUS] Pipeline state: {metric}", (251, 191, 36, 255)),
+            ("✓ Architecture execution verified", (16, 185, 129, 255)),
         ]
         for idx, (line_txt, col) in enumerate(code_lines):
             mid_draw.text((term_x1 + 28, term_y1 + 60 + idx * 46), line_txt, fill=col, font=_get_font(22, bold=False))

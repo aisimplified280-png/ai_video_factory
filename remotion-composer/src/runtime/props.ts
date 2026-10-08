@@ -80,6 +80,7 @@ export interface CharacterSpec {
   scale: number;
   depth_plane: string;
   position: { x: number; y: number };
+  target_anchor?: { x: number; y: number } | null;
   motion: string;
   emotion: string;
   tool_held?: string | null;

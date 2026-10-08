@@ -14,6 +14,12 @@ export interface CaptionTrackProps {
  * Timing is never regenerated here; presentation adds dynamic word-by-word karaoke reveal. */
 export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps, mode = 'karaoke'}) => {
   const frame = useCurrentFrame();
+  const maxEndTime = captions.reduce((max, c) => Math.max(max, c.end), 0);
+  const final4SecondsStartFrame = Math.max(0, Math.round((maxEndTime - 4.0) * fps));
+  if (frame >= final4SecondsStartFrame && maxEndTime > 4.0) {
+    return null;
+  }
+
   const active = captions.find((caption) => {
     const range = eventFrames(caption.start, caption.end, fps);
     return frame >= range.startFrame && frame < range.endFrame;
@@ -21,7 +27,7 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
   if (!active) {
     return null;
   }
-  // RULE C: Auto-hide subtitle renderer as soon as Scene 5 (Outro / CTA / Subscribe) triggers
+  // Auto-hide subtitle renderer during Outro / CTA / Final Scene
   const scLower = (active.scene_id || '').toLowerCase();
   const textLower = (active.textReference || '').toLowerCase();
   if (
@@ -30,8 +36,7 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
     scLower.includes('cta') ||
     scLower.includes('outro') ||
     scLower.includes('brand') ||
-    textLower.includes('subscribe to ai simplified') ||
-    textLower.includes('subscribe to')
+    textLower.includes('subscribe')
   ) {
     return null;
   }
@@ -46,20 +51,20 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
   const currentProgress = Math.min(1, Math.max(0, (framesIntoScene - speechOnsetFrames) / totalSpeechFrames));
 
   return (
-    <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 200, pointerEvents: 'none'}}>
+    <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 190, pointerEvents: 'none'}}>
       <div
         style={{
-          background: 'rgba(255, 255, 255, 0.94)',
+          background: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           border: '1.5px solid #CBD5E1',
-          boxShadow: '0 12px 32px rgba(30, 64, 175, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04)',
+          boxShadow: '0 12px 32px rgba(30, 64, 175, 0.10), 0 2px 8px rgba(15, 23, 42, 0.04)',
           borderRadius: 24,
-          padding: '12px 24px',
+          padding: '16px 28px',
           maxWidth: '88%',
           textAlign: 'center',
-          minHeight: 64,
-          maxHeight: 160,
+          minHeight: 72,
+          maxHeight: 180,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -73,7 +78,7 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
             fontWeight: 800,
             color: '#0F172A',
             letterSpacing: '-0.02em',
-            lineHeight: 1.35,
+            lineHeight: 1.5,
           }}
         >
           <KaraokeText
@@ -145,9 +150,9 @@ function KaraokeText({
               transformOrigin: 'center center',
               transition: 'transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.12s ease',
               backgroundColor,
-              padding: isActive ? '2px 8px' : '0 2px',
+              padding: isActive ? '3px 8px' : '2px 4px',
               borderRadius: 8,
-              margin: '0 2px',
+              margin: '4px 3px',
               fontWeight: isActive ? 900 : 800,
               textShadow,
             }}

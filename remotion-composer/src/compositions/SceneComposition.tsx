@@ -305,6 +305,9 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
     case 'overlay':
       return null;
     case 'background':
+      if (asset) {
+        return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
+      }
       return (
         <BackgroundLayer
           theme={theme}

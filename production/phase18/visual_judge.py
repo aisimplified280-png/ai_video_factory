@@ -181,11 +181,20 @@ def judge_scene_frames(
         art_score = 2.0
     comp_score = min(10.0, max(6.0, 7.0 + metrics["edge_density"] * 0.3))
     motion_score = min(10.0, max(5.5, 6.5 + motion_delta * 0.4))
-    semantic_score = 9.2 if len(fatal_reasons) == 0 else 2.5
 
+    # Grounded semantic score derived from measured pixel properties & domain validation
     if fatal_reasons:
+        semantic_score = 2.0
         art_score = min(art_score, 4.0)
         depth_score = min(depth_score, 4.0)
+    else:
+        structural_quality = min(2.5, metrics["edge_density"] * 0.6)
+        luminance_alignment = 2.5 if metrics["mean_luminance"] > 130 else 1.8
+        contrast_isolation = min(2.5, metrics["lum_separation"] * 0.12)
+        base_grounding = 2.0
+        semantic_score = min(10.0, max(5.0, round(base_grounding + structural_quality + luminance_alignment + contrast_isolation, 1)))
+        if advisories:
+            semantic_score = max(5.0, semantic_score - 0.8)
 
     composite = round(
         0.35 * semantic_score

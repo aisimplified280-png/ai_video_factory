@@ -415,3 +415,51 @@ def test_strict_release_gate_missing_file():
         audit_and_enforce_release_gate(missing_mp4, plan, Path("qa"))
 
     assert "Zero fallback allowed" in str(exc_info.value)
+
+
+def test_phase18_2_enhancements():
+    """Verify Phase 18.2 architectural upgrades:
+    1. Mascot is anchored to dedicated empty zone below cards (y >= 1040) across all scenes.
+    2. Explicit target_anchor coordinates exist for directional laser pointer.
+    3. Zero fabricated numbers: extracting without numbers yields qualitative verified state, not fake % or ms.
+    4. Strings do not truncate mid-token.
+    """
+    from production.phase17.multi_layer_generator import _extract_semantic_entities, TopicDomain
+
+    # 1. Mascot anchoring & target vector
+    for s_idx, role in [(0, "hook"), (1, "mechanism"), (2, "escalation"), (3, "implication"), (4, "cta")]:
+        spec = direct_scene_character(
+            scene_idx=s_idx,
+            total_scenes=5,
+            narrative_role=role,
+            subject="Enterprise Architecture Gateway",
+            action="verifying pipeline",
+            topic="Naive RAG",
+        )
+        assert spec.position["y"] >= 1040.0, f"Scene {s_idx} mascot collides with cards (y={spec.position['y']})"
+        assert spec.target_anchor is not None, f"Scene {s_idx} missing target_anchor"
+        assert "x" in spec.target_anchor and "y" in spec.target_anchor
+
+    # 2. Zero fabricated numbers
+    narr_no_numbers = "The query parser directs tokens into the unindexed vector table."
+    headline, cards, metric = _extract_semantic_entities(
+        subject="Enterprise Architecture Gateway",
+        visual_purpose="Multi-Agent Orchestration Mesh Engine",
+        visual_metaphor="Data Pipeline",
+        narration=narr_no_numbers,
+        domain=TopicDomain.SOFTWARE_AI,
+    )
+    assert metric == "VERIFIED STATE", f"Expected qualitative status, got fabricated: {metric}"
+    assert not headline.endswith(" GA"), f"Headline truncated mid-word: {headline}"
+    assert "ENTERPRISE ARCHITECTURE" in headline
+
+    # 3. Preserves real metrics when present in narration
+    narr_with_number = "Throughput increases by 40% with sub-10ms response."
+    _, _, real_metric = _extract_semantic_entities(
+        subject="Enterprise Architecture Gateway",
+        visual_purpose="Multi-Agent Orchestration Mesh Engine",
+        visual_metaphor="Data Pipeline",
+        narration=narr_with_number,
+        domain=TopicDomain.SOFTWARE_AI,
+    )
+    assert real_metric == "40%"

@@ -44,6 +44,20 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
   const isAnalyst = spec.role === 'analyst';
   const visorColor = isEngineer ? '#D97706' : (isAnalyst ? '#10B981' : theme.accent); // Amber, Emerald, or Royal Blue
 
+  // Dynamic targeting laser calculation
+  const handSvgX = 206;
+  const handSvgY = 121;
+  let targetSvgX = 280;
+  let targetSvgY = spec.pose?.includes('upward') ? 40 : 90;
+  if (spec.target_anchor) {
+    const handCanvasX = posX + (handSvgX - 110) * (scale || 1.0);
+    const handCanvasY = posY + (handSvgY - 130) * (scale || 1.0);
+    const dx = (spec.target_anchor.x - handCanvasX) / Math.max(0.1, scale || 1.0);
+    const dy = (spec.target_anchor.y - handCanvasY) / Math.max(0.1, scale || 1.0);
+    targetSvgX = handSvgX + dx;
+    targetSvgY = handSvgY + dy;
+  }
+
   return (
     <div
       style={{
@@ -67,6 +81,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         style={{
+          overflow: 'visible',
           filter: `drop-shadow(0 20px 30px rgba(30, 64, 175, 0.25))`,
         }}
       >
@@ -211,21 +226,28 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
             <line
               x1="210"
               y1="121"
-              x2="280"
-              y2={spec.pose?.includes('upward') ? 40 : 90}
+              x2={targetSvgX}
+              y2={targetSvgY}
               stroke={visorColor}
               strokeWidth={2.5}
               strokeDasharray="4 4"
               opacity={0.7 + Math.sin(frame / 4) * 0.3}
             />
             <circle
-              cx="280"
-              cy={spec.pose?.includes('upward') ? 40 : 90}
-              r={6 + Math.sin(frame / 6) * 2}
+              cx={targetSvgX}
+              cy={targetSvgY}
+              r={7 + Math.sin(frame / 6) * 2}
               fill="none"
               stroke={visorColor}
               strokeWidth={2}
-              opacity={0.8}
+              opacity={0.85}
+            />
+            <circle
+              cx={targetSvgX}
+              cy={targetSvgY}
+              r={3}
+              fill={visorColor}
+              opacity={0.9}
             />
           </g>
         ) : (

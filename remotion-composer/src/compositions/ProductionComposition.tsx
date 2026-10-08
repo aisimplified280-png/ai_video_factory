@@ -48,9 +48,6 @@ export function transitionOverlapFrames(intent: string | null, fps: number): num
 export const ProductionComposition: React.FC<ProductionCompositionProps> = (props) => {
   assertValidProps(props);
   const fps = props.platform.fps;
-  const primaries = [...props.events]
-    .filter((event) => event.role === 'primary_visual')
-    .sort((a, b) => a.start - b.start);
   const byScene = new Map<string, EditEventProps[]>();
   for (const event of [...props.events].sort((a, b) => a.z_index - b.z_index)) {
     const list = byScene.get(event.scene_id) ?? [];
@@ -58,13 +55,29 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
     byScene.set(event.scene_id, list);
   }
   const sceneOrder = [...props.scenes].sort((a, b) => a.start - b.start);
-  // Tail frames: each primary event lends its tail to the next event's entrance.
-  const tails = new Map<string, number>();
-  for (let index = 0; index < primaries.length - 1; index += 1) {
-    tails.set(primaries[index].event_id, transitionOverlapFrames(primaries[index + 1].transition_in, fps));
+  
+  // Calculate cross-scene overlap tails: scene i lends tail frames to scene i + 1 entrance
+  const sceneTails = new Map<string, number>();
+  const eventTails = new Map<string, number>();
+  for (let index = 0; index < sceneOrder.length - 1; index += 1) {
+    const currScene = sceneOrder[index];
+    const nextScene = sceneOrder[index + 1];
+    const nextEvents = byScene.get(nextScene.scene_id) ?? [];
+    const nextLead = nextEvents.find((e) => e.role === 'midground' || e.role === 'primary_visual') ?? nextEvents[0];
+    const overlap = transitionOverlapFrames(nextLead?.transition_in ?? null, fps);
+    sceneTails.set(currScene.scene_id, overlap);
+
+    // Apply tail frames to currScene visual events
+    const currEvents = byScene.get(currScene.scene_id) ?? [];
+    for (const evt of currEvents) {
+      if (evt.role === 'midground' || evt.role === 'primary_visual' || evt.role === 'background' || evt.role === 'foreground') {
+        eventTails.set(evt.event_id, overlap);
+      }
+    }
   }
+
   const flashes = new Map<string, number>();
-  for (const event of primaries) {
+  for (const event of props.events) {
     if (transitionModuleFor(event.transition_in) === 'lightFlash') {
       flashes.set(event.event_id, flashOverlap(fps));
     }
@@ -84,19 +97,18 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
   return (
     <AbsoluteFill style={{backgroundColor: isAITopic ? '#F8FAFC' : (props.theme.background || '#F8FAFC')}}>
       {sceneOrder.map((scene) => {
-        // Each scene owns exactly its own time range: backgrounds and events
-        // from one scene can never cover another scene's content. Event
-        // placement below is scene-relative; the wrapping Sequence restores
-        // absolute timing.
         const sceneRange = eventFrames(scene.start, scene.end, fps);
+        const sceneTail = sceneTails.get(scene.scene_id) ?? 0;
         const placed: PlacedEvent[] = (byScene.get(scene.scene_id) ?? []).map((event) => {
           const range = eventFrames(event.start, event.end, fps);
+          const isVisual = event.role === 'midground' || event.role === 'primary_visual' || event.role === 'background' || event.role === 'foreground';
+          const tail = eventTails.get(event.event_id) ?? 0;
           return {
             event,
             from: range.startFrame - sceneRange.startFrame,
-            duration: range.frameCount,
+            duration: range.frameCount + (isVisual ? tail : 0),
             head: transitionOverlapFrames(event.transition_in, fps),
-            tail: tails.get(event.event_id) ?? 0,
+            tail: tail,
             flashFrames: flashes.get(event.event_id) ?? 0,
           };
         });
@@ -108,8 +120,7 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
             const range = eventFrames(clip.start, clip.end, fps);
             return {clip, from: range.startFrame - sceneRange.startFrame, duration: range.frameCount};
           });
-        const lastPrimary = [...placed].reverse().find((item) => item.event.role === 'primary_visual');
-        const sceneDuration = sceneRange.frameCount + (lastPrimary ? tails.get(lastPrimary.event.event_id) ?? 0 : 0);
+        const sceneDuration = sceneRange.frameCount + sceneTail;
         return (
           <Sequence key={scene.scene_id} from={sceneRange.startFrame} durationInFrames={sceneDuration} name={scene.scene_id}>
             <SceneComposition
