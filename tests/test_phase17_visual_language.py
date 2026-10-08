@@ -111,8 +111,8 @@ def test_transformative_transitions():
     assert len(errs_bad) == 2
 
 
-def test_visual_language_qa_evaluation(tmp_path: Path):
-    """Verify that evaluate_visual_language enforces environment variety and parallax depth."""
+def test_visual_language_qa_fails_when_no_frames(tmp_path: Path):
+    """Verify that evaluate_visual_language fails closed when no frames are rendered."""
     scenes = [
         {"scene_id": f"scene_0{i+1}", "start_seconds": i * 5.0, "end_seconds": (i + 1) * 5.0, "environment": f"Env_{i+1}", "depth_strategy": "background_midground_foreground"}
         for i in range(5)
@@ -123,8 +123,87 @@ def test_visual_language_qa_evaluation(tmp_path: Path):
     ]
 
     eval_res = evaluate_visual_language(tmp_path, scenes, timeline)
+    assert eval_res.passed is False
+    assert eval_res.visual_language_score == 0.0
+    assert any("No visual frame evidence available" in r for r in eval_res.rejection_reasons)
+
+
+def test_visual_language_qa_fails_on_visually_static_render(tmp_path: Path):
+    """Verify that a visually static render with perfect metadata FAILS closed."""
+    qa_dir = tmp_path / "qa"
+    qa_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Save identical black/static images for all scenes
+    blank = Image.new("RGB", (200, 350), color=(15, 23, 42))
+    for i in range(5):
+        # 2 identical frames per scene
+        blank.save(qa_dir / f"frame_scene_0{i+1}_01.png")
+        blank.save(qa_dir / f"frame_scene_0{i+1}_02.png")
+
+    scenes = [
+        {"scene_id": f"scene_0{i+1}", "start_seconds": i * 5.0, "end_seconds": (i + 1) * 5.0, "environment": f"Env_{i+1}", "depth_strategy": "background_midground_foreground"}
+        for i in range(5)
+    ]
+    timeline = [
+        {"scene_id": f"scene_0{i+1}", "transition_in": "zoom_transition"}
+        for i in range(5)
+    ]
+
+    eval_res = evaluate_visual_language(tmp_path, scenes, timeline)
+    assert eval_res.passed is False
+    assert any("visually static" in r for r in eval_res.rejection_reasons)
+    assert eval_res.visual_language_score < 7.0
+
+
+def test_visual_language_qa_passes_with_real_motion_and_structured_evidence(tmp_path: Path):
+    """Verify that a genuinely varied render with measurable motion passes with structured scene evidence."""
+    qa_dir = tmp_path / "qa" / "frame_samples"
+    qa_dir.mkdir(parents=True, exist_ok=True)
+    from PIL import ImageDraw
+
+    # Generate distinct, high-contrast, varied frames per scene with motion
+    for i in range(5):
+        # Frame 1: Circle/card at top left
+        img1 = Image.new("RGB", (200, 350), color=(20 + i * 30, 30 + i * 20, 50 + i * 15))
+        d1 = ImageDraw.Draw(img1)
+        d1.rectangle([(20, 30), (160, 120)], fill=(220, 240, 255), outline=(255, 255, 255), width=3)
+        d1.ellipse([(50, 180), (140, 270)], fill=(59, 130, 246))
+        img1.save(qa_dir / f"frame_scene_0{i+1}_01.png")
+
+        # Frame 2: Shifted geometry (measurable motion > 10.0)
+        img2 = Image.new("RGB", (200, 350), color=(20 + i * 30, 30 + i * 20, 50 + i * 15))
+        d2 = ImageDraw.Draw(img2)
+        d2.rectangle([(40, 60), (180, 150)], fill=(240, 245, 255), outline=(255, 255, 255), width=3)
+        d2.ellipse([(30, 140), (160, 270)], fill=(234, 88, 12))
+        img2.save(qa_dir / f"frame_scene_0{i+1}_02.png")
+
+    scenes = [
+        {"scene_id": f"scene_0{i+1}", "start_seconds": i * 5.0, "end_seconds": (i + 1) * 5.0, "environment": f"Env_{i+1}", "depth_strategy": "background_midground_foreground"}
+        for i in range(5)
+    ]
+    timeline = [
+        {"scene_id": f"scene_0{i+1}", "transition_in": "zoom_transition"}
+        for i in range(5)
+    ]
+
+    eval_res = evaluate_visual_language(tmp_path, scenes, timeline, frames_dir=qa_dir)
     assert eval_res.passed is True
-    assert eval_res.environment_variety_score >= 9.0
-    assert eval_res.depth_parallax_score >= 9.0
-    assert eval_res.transition_score >= 9.0
-    assert eval_res.visual_language_score >= 8.5
+    assert eval_res.visual_language_score >= 8.0
+    assert len(eval_res.rejection_reasons) == 0
+
+    # Verify structured scene evaluations and evidence
+    assert len(eval_res.scene_evaluations) == 5
+    for sc_eval in eval_res.scene_evaluations:
+        assert "scene_id" in sc_eval
+        assert "score" in sc_eval
+        assert sc_eval["score"] >= 7.0
+        ev = sc_eval["evidence"]
+        assert "frame_samples" in ev
+        assert len(ev["frame_samples"]) >= 1
+        assert "motion_delta" in ev
+        assert ev["motion_delta"] > 5.0
+        assert "layout_signature" in ev
+        assert "background_similarity" in ev
+        assert "layer_occupancy" in ev
+        assert ev["is_static"] is False
+
