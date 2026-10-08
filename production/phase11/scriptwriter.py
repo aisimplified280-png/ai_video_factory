@@ -72,12 +72,149 @@ def _synthesize_escalation_sentence(story: StoryRecord, topic: str) -> str:
         return "Instead of isolated prototypes, these autonomous systems are entering live production environments right now."
 
 
+try:
+    from ..llm_client import call_llm_json
+except Exception:
+    try:
+        from production.llm_client import call_llm_json
+    except Exception:
+        from llm_client import call_llm_json
+
+
+def _llm_synthesize_shorts_script(
+    topic: str,
+    research_pack: ResearchPack,
+    channel_name: str = "AI Simplified Lab",
+) -> Optional[ScriptArtifact]:
+    """Use active LLM to generate authentic, topic-specific narration grounded in research."""
+    try:
+        story_context = []
+        for s in (research_pack.stories or [])[:4]:
+            story_context.append(f"- Headline: {s.headline}\n  Summary: {s.summary}")
+        context_str = "\n".join(story_context) if story_context else "No prior news stories found."
+
+        prompt = f"""You are the lead tech scriptwriter for "{channel_name}", an elite channel breaking down AI models, software architectures, algorithms, and developer tools.
+Write an authentic, highly engaging 5-scene YouTube Shorts script for: "{topic}".
+
+Verified Research Context:
+{context_str}
+
+CRITICAL EDITORIAL RULES:
+1. Do NOT use generic placeholder formulas like "Something unprecedented just happened in {topic}". Write factual, specific, punchy sentences about what actually happened, the technical mechanism, and why developers/engineers care.
+2. If the topic is software/models (like "jev vs other models", "MCP", "Transformers"), do NOT talk about physical warehouse robots! Talk about model inference, latency, evaluation benchmarks, decision-making, or software architecture.
+3. Scene 1 (Hook, 10-15 words): A gripping first 3 seconds mentioning the specific core breakthrough, comparison, or dilemma.
+4. Scene 2 (Lead Story, 14-20 words): What specifically changed or was released based on the research.
+5. Scene 3 (Mechanism / Contrast, 14-20 words): How the technology actually works, benchmark numbers, or architectural difference.
+6. Scene 4 (Implication / Stakes, 12-18 words): What this means for production systems, developers, or industry scale.
+7. Scene 5 (CTA, 14-18 words): Conclude the thought and end with: "And this is just the beginning. Subscribe to {channel_name} for daily frontier AI briefings."
+8. TOTAL WORDS: The entire script across all 5 scenes must total at least 55 to 80 words (around 12-18 words per scene) to match optimal YouTube Shorts duration.
+
+Output MUST be a JSON object with this exact schema:
+{{
+  "sections": [
+    {{
+      "role": "hook",
+      "spoken_text": "...",
+      "primary_subject": "short 2-4 word specific subject name",
+      "visual_intent": "emerge",
+      "emphasis_words": ["WORD1", "WORD2", "WORD3"]
+    }},
+    {{
+      "role": "lead_story",
+      "spoken_text": "...",
+      "primary_subject": "short 2-4 word specific subject name",
+      "visual_intent": "reveal",
+      "emphasis_words": ["WORD1", "WORD2", "WORD3"]
+    }},
+    {{
+      "role": "escalation",
+      "spoken_text": "...",
+      "primary_subject": "short 2-4 word specific subject name",
+      "visual_intent": "dramatic_cut",
+      "emphasis_words": ["WORD1", "WORD2", "WORD3"]
+    }},
+    {{
+      "role": "implication",
+      "spoken_text": "...",
+      "primary_subject": "short 2-4 word specific subject name",
+      "visual_intent": "scale_up",
+      "emphasis_words": ["WORD1", "WORD2", "WORD3"]
+    }},
+    {{
+      "role": "cta",
+      "spoken_text": "And this is just the beginning. Subscribe to {channel_name} for daily frontier AI briefings.",
+      "primary_subject": "{channel_name}",
+      "visual_intent": "branded_callout",
+      "emphasis_words": ["BEGINNING", "SUBSCRIBE", "DAILY"]
+    }}
+  ]
+}}"""
+        data = call_llm_json(prompt)
+        if not data or not isinstance(data.get("sections"), list) or len(data["sections"]) < 4:
+            return None
+
+        sections: list[ScriptSection] = []
+        for idx, sec_data in enumerate(data["sections"][:5]):
+            sc_id = f"scene_{idx+1:02d}"
+            sec_id = f"sec_{idx+1:02d}"
+            role = str(sec_data.get("role", "context")).lower()
+            spoken = str(sec_data.get("spoken_text", "")).strip()
+            if not spoken:
+                continue
+            dur = _estimate_duration(spoken)
+            emphasis = [str(w).upper() for w in sec_data.get("emphasis_words", [])[:3]]
+            subj = str(sec_data.get("primary_subject", topic.strip()))
+            intent = str(sec_data.get("visual_intent", "reveal"))
+            sections.append(ScriptSection(
+                section_id=sec_id,
+                scene_id=sc_id,
+                role=role,
+                spoken_text=spoken,
+                estimated_duration_seconds=dur,
+                word_count=len(spoken.split()),
+                emphasis_words=emphasis or ["FRONTIER", "AI", "SYSTEM"],
+                visual_intent=intent,
+                primary_subject=subj,
+                retention_trigger="immediate_curiosity" if idx == 0 else "fast_pacing",
+            ))
+
+        if len(sections) >= 4:
+            total_words = sum(s.word_count for s in sections)
+            if total_words < 50:
+                print(f"  -> [Script Intelligence Warning] LLM script too brief ({total_words} words < 50); using heuristic fallback.")
+                return None
+            total_dur = sum(s.estimated_duration_seconds for s in sections)
+            scoring = score_script(sections)
+            print(f"  -> [Script Intelligence] Synthesized authentic narration via LLM ({len(sections)} scenes, {total_words} words).")
+            return ScriptArtifact(
+                topic=topic.strip(),
+                format=ScriptFormat.SHORTS,
+                hook_story_id=research_pack.stories[0].story_id if research_pack.stories else "story_01",
+                sections=sections,
+                total_duration_seconds=round(total_dur, 1),
+                total_word_count=total_words,
+                scoring=scoring,
+                grounded_claims=[s.headline for s in (research_pack.stories or [])[:3]],
+                channel_name=channel_name,
+            )
+    except Exception as exc:
+        print(f"  -> [Script Intelligence Warning] LLM generation failed ({exc}); using procedural fallback.")
+    return None
+
+
 def generate_shorts_script(
     topic: str,
     research_pack: ResearchPack,
     channel_name: str = "AI Simplified Lab",
 ) -> ScriptArtifact:
     """Generate a high-retention, 35-50s YouTube Shorts script in AI Simplified Lab voice."""
+    # 1. Attempt authentic LLM synthesis first
+    llm_script = _llm_synthesize_shorts_script(topic, research_pack, channel_name)
+    if llm_script:
+        return llm_script
+
+    # 2. Procedural heuristic fallback if LLM is offline
+    print("  -> [Script Intelligence Fallback] Using procedural heuristic fallback template.")
     hook_story, stories = select_stories_for_script(research_pack, ScriptFormat.SHORTS)
     topic_clean = topic.strip()
     topic_lower = topic_clean.lower()

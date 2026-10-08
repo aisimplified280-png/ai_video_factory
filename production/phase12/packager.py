@@ -81,6 +81,56 @@ def generate_title_candidates(topic: str, research_pack: ResearchPack) -> list[T
     ]
 
 
+try:
+    from ..llm_client import call_llm_json
+except Exception:
+    try:
+        from production.llm_client import call_llm_json
+    except Exception:
+        from llm_client import call_llm_json
+
+
+def _llm_generate_packaging_metadata(
+    topic: str,
+    script_shorts: ScriptArtifact,
+    research_pack: ResearchPack,
+    channel_name: str = "AI Simplified Lab",
+) -> Optional[dict]:
+    """Generate authentic, high-CTR YouTube packaging using the active LLM."""
+    try:
+        script_lines = "\n".join(f"- {s.spoken_text}" for s in script_shorts.sections if s.spoken_text)
+        story_lines = "\n".join(f"- {s.headline}" for s in (research_pack.stories or [])[:4])
+
+        prompt = f"""You are the head of YouTube strategy and packaging for "{channel_name}".
+Based on this authentic script about "{topic}", generate elite packaging assets.
+
+Script Narration:
+{script_lines}
+
+Research Context:
+{story_lines or "No news headlines."}
+
+Generate:
+1. 10 compelling, high-CTR YouTube titles that create a genuine curiosity gap, state an authentic technical contrast, or highlight the real revelation. (Do NOT generate generic formulas like "Something Unprecedented Just Happened In {topic}").
+2. thumbnail_text: 2 to 4 punchy, high-impact words (e.g. "CLEF VS JEV", "RECORD LATENCY", "NEW AI BENCHMARK").
+3. thumbnail_prompt: Photorealistic, cinematic 8k visual prompt for the thumbnail tailored directly to this topic. If the topic is software/models, describe high-tech glowing architectural node graphs, datacenter compute clusters, or high-dimensional vector visuals (NO robotics unless topic is physical robots).
+
+Output MUST be a JSON object:
+{{
+  "title_candidates": [
+    {{"title": "...", "angle": "curiosity_gap", "title_score": 9.5, "curiosity_score": 9.6}}
+  ],
+  "thumbnail_text": "...",
+  "thumbnail_prompt": "..."
+}}"""
+        data = call_llm_json(prompt)
+        if data and isinstance(data.get("title_candidates"), list) and len(data["title_candidates"]) >= 4:
+            return data
+    except Exception as exc:
+        print(f"  -> [Packaging Warning] LLM packaging failed ({exc}); using procedural fallback.")
+    return None
+
+
 def generate_packaging(
     topic: str,
     script_shorts: ScriptArtifact,
@@ -89,7 +139,44 @@ def generate_packaging(
     channel_name: str = "AI Simplified Lab",
 ) -> TopicPackage:
     """Generate the complete topic packaging artifact."""
-    title_candidates = generate_title_candidates(topic, research_pack)
+    llm_pkg = _llm_generate_packaging_metadata(topic, script_shorts, research_pack, channel_name)
+    if llm_pkg:
+        title_candidates = [
+            TitleCandidate(
+                title=str(t.get("title", "")).strip(),
+                angle=str(t.get("angle", "curiosity_gap")),
+                title_score=float(t.get("title_score", 9.2)),
+                curiosity_score=float(t.get("curiosity_score", 9.3)),
+            )
+            for t in llm_pkg.get("title_candidates", [])
+            if str(t.get("title", "")).strip()
+        ]
+        raw_thumb = str(llm_pkg.get("thumbnail_text", "NEW BREAKTHROUGH")).upper().strip()
+        words = raw_thumb.split()
+        thumbnail_text = " ".join(words[:4]) if len(words) > 4 else raw_thumb
+        raw_prompt = str(llm_pkg.get("thumbnail_prompt", "")).strip()
+        if not ("Cinematic documentary" in raw_prompt or "photography" in raw_prompt.lower()):
+            thumbnail_prompt = f"Cinematic documentary photography: {raw_prompt}"
+        else:
+            thumbnail_prompt = raw_prompt
+        print(f"  -> [Packaging Intelligence] Generated authentic titles & thumbnail metadata via LLM ({len(title_candidates)} titles).")
+    else:
+        print("  -> [Packaging Fallback] Using procedural heuristic title templates.")
+        title_candidates = generate_title_candidates(topic, research_pack)
+        topic_lower = topic.lower()
+        if "robot" in topic_lower or "astra" in topic_lower:
+            thumbnail_text = "ROBOTS UNLEASHED"
+        elif "chip" in topic_lower or "hardware" in topic_lower:
+            thumbnail_text = "HARDWARE SHOCK"
+        elif "leak" in topic_lower:
+            thumbnail_text = "LEAKED BENCHMARK"
+        else:
+            thumbnail_text = "NEW BREAKTHROUGH"
+        thumbnail_prompt = (
+            f"Ultra-detailed cinematic documentary photography inside a modern tech facility, "
+            f"dramatic lighting, 8k resolution, photorealistic, clean negative space for text overlay."
+        )
+
     title_candidates.sort(key=lambda t: (t.title_score + t.curiosity_score), reverse=True)
     selected_title = title_candidates[0].title
 
@@ -109,41 +196,18 @@ def generate_packaging(
         sources_summary,
         "",
         f"Subscribe to {channel_name} for daily analysis on autonomous systems, models, and robotics.",
-        f"#{channel_name.replace(' ', '')} #ArtificialIntelligence #AI #TechNews #Robotics",
+        f"#{channel_name.replace(' ', '')} #ArtificialIntelligence #AI #TechNews",
     ]
     description = "\n".join(description_parts)
 
     hashtags = [
         "#AI",
         "#ArtificialIntelligence",
-        "#Robotics",
-        "#MachineLearning",
-        "#OpenAI",
         "#TechNews",
-        "#FutureTech",
+        "#MachineLearning",
+        "#FrontierAI",
         f"#{channel_name.replace(' ', '')}",
     ]
-
-    # Thumbnail Text: 2 to 4 punchy words max
-    topic_lower = topic.lower()
-    if "robot" in topic_lower or "astra" in topic_lower:
-        thumbnail_text = "ROBOTS UNLEASHED"
-    elif "chip" in topic_lower or "hardware" in topic_lower:
-        thumbnail_text = "HARDWARE SHOCK"
-    elif "leak" in topic_lower:
-        thumbnail_text = "LEAKED BENCHMARK"
-    else:
-        thumbnail_text = "IT'S HAPPENING"
-
-    vf = research_pack.visual_facts
-    loc = vf.locations[0] if vf.locations else "modern industrial robotics facility"
-    obj = vf.objects[0] if vf.objects else "industrial robotic manipulator"
-    thumbnail_prompt = (
-        f"Ultra-detailed cinematic documentary photography inside a {loc}, "
-        f"dramatic close-up of {obj}, high contrast lighting, natural specular highlights, "
-        f"intense focus, 8k resolution, photorealistic, clean negative space for text overlay, "
-        f"no visible human faces, no artificial cartoon stylization."
-    )
 
     avg_title_score = round(sum(t.title_score for t in title_candidates[:3]) / 3, 1)
     avg_curiosity_score = round(sum(t.curiosity_score for t in title_candidates[:3]) / 3, 1)
