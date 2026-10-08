@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Audio, Sequence, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame} from 'remotion';
 import {appear} from '../motion/appear';
 import {compare} from '../motion/compare';
 import {connect} from '../motion/connect';
@@ -439,9 +439,13 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
       {audio
         .filter((item) => item.clip.publicPath !== null)
         .map((item) => {
+          const raw = item.clip.publicPath as string;
+          const src = raw.startsWith('http://') || raw.startsWith('https://')
+            ? raw
+            : staticFile(raw);
           return (
             <Sequence key={item.clip.event_id} from={item.from} durationInFrames={item.duration}>
-              <Audio src={item.clip.publicPath as string} />
+              <Audio src={src} />
             </Sequence>
           );
         })}

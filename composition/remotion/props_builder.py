@@ -203,7 +203,8 @@ def build_production_props(
                     subprocess.run(["ffmpeg", "-y", "-i", str(source), "-acodec", "pcm_s16le", "-ar", "48000", "-ac", "2", str(target)], check=True, capture_output=True)
                 else:
                     shutil.copyfile(source, target)
-                public_path = f"http://127.0.0.1:8000/{target.name}"
+                port = os.environ.get("MEDIA_SERVER_PORT") or os.environ.get("REMOTION_MEDIA_PORT") or "8000"
+                public_path = f"http://127.0.0.1:{port}/{target.name}"
             props_audio.append({
                 "event_id": clip.get("event_id"),
                 "track": track,

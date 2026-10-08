@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -148,6 +149,11 @@ class RemotionRuntime:
             if media_port is not None:
                 render_env["MEDIA_SERVER_PORT"] = str(media_port)
                 render_env["REMOTION_MEDIA_PORT"] = str(media_port)
+                p_file = Path(props_path)
+                if p_file.is_file():
+                    content = p_file.read_text(encoding="utf-8")
+                    updated = re.sub(r"http://127\.0\.0\.1:\d+/", f"http://127.0.0.1:{media_port}/", content)
+                    p_file.write_text(updated, encoding="utf-8")
 
             subprocess.run(
                 [*node, "scripts/render.mjs", "--props", str(props_path), "--output", str(output_path), "--public-dir", "public"]
