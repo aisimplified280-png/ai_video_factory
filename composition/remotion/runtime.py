@@ -126,6 +126,18 @@ class RemotionRuntime:
             server_script = workspace_root / "scripts" / "serve_public.py"
             assets_dir = public_dir / "assets"
             if server_script.is_file() and assets_dir.is_dir():
+                # Free port 8000 from any lingering zombie servers before starting
+                try:
+                    out = subprocess.check_output('netstat -ano | findstr :8000', shell=True, text=True, errors="ignore")
+                    for line in out.strip().splitlines():
+                        parts = line.split()
+                        if len(parts) >= 5 and "LISTENING" in parts:
+                            pid = parts[-1]
+                            if pid and pid != "0":
+                                subprocess.run(f"taskkill /F /PID {pid}", shell=True, capture_output=True)
+                except Exception:
+                    pass
+
                 server_process = subprocess.Popen(
                     [sys.executable, str(server_script), str(assets_dir)],
                     cwd=str(workspace_root)
@@ -146,7 +158,11 @@ class RemotionRuntime:
             return RenderResult(status="blocked", code="RENDER_FAILED", message=f"Remotion render failed: {exc}")
         finally:
             if server_process:
-                server_process.terminate()
+                try:
+                    server_process.kill()
+                    server_process.wait(timeout=2)
+                except Exception:
+                    pass
         manifest = None
         if manifest_path and Path(manifest_path).is_file():
             manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
