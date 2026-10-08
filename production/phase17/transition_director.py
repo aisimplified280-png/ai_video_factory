@@ -15,6 +15,9 @@ Requires transformative transitions:
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Any
+
 FORBIDDEN_TRANSITIONS = {"fade", "cross_dissolve", "hard_cut", "cut", "none"}
 
 ALLOWED_TRANSITIONS = [
@@ -26,35 +29,102 @@ ALLOWED_TRANSITIONS = [
     "match_cut",
 ]
 
+TRANSITION_CYCLE = [
+    "zoom_transition",
+    "directional_wipe",
+    "object_transition",
+    "shape_morph",
+    "motion_blur",
+    "match_cut",
+]
 
-def assign_transformative_transitions(scene_count: int, as_boundaries: bool = False) -> list[str]:
-    """Assigns purposeful, transformative transition intents for each scene boundary.
+
+@dataclass
+class SceneBoundaryTransition:
+    from_scene_id: str
+    to_scene_id: str
+    transition_intent: str
+    boundary_index: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "from_scene_id": self.from_scene_id,
+            "to_scene_id": self.to_scene_id,
+            "transition_intent": self.transition_intent,
+            "boundary_index": self.boundary_index,
+        }
+
+
+def assign_boundary_transitions(
+    scenes: int | list[dict[str, Any]] | list[str],
+) -> list[SceneBoundaryTransition]:
+    """Define ONE authoritative contract for scene-boundary transitions.
     
-    If as_boundaries is True, returns (scene_count - 1) transitions representing the
-    exact boundaries between scenes, resolving boundary-count ambiguity (Issue #8).
+    Rule: N scenes = exactly (N - 1) transitions between adjacent scenes.
+    Every transition object explicitly identifies:
+    - from_scene_id
+    - to_scene_id
+    - transition_intent
+    - boundary_index
+    
+    No phantom final transition.
     """
-    patterns = [
-        "zoom_transition",
-        "directional_wipe",
-        "object_transition",
-        "shape_morph",
-        "motion_blur",
-    ]
-    target_count = max(0, scene_count - 1) if as_boundaries else scene_count
-    return [patterns[i % len(patterns)] for i in range(target_count)]
+    if isinstance(scenes, int):
+        scene_ids = [f"scene_{i+1:02d}" for i in range(max(0, scenes))]
+    elif isinstance(scenes, list):
+        scene_ids = []
+        for idx, item in enumerate(scenes):
+            if isinstance(item, dict):
+                sc_id = item.get("scene_id") or item.get("id") or f"scene_{idx+1:02d}"
+                scene_ids.append(str(sc_id))
+            else:
+                scene_ids.append(str(item))
+    else:
+        scene_ids = []
+
+    if len(scene_ids) <= 1:
+        return []
+
+    boundary_count = len(scene_ids) - 1
+    transitions: list[SceneBoundaryTransition] = []
+    for i in range(boundary_count):
+        intent = TRANSITION_CYCLE[i % len(TRANSITION_CYCLE)]
+        transitions.append(
+            SceneBoundaryTransition(
+                from_scene_id=scene_ids[i],
+                to_scene_id=scene_ids[i + 1],
+                transition_intent=intent,
+                boundary_index=i,
+            )
+        )
+    return transitions
 
 
-def assign_boundary_transitions(scene_count: int) -> list[str]:
-    """Returns exactly (scene_count - 1) transitions between adjacent scenes."""
-    return assign_transformative_transitions(scene_count, as_boundaries=True)
+def assign_transformative_transitions(
+    scenes: int | list[dict[str, Any]] | list[str],
+) -> list[str]:
+    """Returns exactly (N - 1) transformative transition intent strings for N scenes.
+    
+    Unifies the API so there is no ambiguity:
+    1 scene  -> 0 transitions
+    2 scenes -> 1 transition
+    5 scenes -> 4 transitions
+    6 scenes -> 5 transitions
+    """
+    boundaries = assign_boundary_transitions(scenes)
+    return [b.transition_intent for b in boundaries]
 
 
-def validate_transition_integrity(transitions: list[str]) -> tuple[bool, list[str]]:
+def validate_transition_integrity(
+    transitions: list[str] | list[SceneBoundaryTransition],
+) -> tuple[bool, list[str]]:
     """Validates that no forbidden transitions exist and all are transformative."""
     errors = []
-    for idx, tr in enumerate(transitions):
+    for idx, tr_item in enumerate(transitions):
+        tr = tr_item.transition_intent if isinstance(tr_item, SceneBoundaryTransition) else str(tr_item)
         if tr.lower() in FORBIDDEN_TRANSITIONS:
-            errors.append(f"Scene {idx+1} transition '{tr}' is forbidden (static cuts and fades are banned).")
+            errors.append(f"Boundary {idx+1} transition '{tr}' is forbidden (static cuts and fades are banned).")
         elif tr not in ALLOWED_TRANSITIONS:
-            errors.append(f"Scene {idx+1} transition '{tr}' is not in approved transformative transitions.")
+            errors.append(f"Boundary {idx+1} transition '{tr}' is not in approved transformative transitions.")
     return len(errors) == 0, errors
+

@@ -30,6 +30,7 @@ from production.phase17.transition_director import (
     assign_transformative_transitions,
     validate_transition_integrity,
     FORBIDDEN_TRANSITIONS,
+    ALLOWED_TRANSITIONS,
 )
 from production.phase17.visual_qa import evaluate_visual_language
 
@@ -208,9 +209,24 @@ def test_multi_layer_depth_separation(tmp_path: Path):
 
 
 def test_transformative_transitions():
-    """Verify forbidden cuts/fades are rejected and transformative transitions are assigned."""
+    """Verify forbidden cuts/fades are rejected and authoritative N-1 boundary transitions are assigned."""
+    from production.phase17.transition_director import assign_boundary_transitions, SceneBoundaryTransition
+
+    # 1 scene: exactly 0 transitions (no phantom final transition)
+    assert assign_boundary_transitions(1) == []
+    assert assign_transformative_transitions(1) == []
+
+    # 2 scenes: exactly 1 boundary transition
+    b_2 = assign_boundary_transitions(2)
+    assert len(b_2) == 1
+    assert b_2[0].from_scene_id == "scene_01"
+    assert b_2[0].to_scene_id == "scene_02"
+    assert b_2[0].transition_intent in ALLOWED_TRANSITIONS
+    assert len(assign_transformative_transitions(2)) == 1
+
+    # 5 scenes: exactly 4 boundary transitions (N-1)
     trans = assign_transformative_transitions(5)
-    assert len(trans) == 5
+    assert len(trans) == 4
     for t in trans:
         assert t not in FORBIDDEN_TRANSITIONS
 
@@ -218,17 +234,40 @@ def test_transformative_transitions():
     assert valid is True
     assert len(errs) == 0
 
-    from production.phase17.transition_director import assign_boundary_transitions
-    boundary_trans = assign_boundary_transitions(5)
-    assert len(boundary_trans) == 4
-    valid_b, errs_b = validate_transition_integrity(boundary_trans)
-    assert valid_b is True
-    assert len(errs_b) == 0
+    boundary_trans_5 = assign_boundary_transitions(5)
+    assert len(boundary_trans_5) == 4
+    assert boundary_trans_5[0].from_scene_id == "scene_01"
+    assert boundary_trans_5[0].to_scene_id == "scene_02"
+    assert boundary_trans_5[3].from_scene_id == "scene_04"
+    assert boundary_trans_5[3].to_scene_id == "scene_05"
+    valid_b5, errs_b5 = validate_transition_integrity(boundary_trans_5)
+    assert valid_b5 is True
 
-    # Test rejection of forbidden cut
+    # 6 scenes: exactly 5 boundary transitions
+    b_6 = assign_boundary_transitions(6)
+    assert len(b_6) == 5
+    assert len(assign_transformative_transitions(6)) == 5
+    assert b_6[4].from_scene_id == "scene_05"
+    assert b_6[4].to_scene_id == "scene_06"
+
+    # Also test passing actual scene dicts
+    custom_scenes = [
+        {"scene_id": "intro"},
+        {"scene_id": "concept"},
+        {"scene_id": "outro"},
+    ]
+    b_custom = assign_boundary_transitions(custom_scenes)
+    assert len(b_custom) == 2
+    assert b_custom[0].from_scene_id == "intro"
+    assert b_custom[0].to_scene_id == "concept"
+    assert b_custom[1].from_scene_id == "concept"
+    assert b_custom[1].to_scene_id == "outro"
+
+    # Test rejection of forbidden cuts and fades
     invalid, errs_bad = validate_transition_integrity(["hard_cut", "fade"])
     assert invalid is False
     assert len(errs_bad) == 2
+
 
 
 def test_visual_language_qa_fails_when_no_frames(tmp_path: Path):
