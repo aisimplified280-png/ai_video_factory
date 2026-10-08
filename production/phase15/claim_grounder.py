@@ -591,7 +591,7 @@ def evaluate_claim_grounding(
             contradiction_detected = True
             rejection_reasons.append("Contradiction: Narration claims AI autonomous control but visual shows manual human operation.")
         if "abstract brain in dark void without robot" in combined_plan_text or (
-            "abstract" in scene_plan.visual_mode.value and "robot" not in combined_plan_text
+            "abstract" in scene_plan.visual_mode.value and "robot" not in combined_plan_text and any(k in (claim_plan.narration_text + " " + " ".join(claim_plan.entities)).lower() for k in ["robot", "arm", "physical", "machine", "actuator"])
         ):
             rejection_reasons.append("Unacceptable generic metaphor: Abstract brain/data stream with no visible physical robot.")
 

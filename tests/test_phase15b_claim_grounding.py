@@ -270,3 +270,29 @@ def test_phase15b_end_to_end_plan_generation():
     assert scorecard["claim_coverage"] >= 0.75
     assert scorecard["contradiction_count"] == 0
     assert len(plan["claim_visual_qa_report"]) == 5
+
+
+def test_software_rag_topic_never_produces_robotics_subjects():
+    """Verify that software/AI topics never fall back to warehouse robotics or mechanical gear subjects."""
+    script_data = {
+        "data": {
+            "sections": [
+                {"id": "sec_01", "spoken_text": "The naive RAG bottleneck is solved by vector quantization and dynamic pruning.", "narrative_role": "hook"},
+                {"id": "sec_02", "spoken_text": "We replaced static embeddings with adaptive retrieval layers that cut latency by 60% in tests.", "narrative_role": "reveal"},
+                {"id": "sec_03", "spoken_text": "Cross-attention filters irrelevant documents before cross-encoder scoring, boosting precision significantly in real-time inference pipelines.", "narrative_role": "mechanism"},
+                {"id": "sec_04", "spoken_text": "This enables enterprise-grade RAG systems to handle millions of documents without degradation.", "narrative_role": "implication"},
+                {"id": "sec_05", "spoken_text": "And this is just the beginning. Subscribe to AI Simplified Lab for daily frontier AI briefings.", "narrative_role": "cta"},
+            ]
+        }
+    }
+    prod_state = {"topic": "the architecture of naive rag process"}
+
+    plan = generate_phase15_plan(script_data, prod_state)
+    assert len(plan["scene_concepts"]) == 5
+
+    forbidden_hardware_words = ["robotic", "robot", "gripper", "harmonic drive", "autonomous logistics", "warehouse rover"]
+    for sc in plan["scene_concepts"]:
+        subject_lower = sc["subject"].lower()
+        for forbidden in forbidden_hardware_words:
+            assert forbidden not in subject_lower, f"Scene {sc['scene_id']} illegally contains '{forbidden}' in subject: '{sc['subject']}'"
+

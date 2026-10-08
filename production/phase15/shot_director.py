@@ -425,6 +425,18 @@ class ShotDirector:
         # Dynamically inject tailored option directly from ClaimVisualPlan if present
         if claim_plan:
             is_rob = any(k in (claim_plan.action + " " + claim_plan.environment + " " + " ".join(claim_plan.entities)).lower() for k in ["robot", "clamp", "gripper", "agv", "rover", "pneumatic"])
+            if not is_rob:
+                palette_options = [
+                    opt for opt in palette_options
+                    if not any(k in (opt.get("subject", "") + " " + opt.get("action", "") + " " + opt.get("environment", "")).lower()
+                               for k in ["robot", "gripper", "actuator", "gear", "transmission", "harmonic", "rover", "warehouse", "conveyor", "pallet"])
+                ]
+
+            cameras = ["tracking", "push_in", "slow_pan", "crane_pull_out"]
+            compositions = ["balanced_rule_of_thirds", "layered_depth", "wide_isometric_plane", "center_focus"]
+            cam_idx = scene_idx % len(cameras)
+            comp_idx = scene_idx % len(compositions)
+
             if chosen_mode == VisualMode.BRAND_CTA:
                 custom_shot_type = "clean_minimalist_studio"
             elif scene_idx == 0:
@@ -440,9 +452,9 @@ class ShotDirector:
 
             custom_opt = {
                 "shot_type": custom_shot_type,
-                "camera_motion": "push_in" if scene_idx == 0 else "tracking",
+                "camera_motion": "push_in" if scene_idx == 0 else cameras[cam_idx],
                 "camera_angle": "macro_probe_level" if (scene_idx == 0 and is_rob) else "eye_level_three_quarter",
-                "composition": "tight_macro_crop" if (scene_idx == 0 and is_rob) else "balanced_rule_of_thirds",
+                "composition": "tight_macro_crop" if (scene_idx == 0 and is_rob) else compositions[comp_idx],
                 "subject": ", ".join(claim_plan.entities) or intent.what_is_said,
                 "action": claim_plan.action,
                 "environment": claim_plan.environment,
@@ -467,12 +479,12 @@ class ShotDirector:
         best_eval = None
 
         for opt in palette_options:
-            # Build mock SceneVisualPlan to evaluate grounding
+            # Build mock SceneVisualPlan to evaluate grounding (do not leak ideal visual_intent)
             mock_plan = SceneVisualPlan(
                 scene_id=intent.scene_id,
                 section_id=intent.section_id,
                 narrative_role=intent.narrative_role,
-                visual_intent=intent.what_viewer_sees,
+                visual_intent="",
                 visual_mode=chosen_mode,
                 subject=opt.get("subject", ""),
                 action=opt.get("action", ""),
