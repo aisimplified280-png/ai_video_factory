@@ -23,6 +23,7 @@ from production.phase15.semantic_analyzer import analyze_scene_intent
 from production.phase15.shot_director import ShotDirector
 from production.phase17.transition_director import assign_transformative_transitions
 from .character_director import CharacterSpec, direct_scene_character
+from .scene_graph import SemanticSceneGraph, build_semantic_scene_graph
 
 
 class CanonicalLayerSpec(BaseModel):
@@ -54,6 +55,8 @@ class CanonicalSceneSpec(BaseModel):
     transition_in: str
     transition_out: str
     character_spec: CharacterSpec
+    scene_graph: Optional[SemanticSceneGraph] = None
+    required_visual_evidence: list[str] = Field(default_factory=list)
     layers: list[CanonicalLayerSpec] = Field(default_factory=list)
 
 
@@ -98,7 +101,21 @@ def direct_production_scenes(
         # 3. Explicit CTA narrative role for final scene
         narrative_role = "cta" if (idx == total_scenes - 1) else sec.get("narrative_role", "context")
 
-        # 4. Direct Character / Mascot
+        # 4. Compile Semantic Scene Graph & True Subject Geometry
+        scene_graph = build_semantic_scene_graph(
+            scene_id=sc_id,
+            scene_index=idx,
+            total_scenes=total_scenes,
+            narrative_role=narrative_role,
+            subject=shot.subject,
+            visual_purpose=shot.visual_intent,
+            visual_metaphor=shot.visual_metaphor if hasattr(shot, "visual_metaphor") else "",
+            spoken_text=sec.get("spoken_text", ""),
+            topic=topic,
+            research_claim=research_context,
+        )
+
+        # 5. Direct Character / Mascot bound dynamically to actual subject geometry
         char_spec = direct_scene_character(
             scene_idx=idx,
             total_scenes=total_scenes,
@@ -107,12 +124,17 @@ def direct_production_scenes(
             action=shot.action,
             topic=topic,
         )
+        # Authoritative target discovery: point directly at compiled primary subject center!
+        char_spec.target_anchor = {
+            "x": float(scene_graph.primary_anchor[0]),
+            "y": float(scene_graph.primary_anchor[1]),
+        }
 
-        # 5. Transformative Transitions (No hard cuts on scene exits)
+        # 6. Transformative Transitions (No hard cuts on scene exits)
         trans_in = "hard_cut" if idx == 0 else (transitions[idx - 1] if (idx - 1 < len(transitions)) else "zoom_transition")
         trans_out = "fade" if idx == total_scenes - 1 else (transitions[idx] if idx < len(transitions) else "zoom_transition")
 
-        # 5. Define Canonical 4-Layer Hierarchy
+        # 7. Define Canonical 4-Layer Hierarchy
         layers = [
             CanonicalLayerSpec(
                 asset_id=f"ast_{sc_id}_bg",
@@ -151,7 +173,7 @@ def direct_production_scenes(
                 role="primary_visual",
                 z_index=10,
                 purpose=f"Master composite: {shot.subject} in {shot.environment}",
-                relative_path=f"projects/{production_id}/assets/ast_{sc_id}_primary.png",
+                relative_path=f"projects/{production_id}/assets/ast_{sc_id}.png",
                 parallax_factor=1.0,
             ),
         ]
@@ -176,6 +198,8 @@ def direct_production_scenes(
             transition_in=trans_in,
             transition_out=trans_out,
             character_spec=char_spec,
+            scene_graph=scene_graph,
+            required_visual_evidence=scene_graph.required_visual_evidence,
             layers=layers,
         )
         scenes_spec.append(scene_spec)

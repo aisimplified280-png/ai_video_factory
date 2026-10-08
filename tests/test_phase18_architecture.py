@@ -463,3 +463,92 @@ def test_phase18_2_enhancements():
         domain=TopicDomain.SOFTWARE_AI,
     )
     assert real_metric == "40%"
+
+
+def test_phase18_3_scene_graph_and_multimodal_judge(tmp_path: Path):
+    """Verify Phase 18.3:
+    1. Dynamic Semantic Scene Graph compilation (Zero rigid templates).
+    2. Dynamic mascot targeting derived from actual primary subject centroid.
+    3. Zero fabricated claims (all details strictly grounded in input semantics).
+    4. Empirical connected-component visual judge with observed topology verification.
+    """
+    from production.phase18.scene_graph import (
+        build_semantic_scene_graph,
+        SceneNodeType,
+    )
+    from production.phase17.multi_layer_generator import generate_scene_layers
+    from production.phase18.visual_judge import analyze_frame_geometry, judge_scene_frames
+
+    # 1. Pipeline topology compilation
+    sg_pipeline = build_semantic_scene_graph(
+        scene_id="sec_01",
+        scene_index=1,
+        total_scenes=5,
+        narrative_role="mechanism",
+        subject="Vector Indexing and Embedding Pipeline",
+        visual_purpose="Convert raw documents into dense vector embeddings",
+        spoken_text="Raw documents are chunked and converted into vector embeddings stored in a vector index.",
+    )
+    assert sg_pipeline.topology == "pipeline"
+    assert len(sg_pipeline.nodes) >= 2
+    # Check that primary anchor exactly matches primary node bounds center
+    pri_node = next(n for n in sg_pipeline.nodes if n.is_primary)
+    expected_cx = (pri_node.bounds[0] + pri_node.bounds[2]) / 2.0
+    expected_cy = (pri_node.bounds[1] + pri_node.bounds[3]) / 2.0
+    assert sg_pipeline.primary_anchor == (expected_cx, expected_cy)
+
+    # 2. Contrast topology without fabricated "BASELINE / NAIVE" claims
+    sg_contrast = build_semantic_scene_graph(
+        scene_id="sec_02",
+        scene_index=2,
+        total_scenes=5,
+        narrative_role="escalation",
+        subject="Exact Keyword Search versus Semantic Vector Retrieval",
+        visual_purpose="Compare token matching against embedding similarity",
+        spoken_text="Keyword matching fails on synonyms versus dense semantic retrieval.",
+    )
+    assert sg_contrast.topology == "bipartite"
+    # Ensure no fabricated text
+    for n in sg_contrast.nodes:
+        assert "BASELINE / NAIVE" not in n.label
+        assert "OPTIMIZED // TARGET" not in n.label
+
+    # 3. Direct production scenes binds mascot target_anchor to actual scene graph primary anchor
+    plan = direct_production_scenes(
+        production_id="test_sg_prod",
+        sections=[
+            {"section_id": "sec_01", "role": "mechanism", "title": "Vector Pipeline", "voiceover": "Embeddings are calculated.", "duration": 4.0},
+        ],
+        topic="Naive RAG Architecture",
+    )
+    sc = plan.scenes[0]
+    assert sc.scene_graph is not None
+    assert sc.character_spec.target_anchor["x"] == sc.scene_graph.primary_anchor[0]
+    assert sc.character_spec.target_anchor["y"] == sc.scene_graph.primary_anchor[1]
+
+    # 4. Render layers and run empirical visual judge
+    layers = generate_scene_layers(
+        scene_index=1,
+        narration="Raw documents are chunked into vectors",
+        output_dir=tmp_path,
+        scene_id="sec_01",
+        subject="Vector Indexing and Embedding Pipeline",
+        visual_purpose="Convert raw documents into dense vector embeddings",
+        narrative_role="mechanism",
+        total_scenes=5,
+        scene_graph=sc.scene_graph,
+    )
+    mid_img = Image.open(layers["mid"])
+    geom = analyze_frame_geometry(mid_img)
+    assert geom["num_clusters"] >= 1
+    # Check empirical judge scoring and description
+    judgement = judge_scene_frames(
+        scene_spec=sc,
+        scene_frames={"mid": layers["primary"], "start": layers["primary"], "end": layers["primary"]},
+        topic="Naive RAG Architecture",
+    )
+    assert judgement.passed is True
+    assert judgement.semantic_grounding_score >= 8.0
+    assert "detected clusters" in judgement.visible_description
+    assert "primary subject at" in judgement.visible_description
+

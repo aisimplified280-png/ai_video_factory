@@ -12,7 +12,7 @@ import {overlapFrames as matchOverlap} from '../transitions/matchCut';
 import {eventFrames} from '../runtime/timeline';
 import {assertValidProps} from '../runtime/validators';
 import type {EditEventProps, ProductionCompositionProps} from '../runtime/props';
-import {SceneComposition, transitionModuleFor, type PlacedAudio, type PlacedEvent} from './SceneComposition';
+import {SceneComposition, transitionModuleFor, type PlacedAudio, type PlacedEvent, type SceneBoundaryTransition} from './SceneComposition';
 
 /** Overlap borrowed from the outgoing event for an incoming transition. */
 export function transitionOverlapFrames(intent: string | null, fps: number): number {
@@ -56,15 +56,26 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
   }
   const sceneOrder = [...props.scenes].sort((a, b) => a.start - b.start);
   
-  // Calculate cross-scene overlap tails: scene i lends tail frames to scene i + 1 entrance
+  // Calculate first-class scene boundary transitions & cross-scene overlap tails
   const sceneTails = new Map<string, number>();
   const eventTails = new Map<string, number>();
+  const boundaryMap = new Map<string, SceneBoundaryTransition>();
   for (let index = 0; index < sceneOrder.length - 1; index += 1) {
     const currScene = sceneOrder[index];
     const nextScene = sceneOrder[index + 1];
     const nextEvents = byScene.get(nextScene.scene_id) ?? [];
     const nextLead = nextEvents.find((e) => e.role === 'midground' || e.role === 'primary_visual') ?? nextEvents[0];
-    const overlap = transitionOverlapFrames(nextLead?.transition_in ?? null, fps);
+    const intent = nextLead?.transition_in ?? 'fade';
+    const overlap = transitionOverlapFrames(intent, fps);
+    const boundary: SceneBoundaryTransition = {
+      from_scene: currScene.scene_id,
+      to_scene: nextScene.scene_id,
+      intent,
+      overlap_frames: overlap,
+      outgoing_motion: 'outgoing',
+      incoming_motion: 'incoming',
+    };
+    boundaryMap.set(currScene.scene_id, boundary);
     sceneTails.set(currScene.scene_id, overlap);
 
     // Apply tail frames to currScene visual events
@@ -134,6 +145,7 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
               height={props.platform.resolution.height}
               ctaBranding={props.cta.branding}
               isAITopic={isAITopic}
+              boundaryTransition={boundaryMap.get(scene.scene_id) ?? null}
             />
           </Sequence>
         );

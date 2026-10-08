@@ -94,142 +94,6 @@ def _draw_titanium_gripper(
     )
 
 
-def generate_scene_layers(
-    scene_index: int,
-    narration: str,
-    output_dir: Path,
-    scene_id: str,
-    style: StyleSystem | None = None,
-    width: int = 1080,
-    height: int = 1920,
-    topic: str = "",
-    subject: str = "",
-    visual_purpose: str = "",
-    visual_metaphor: str = "",
-    narrative_role: str = "",
-    total_scenes: int = 5,
-) -> dict[str, Path]:
-    """Generates and saves the 3 distinct depth layers for a scene:
-    Returns dict: {"bg": path, "mid": path, "fg": path, "primary": path}
-    
-    Adheres strictly to:
-    1. Topic-aligned semantics: Software/cloud topics NEVER render physical robotics arms.
-    2. Mobile Readability: Max 3 core cards per scene, headline fonts increased by >= 35%.
-    3. Safe Zone Layout: All graphics fit in top 75% of canvas (above y=1440), leaving strict 20% bottom margin.
-    """
-    st = style or get_style_system()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    accent_rgb = _hex_to_rgb(st.accent)
-    border_rgb = _hex_to_rgb(st.border_color)
-    text_rgb = _hex_to_rgb(st.primary_text)
-    muted_rgb = _hex_to_rgb(st.secondary_text)
-    surface_rgb = _hex_to_rgb(st.surface_elevated) if hasattr(st, "surface_elevated") else (255, 255, 255)
-
-    # +35-45% font sizes for mobile readability
-    font_title = _get_font(56, bold=True)
-    font_sub = _get_font(32)
-    font_badge = _get_font(26, bold=True)
-    font_mono = _get_font(28)
-
-    # 1. BACKGROUND LAYER (z_index: 0) - Topic-derived environment
-    bg_img = generate_environment_for_scene(
-        scene_index=scene_index,
-        width=width,
-        height=height,
-        style=st,
-        topic=topic,
-        subject=subject,
-        visual_purpose=visual_purpose,
-        visual_metaphor=visual_metaphor,
-        narrative_role=narrative_role,
-    )
-    bg_path = output_dir / f"bg_{scene_id}.png"
-    bg_img.save(bg_path, "PNG")
-
-    # 2. MIDGROUND LAYER (z_index: 10, Transparent RGBA)
-    mid_img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    mid_draw = ImageDraw.Draw(mid_img)
-
-    # 3. FOREGROUND LAYER (z_index: 20, Transparent RGBA)
-    fg_img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    fg_draw = ImageDraw.Draw(fg_img)
-
-    # Safe Zone: Offset all core geometry upward by 10-15% (all graphics stay in top 75%, y <= 1400)
-    cx = width // 2
-    domain = classify_topic_domain(topic=topic, subject=subject, visual_purpose=visual_purpose, narration=narration)
-
-    # -------------------------------------------------------------------------
-    # DYNAMIC SEMANTIC EXTRACTION (Zero Static Boilerplate Templates)
-    # -------------------------------------------------------------------------
-    headline, cards, metric = _extract_semantic_entities(
-        subject=subject,
-        visual_purpose=visual_purpose,
-        visual_metaphor=visual_metaphor,
-        narration=narration,
-        domain=domain,
-    )
-
-    # -------------------------------------------------------------------------
-    # 2. FOREGROUND LAYER ARCHITECTURE (z=20, True Spatial Depth)
-    # Substantial framing aperture, near-plane depth brackets, and foreground monitor
-    # -------------------------------------------------------------------------
-    _draw_foreground_depth_elements(
-        fg_draw=fg_draw,
-        width=width,
-        height=height,
-        domain=domain,
-        headline=headline,
-        accent_rgb=accent_rgb,
-        border_rgb=border_rgb,
-        surface_rgb=surface_rgb,
-        muted_rgb=muted_rgb,
-        font_badge=font_badge,
-    )
-
-    # -------------------------------------------------------------------------
-    # 3. MIDGROUND LAYER ARCHITECTURE (z=10, Core Semantic Subject)
-    # Hero visual action, high-contrast conduits, and core diagrams
-    # -------------------------------------------------------------------------
-    _draw_midground_subject(
-        mid_draw=mid_draw,
-        width=width,
-        height=height,
-        scene_index=scene_index,
-        narrative_role=narrative_role,
-        domain=domain,
-        headline=headline,
-        cards=cards,
-        metric=metric,
-        visual_metaphor=visual_metaphor,
-        visual_purpose=visual_purpose,
-        accent_rgb=accent_rgb,
-        border_rgb=border_rgb,
-        text_rgb=text_rgb,
-        surface_rgb=surface_rgb,
-        muted_rgb=muted_rgb,
-        font_title=font_title,
-        font_badge=font_badge,
-        total_scenes=total_scenes,
-    )
-
-    mid_path = output_dir / f"mid_{scene_id}.png"
-    mid_img.save(mid_path, "PNG")
-
-    fg_path = output_dir / f"fg_{scene_id}.png"
-    fg_img.save(fg_path, "PNG")
-
-    # Composite into primary asset
-    composite = Image.alpha_composite(bg_img.convert("RGBA"), mid_img)
-    composite = Image.alpha_composite(composite, fg_img)
-    primary_path = output_dir / f"ast_{scene_id}_primary.png"
-    composite.convert("RGB").save(primary_path, "PNG")
-
-    return {
-        "bg": bg_path,
-        "mid": mid_path,
-        "fg": fg_path,
-        "primary": primary_path,
-    }
 
 
 def compute_layer_occupancy(image_input: Path | Image.Image) -> float:
@@ -415,18 +279,19 @@ def _draw_foreground_depth_elements(
         fg_draw.ellipse([(sx - sr, sy - sr), (sx + sr, sy + sr)], fill=(*accent_rgb, 45), outline=(*accent_rgb, 120), width=2)
 
 
+from production.phase18.scene_graph import (
+    SemanticSceneGraph,
+    SceneNodeType,
+    build_semantic_scene_graph,
+)
+
+
 def _draw_midground_subject(
     mid_draw: ImageDraw.ImageDraw,
     width: int,
     height: int,
-    scene_index: int,
-    narrative_role: str,
-    domain: TopicDomain,
+    scene_graph: SemanticSceneGraph,
     headline: str,
-    cards: list[str],
-    metric: str,
-    visual_metaphor: str,
-    visual_purpose: str,
     accent_rgb: tuple[int, int, int],
     border_rgb: tuple[int, int, int],
     text_rgb: tuple[int, int, int],
@@ -434,216 +299,219 @@ def _draw_midground_subject(
     muted_rgb: tuple[int, int, int],
     font_title: ImageFont.FreeTypeFont | ImageFont.ImageFont,
     font_badge: ImageFont.FreeTypeFont | ImageFont.ImageFont,
-    total_scenes: int = 5,
 ):
-    """Draws core hero visual subject with strict semantic routing across scenes.
-    Eliminates template monotony by dynamically mapping narrative role to canonical layouts:
-    - Outro Anchor: Final scene (scene_index == total_scenes - 1) or role == 'cta'.
-    - Hook / Intro: Centered Hero Card with bold metric/status callout.
-    - Mechanism / Architecture: Horizontal Flowchart / Pipeline Node Tree.
-    - Escalation / Comparison: Split Comparison View (Naive vs Target).
-    - Implication / Terminal: Developer Terminal / Execution Telemetry window.
-    Supports arbitrary scene lengths (including 6+ scenes) without template collisions.
-    Zero fabricated numbers: all data is derived from topic entities, claims, and verified metrics.
+    """Renders midground layer directly from compiled SemanticSceneGraph nodes and edges.
+    Composes visuals dynamically without fixed layout templates.
     """
     cx = width // 2
-    metaphor_lower = f"{visual_metaphor} {visual_purpose}".lower()
-    role_lower = narrative_role.lower()
 
-    if domain == TopicDomain.ROBOTICS_HARDWARE:
-        # Dedicated Physical Robotics Hardware Layout
-        mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 550)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
-        _draw_fitted_text(mid_draw, headline, cx - 350, 465, 700, 70, fill=(255, 255, 255, 255), base_size=42, center=True)
-        mid_draw.rounded_rectangle([(cx - 360, 580), (cx + 360, 880)], radius=24, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
-        mid_draw.rectangle([(cx - 320, 780), (cx + 320, 850)], fill=(*surface_rgb, 255), outline=(*border_rgb, 255), width=2)
-        _draw_titanium_gripper(mid_draw, cx, 700, scale=1.35, open_angle=20, accent_rgb=accent_rgb, border_rgb=border_rgb)
-        mid_draw.text((cx - 150, 855), f"STATUS: {metric}", fill=(*accent_rgb, 255), font=font_badge)
-        return
+    # 1. Top Header Banner
+    mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 545)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
+    _draw_fitted_text(mid_draw, headline, cx - 350, 465, 700, 65, fill=(255, 255, 255, 255), base_size=42, center=True)
 
-    # Determine layout mode:
-    # Dedicated Outro CTA is ONLY for the final scene or explicit cta/outro role
-    is_cta = (scene_index == total_scenes - 1) or role_lower in ("cta", "outro") or any(k in metaphor_lower for k in ["outro", "cta", "subscribe"])
+    # 2. Render Nodes from Scene Graph
+    for node in scene_graph.nodes:
+        x1, y1, x2, y2 = node.bounds
 
-    if is_cta:
-        # =========================================================================
-        # LAYOUT 5: BRAND IDENTITY OUTRO ANCHOR (Clean Royal Blue Robot Emblem)
-        # =========================================================================
-        # Top Header Pill (Clean charcoal, NO contradictory 'DARK' text)
-        mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 545)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
-        _draw_fitted_text(mid_draw, "AI SIMPLIFIED LAB", cx - 350, 465, 700, 65, fill=(255, 255, 255, 255), base_size=42, center=True)
+        if node.node_type == SceneNodeType.BRAND:
+            cy_logo = 710
+            # Outer Royal Blue Glow Ring
+            mid_draw.ellipse([(cx - 130, cy_logo - 130), (cx + 130, cy_logo + 130)], fill=(239, 246, 255, 250), outline=(37, 99, 235, 255), width=4)
+            mid_draw.ellipse([(cx - 105, cy_logo - 105), (cx + 105, cy_logo + 105)], fill=(15, 23, 42, 255), outline=(217, 119, 6, 255), width=2)
+            # Robot Silhouette Emblem inside shield
+            mid_draw.rounded_rectangle([(cx - 55, cy_logo - 60), (cx + 55, cy_logo + 10)], radius=20, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=2)
+            mid_draw.rounded_rectangle([(cx - 40, cy_logo - 45), (cx + 40, cy_logo - 10)], radius=12, fill=(37, 99, 235, 255))
+            mid_draw.ellipse([(cx - 24, cy_logo - 34), (cx - 12, cy_logo - 22)], fill=(255, 255, 255, 255))
+            mid_draw.ellipse([(cx + 12, cy_logo - 34), (cx + 24, cy_logo - 22)], fill=(255, 255, 255, 255))
+            mid_draw.rounded_rectangle([(cx - 45, cy_logo + 18), (cx + 45, cy_logo + 65)], radius=14, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=2)
+            mid_draw.rectangle([(cx - 18, cy_logo + 32), (cx + 18, cy_logo + 48)], fill=(37, 99, 235, 255))
 
-        # Central Brand Shield & Mascot Vector Crest
-        cy_logo = 710
-        # Outer Royal Blue Glow Ring
-        mid_draw.ellipse([(cx - 130, cy_logo - 130), (cx + 130, cy_logo + 130)], fill=(239, 246, 255, 250), outline=(37, 99, 235, 255), width=4)
-        mid_draw.ellipse([(cx - 105, cy_logo - 105), (cx + 105, cy_logo + 105)], fill=(15, 23, 42, 255), outline=(217, 119, 6, 255), width=2)
+            mid_draw.rounded_rectangle([(cx - 300, 870), (cx + 300, 930)], radius=14, fill=(241, 245, 249, 250), outline=(37, 99, 235, 255), width=2)
+            _draw_fitted_text(mid_draw, node.details[0] if node.details else "AI SIMPLIFIED BRIEFINGS", cx - 280, 880, 560, 40, fill=(30, 41, 59, 255), base_size=24, bold=True, center=True)
 
-        # Robot Silhouette Emblem inside shield
-        # Head
-        mid_draw.rounded_rectangle([(cx - 55, cy_logo - 60), (cx + 55, cy_logo + 10)], radius=20, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=2)
-        # Royal Blue Visor
-        mid_draw.rounded_rectangle([(cx - 40, cy_logo - 45), (cx + 40, cy_logo - 10)], radius=12, fill=(37, 99, 235, 255))
-        # Visor Glow Eyes
-        mid_draw.ellipse([(cx - 24, cy_logo - 34), (cx - 12, cy_logo - 22)], fill=(255, 255, 255, 255))
-        mid_draw.ellipse([(cx + 12, cy_logo - 34), (cx + 24, cy_logo - 22)], fill=(255, 255, 255, 255))
-        # Torso & Lab Badge
-        mid_draw.rounded_rectangle([(cx - 45, cy_logo + 18), (cx + 45, cy_logo + 65)], radius=14, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=2)
-        mid_draw.rectangle([(cx - 18, cy_logo + 32), (cx + 18, cy_logo + 48)], fill=(37, 99, 235, 255))
+        elif node.node_type == SceneNodeType.TERMINAL:
+            # Dark Terminal Body
+            mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=18, fill=(15, 23, 42, 250), outline=(51, 65, 85, 255), width=2)
+            # Window Header
+            mid_draw.rounded_rectangle([(x1, y1), (x2, y1 + 44)], radius=18, fill=(30, 41, 59, 255))
+            mid_draw.rectangle([(x1, y1 + 24), (x2, y1 + 44)], fill=(30, 41, 59, 255))
+            mid_draw.ellipse([(x1 + 20, y1 + 14), (x1 + 34, y1 + 28)], fill=(239, 68, 68, 255))
+            mid_draw.ellipse([(x1 + 44, y1 + 14), (x1 + 58, y1 + 28)], fill=(245, 158, 11, 255))
+            mid_draw.ellipse([(x1 + 68, y1 + 14), (x1 + 82, y1 + 28)], fill=(16, 185, 129, 255))
+            mid_draw.text((x1 + 110, y1 + 12), node.label, fill=(148, 163, 184, 255), font=_get_font(18, bold=True))
 
-        # Channel Credentials Badges Below
-        mid_draw.rounded_rectangle([(cx - 300, 870), (cx + 300, 930)], radius=14, fill=(241, 245, 249, 250), outline=(37, 99, 235, 255), width=2)
-        _draw_fitted_text(mid_draw, "FRONTIER AI ARCHITECTURE BRIEFINGS", cx - 280, 880, 560, 40, fill=(30, 41, 59, 255), base_size=24, bold=True, center=True)
-        return
+            cols = [(52, 211, 153, 255), (226, 232, 240, 255), (56, 189, 248, 255), (251, 191, 36, 255), (16, 185, 129, 255)]
+            for idx, line_txt in enumerate(node.details):
+                mid_draw.text((x1 + 28, y1 + 60 + idx * 46), line_txt, fill=cols[idx % len(cols)], font=_get_font(22, bold=False))
 
-    # Dynamic semantic layout selection based on narrative role with round-robin fallback
-    if role_lower in ("hook", "intro"):
-        layout_mode = "hero"
-    elif role_lower in ("mechanism", "process", "architecture", "flow"):
-        layout_mode = "flowchart"
-    elif role_lower in ("escalation", "comparison", "problem", "challenge"):
-        layout_mode = "comparison"
-    elif role_lower in ("implication", "telemetry", "terminal", "code", "implementation", "runtime", "scale"):
-        layout_mode = "terminal"
-    else:
-        # Fallback cycle across the 4 content layouts cleanly
-        content_modes = ["hero", "flowchart", "comparison", "terminal"]
-        layout_mode = content_modes[scene_index % 4]
+        else:
+            # Entity / Process / Storage Card Container
+            n_fill = (15, 23, 42, 250) if node.is_primary and scene_graph.topology != "focal" else (*surface_rgb, 248)
+            n_border = (*accent_rgb, 255) if node.is_primary else (*border_rgb, 255)
+            n_text = (255, 255, 255, 255) if (node.is_primary and scene_graph.topology != "focal") else (*text_rgb, 255)
 
-    if layout_mode == "hero":
-        # =========================================================================
-        # LAYOUT 1: CENTERED HERO CARD WITH BOLD METRIC / STATUS CALLOUT
-        # =========================================================================
-        mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 545)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
-        _draw_fitted_text(mid_draw, headline, cx - 350, 465, 700, 65, fill=(255, 255, 255, 255), base_size=42, center=True)
-
-        # Centered Hero Metric Card
-        mid_draw.rounded_rectangle([(cx - 380, 570), (cx + 380, 890)], radius=24, fill=(*surface_rgb, 248), outline=(*accent_rgb, 255), width=2)
-        mid_draw.rounded_rectangle([(cx - 350, 595), (cx + 350, 645)], radius=12, fill=(239, 246, 255, 255), outline=(37, 99, 235, 255), width=1)
-        _draw_fitted_text(mid_draw, "CORE PRODUCTION BENCHMARK", cx - 330, 605, 660, 30, fill=(30, 64, 175, 255), base_size=22, bold=True, center=True)
-
-        # Huge Bold Metric Text
-        _draw_fitted_text(mid_draw, metric, cx - 340, 670, 680, 90, fill=(217, 119, 6, 255), base_size=64, bold=True, center=True)
-
-        # Metric Status Gauges (derived from verified tokens, no fabricated numbers)
-        mid_draw.line([(cx - 320, 785), (cx + 320, 785)], fill=(226, 232, 240, 255), width=2)
-        callout_w = 210
-        labels = [cards[0] if len(cards) > 0 else "INPUT", cards[1] if len(cards) > 1 else "PIPELINE", cards[2] if len(cards) > 2 else "RUNTIME"]
-        vals = ["READY", metric if metric != "VERIFIED STATE" else "VERIFIED", "ACTIVE"]
-        for i, (lbl, val) in enumerate(zip(labels, vals)):
-            lx = cx - 320 + i * callout_w
-            mid_draw.text((lx + 10, 800), lbl[:14], fill=(100, 116, 139, 255), font=_get_font(20, bold=False))
-            mid_draw.text((lx + 10, 830), val, fill=(30, 41, 59, 255), font=_get_font(24, bold=True))
-
-    elif layout_mode == "flowchart":
-        # =========================================================================
-        # LAYOUT 2: HORIZONTAL FLOWCHART / PIPELINE NODE TREE
-        # =========================================================================
-        mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 545)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
-        _draw_fitted_text(mid_draw, headline, cx - 350, 465, 700, 65, fill=(255, 255, 255, 255), base_size=42, center=True)
-
-        # 3 Sequential Nodes in Horizontal Flow
-        node_w = 220
-        node_h = 240
-        gap = 35
-        total_flow_w = 3 * node_w + 2 * gap
-        flow_start_x = cx - total_flow_w // 2
-
-        for i in range(3):
-            nx = flow_start_x + i * (node_w + gap)
-            ny = 610
-            lbl = cards[i] if i < len(cards) else f"STAGE {i+1}"
-            is_active = (i == 1)
-            n_fill = (15, 23, 42, 250) if is_active else (*surface_rgb, 245)
-            n_border = (*accent_rgb, 255) if is_active else (*border_rgb, 255)
-            n_text = (255, 255, 255, 255) if is_active else (*text_rgb, 255)
-
-            mid_draw.rounded_rectangle([(nx, ny), (nx + node_w, ny + node_h)], radius=18, fill=n_fill, outline=n_border, width=2)
-            # Step index tag
-            mid_draw.rounded_rectangle([(nx + 15, ny + 15), (nx + 75, ny + 45)], radius=8, fill=(37, 99, 235, 255) if is_active else (226, 232, 240, 255))
-            mid_draw.text((nx + 25, ny + 20), f"0{i+1}", fill=(255, 255, 255, 255) if is_active else (100, 116, 139, 255), font=_get_font(20, bold=True))
+            mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=20, fill=n_fill, outline=n_border, width=2)
             # Label
-            _draw_fitted_text(mid_draw, lbl, nx + 15, ny + 70, node_w - 30, 40, fill=n_text, base_size=24, bold=True, center=True)
-            # Node status tag
-            st_text = "PROCESSING" if is_active else ("READY" if i == 0 else "OUTPUT")
-            mid_draw.text((nx + 25, ny + 175), f"• {st_text}", fill=(16, 185, 129, 255) if is_active else (148, 163, 184, 255), font=_get_font(18, bold=True))
+            _draw_fitted_text(mid_draw, node.label, x1 + 15, y1 + 25, (x2 - x1) - 30, 45, fill=n_text, base_size=26, bold=True, center=True)
+            # Details / bullet facts
+            for d_idx, detail in enumerate(node.details):
+                dy = y1 + 85 + d_idx * 45
+                if dy + 35 <= y2:
+                    mid_draw.text((x1 + 20, dy), f"• {detail[:28]}", fill=(100, 116, 139, 255) if n_text != (255, 255, 255, 255) else (203, 213, 225, 255), font=_get_font(20, bold=False))
 
-            # Connecting Conduits with Directional Chevrons
-            if i < 2:
-                pipe_x1 = nx + node_w
-                pipe_x2 = nx + node_w + gap
-                pipe_y = ny + node_h // 2
-                mid_draw.line([(pipe_x1, pipe_y), (pipe_x2, pipe_y)], fill=(*accent_rgb, 255), width=4)
-                mid_draw.polygon([(pipe_x2 - 8, pipe_y - 6), (pipe_x2, pipe_y), (pipe_x2 - 8, pipe_y + 6)], fill=(*accent_rgb, 255))
+    # 3. Render Edges from Scene Graph
+    for edge in scene_graph.edges:
+        src = next((n for n in scene_graph.nodes if n.id == edge.from_node), None)
+        dst = next((n for n in scene_graph.nodes if n.id == edge.to_node), None)
+        if not src or not dst:
+            continue
+        if edge.relationship == "flows_to":
+            p1_x = src.bounds[2]
+            p2_x = dst.bounds[0]
+            py = (src.bounds[1] + src.bounds[3]) // 2
+            mid_draw.line([(p1_x, py), (p2_x, py)], fill=(*accent_rgb, 255), width=4)
+            mid_draw.polygon([(p2_x - 8, py - 6), (p2_x, py), (p2_x - 8, py + 6)], fill=(*accent_rgb, 255))
+        elif edge.relationship == "contrasts_with":
+            c_badge_x = (src.bounds[2] + dst.bounds[0]) // 2
+            c_badge_y = (src.bounds[1] + src.bounds[3]) // 2
+            mid_draw.ellipse([(c_badge_x - 28, c_badge_y - 28), (c_badge_x + 28, c_badge_y + 28)], fill=(15, 23, 42, 255), outline=(255, 255, 255, 255), width=2)
+            mid_draw.text((c_badge_x - 14, c_badge_y - 12), "VS", fill=(255, 255, 255, 255), font=_get_font(20, bold=True))
 
-    elif layout_mode == "comparison":
-        # =========================================================================
-        # LAYOUT 3: SPLIT COMPARISON VIEW (Naive vs Target)
-        # =========================================================================
-        mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 545)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
-        _draw_fitted_text(mid_draw, headline, cx - 350, 465, 700, 65, fill=(255, 255, 255, 255), base_size=42, center=True)
 
-        col_w = 345
-        c_term1 = cards[0] if cards else "PIPELINE"
-        c_term2 = cards[1] if len(cards) > 1 else "ROUTING"
+def generate_scene_layers(
+    scene_index: int,
+    narration: str,
+    output_dir: Path,
+    scene_id: str,
+    style: StyleSystem | None = None,
+    width: int = 1080,
+    height: int = 1920,
+    topic: str = "",
+    subject: str = "",
+    visual_purpose: str = "",
+    visual_metaphor: str = "",
+    narrative_role: str = "",
+    total_scenes: int = 5,
+    scene_graph: SemanticSceneGraph | None = None,
+) -> dict[str, Path]:
+    """Generates and saves the 3 distinct depth layers for a scene:
+    Returns dict: {"bg": path, "mid": path, "fg": path, "primary": path}
+    
+    Adheres strictly to:
+    1. Topic-aligned semantics: Software/cloud topics NEVER render physical robotics arms.
+    2. Dynamic Scene Graph compilation: Renders verified claims into node topologies rather than rigid templates.
+    3. Safe Zone Layout: All graphics fit in top 75% of canvas (above y=1440), leaving strict 20% bottom margin.
+    """
+    st = style or get_style_system()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    accent_rgb = _hex_to_rgb(st.accent)
+    border_rgb = _hex_to_rgb(st.border_color)
+    text_rgb = _hex_to_rgb(st.primary_text)
+    muted_rgb = _hex_to_rgb(st.secondary_text)
+    surface_rgb = _hex_to_rgb(st.surface_elevated) if hasattr(st, "surface_elevated") else (255, 255, 255)
 
-        # Left: Naive / Traditional Baseline
-        lx = cx - 380
-        mid_draw.rounded_rectangle([(lx, 580), (lx + col_w, 890)], radius=20, fill=(*surface_rgb, 245), outline=(239, 68, 68, 255), width=2)
-        mid_draw.rounded_rectangle([(lx + 20, 600), (lx + col_w - 20, 645)], radius=10, fill=(254, 242, 242, 255), outline=(239, 68, 68, 255), width=1)
-        _draw_fitted_text(mid_draw, "BASELINE / NAIVE", lx + 25, 610, col_w - 50, 25, fill=(185, 28, 28, 255), base_size=20, bold=True, center=True)
-        mid_draw.text((lx + 25, 670), f"• Unindexed {c_term1[:12]}", fill=(71, 85, 105, 255), font=_get_font(22))
-        mid_draw.text((lx + 25, 715), f"• Raw {c_term2[:12]}", fill=(185, 28, 28, 255), font=_get_font(22, bold=True))
-        mid_draw.text((lx + 25, 760), "• Linear O(N) Cost", fill=(71, 85, 105, 255), font=_get_font(22))
-        mid_draw.text((lx + 25, 805), "• Sequential Queue", fill=(71, 85, 105, 255), font=_get_font(22))
+    font_title = _get_font(56, bold=True)
+    font_sub = _get_font(32)
+    font_badge = _get_font(26, bold=True)
+    font_mono = _get_font(28)
 
-        # Center VS Badge
-        mid_draw.ellipse([(cx - 28, 715), (cx + 28, 771)], fill=(15, 23, 42, 255), outline=(255, 255, 255, 255), width=2)
-        mid_draw.text((cx - 14, 730), "VS", fill=(255, 255, 255, 255), font=_get_font(20, bold=True))
+    # 1. BACKGROUND LAYER (z_index: 0) - Topic-derived environment
+    bg_img = generate_environment_for_scene(
+        scene_index=scene_index,
+        width=width,
+        height=height,
+        style=st,
+        topic=topic,
+        subject=subject,
+        visual_purpose=visual_purpose,
+        visual_metaphor=visual_metaphor,
+        narrative_role=narrative_role,
+    )
+    bg_path = output_dir / f"bg_{scene_id}.png"
+    bg_img.save(bg_path, "PNG")
 
-        # Right: Optimized Target Architecture
-        rx = cx + 35
-        mid_draw.rounded_rectangle([(rx, 580), (rx + col_w, 890)], radius=20, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
-        mid_draw.rounded_rectangle([(rx + 20, 600), (rx + col_w - 20, 645)], radius=10, fill=(30, 64, 175, 255))
-        _draw_fitted_text(mid_draw, "OPTIMIZED // TARGET", rx + 25, 610, col_w - 50, 25, fill=(255, 255, 255, 255), base_size=20, bold=True, center=True)
-        mid_draw.text((rx + 25, 670), f"• Indexed {c_term1[:12]}", fill=(226, 232, 240, 255), font=_get_font(22))
-        mid_draw.text((rx + 25, 715), f"• Status: {metric[:14]}", fill=(245, 158, 11, 255), font=_get_font(22, bold=True))
-        mid_draw.text((rx + 25, 760), f"• Directed {c_term2[:12]}", fill=(226, 232, 240, 255), font=_get_font(22))
-        mid_draw.text((rx + 25, 805), "• High Concurrency", fill=(16, 185, 129, 255), font=_get_font(22, bold=True))
+    # 2. MIDGROUND LAYER (z_index: 10, Transparent RGBA)
+    mid_img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    mid_draw = ImageDraw.Draw(mid_img)
 
-    else:
-        # =========================================================================
-        # LAYOUT 4: DEVELOPER TERMINAL / CODE SNIPPET WINDOW
-        # =========================================================================
-        mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 545)], radius=16, fill=(15, 23, 42, 250), outline=(*accent_rgb, 255), width=2)
-        _draw_fitted_text(mid_draw, headline, cx - 350, 465, 700, 65, fill=(255, 255, 255, 255), base_size=42, center=True)
+    # 3. FOREGROUND LAYER (z_index: 20, Transparent RGBA)
+    fg_img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    fg_draw = ImageDraw.Draw(fg_img)
 
-        term_x1 = cx - 380
-        term_x2 = cx + 380
-        term_y1 = 575
-        term_y2 = 890
-        # Dark Terminal Body
-        mid_draw.rounded_rectangle([(term_x1, term_y1), (term_x2, term_y2)], radius=18, fill=(15, 23, 42, 250), outline=(51, 65, 85, 255), width=2)
-        # Window Header
-        mid_draw.rounded_rectangle([(term_x1, term_y1), (term_x2, term_y1 + 44)], radius=18, fill=(30, 41, 59, 255))
-        mid_draw.rectangle([(term_x1, term_y1 + 24), (term_x2, term_y1 + 44)], fill=(30, 41, 59, 255))
-        # Window Controls (Red, Yellow, Green)
-        mid_draw.ellipse([(term_x1 + 20, term_y1 + 14), (term_x1 + 34, term_y1 + 28)], fill=(239, 68, 68, 255))
-        mid_draw.ellipse([(term_x1 + 44, term_y1 + 14), (term_x1 + 58, term_y1 + 28)], fill=(245, 158, 11, 255))
-        mid_draw.ellipse([(term_x1 + 68, term_y1 + 14), (term_x1 + 82, term_y1 + 28)], fill=(16, 185, 129, 255))
-        mid_draw.text((term_x1 + 110, term_y1 + 12), f"{domain.value.lower()}_runtime [TELEMETRY]", fill=(148, 163, 184, 255), font=_get_font(18, bold=True))
+    cx = width // 2
+    domain = classify_topic_domain(topic=topic, subject=subject, visual_purpose=visual_purpose, narration=narration)
 
-        c1 = cards[0].lower() if cards else "runtime"
-        c2 = cards[1].lower() if len(cards) > 1 else "pipeline"
-        # Monospaced Command & Log Stream derived from real semantic entities
-        code_lines = [
-            (f"$ {domain.value.lower()}_engine.exec(target='{c1}')", (52, 211, 153, 255)),
-            (f"[INFO] Initializing {c1.upper()} execution module", (226, 232, 240, 255)),
-            (f"[EXEC] Dispatching stream: {c2.upper()}", (56, 189, 248, 255)),
-            (f"[STATUS] Pipeline state: {metric}", (251, 191, 36, 255)),
-            ("✓ Architecture execution verified", (16, 185, 129, 255)),
-        ]
-        for idx, (line_txt, col) in enumerate(code_lines):
-            mid_draw.text((term_x1 + 28, term_y1 + 60 + idx * 46), line_txt, fill=col, font=_get_font(22, bold=False))
+    headline, cards, metric = _extract_semantic_entities(
+        subject=subject,
+        visual_purpose=visual_purpose,
+        visual_metaphor=visual_metaphor,
+        narration=narration,
+        domain=domain,
+    )
+
+    # Compile scene graph if not passed in
+    if scene_graph is None:
+        scene_graph = build_semantic_scene_graph(
+            scene_index=scene_index,
+            narrative_role=narrative_role,
+            subject=subject,
+            visual_purpose=visual_purpose,
+            narration=narration,
+            domain=domain,
+            total_scenes=total_scenes,
+        )
+
+    # FOREGROUND LAYER ARCHITECTURE (z=20, True Spatial Depth)
+    _draw_foreground_depth_elements(
+        fg_draw=fg_draw,
+        width=width,
+        height=height,
+        domain=domain,
+        headline=headline,
+        accent_rgb=accent_rgb,
+        border_rgb=border_rgb,
+        surface_rgb=surface_rgb,
+        muted_rgb=muted_rgb,
+        font_badge=font_badge,
+    )
+
+    # MIDGROUND LAYER (z=10) - Dynamic Scene Graph Visuals
+    _draw_midground_subject(
+        mid_draw=mid_draw,
+        width=width,
+        height=height,
+        scene_graph=scene_graph,
+        headline=headline,
+        accent_rgb=accent_rgb,
+        border_rgb=border_rgb,
+        text_rgb=text_rgb,
+        surface_rgb=surface_rgb,
+        muted_rgb=muted_rgb,
+        font_title=font_title,
+        font_badge=font_badge,
+    )
+
+    mid_path = output_dir / f"mid_{scene_id}.png"
+    mid_img.save(mid_path, "PNG")
+
+    fg_path = output_dir / f"fg_{scene_id}.png"
+    fg_img.save(fg_path, "PNG")
+
+    # Composite into primary asset
+    composite = Image.alpha_composite(bg_img.convert("RGBA"), mid_img)
+    composite = Image.alpha_composite(composite, fg_img)
+    primary_path = output_dir / f"ast_{scene_id}_primary.png"
+    composite.convert("RGB").save(primary_path, "PNG")
+    compat_path = output_dir / f"ast_{scene_id}.png"
+    composite.convert("RGB").save(compat_path, "PNG")
+
+    return {
+        "bg": bg_path,
+        "mid": mid_path,
+        "fg": fg_path,
+        "primary": primary_path,
+    }
+
 
 
 

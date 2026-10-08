@@ -324,6 +324,7 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
             visual_metaphor=sc.visual_metaphor,
             narrative_role=sc.narrative_role,
             total_scenes=len(visual_plan.scenes),
+            scene_graph=getattr(sc, "scene_graph", None),
         )
         char_png = assets_dir / f"char_{sc.scene_id}.png"
         render_character_asset(sc.character_spec, char_png)

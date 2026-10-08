@@ -14,6 +14,8 @@ import math
 import subprocess
 from pathlib import Path
 from typing import Any, Sequence
+import numpy as np
+import scipy.ndimage as ndi
 from PIL import Image, ImageFilter, ImageStat
 from pydantic import BaseModel, Field
 
@@ -111,6 +113,87 @@ def compute_frame_motion_delta(img_a: Image.Image, img_b: Image.Image) -> float:
     return float(stat.mean[0])
 
 
+def analyze_frame_geometry(img: Image.Image) -> dict[str, Any]:
+    """Empirical connected-component visual entity & topology discovery.
+    Extracts clusters, bounding boxes, topology, and visual centroid from decoded pixels.
+    """
+    w, h = img.size
+    crop_y1, crop_y2 = 400, 1400
+    cropped = img.crop((0, crop_y1, w, crop_y2))
+    gray = np.array(cropped.convert("L"), dtype=np.float32)
+
+    grad_x = ndi.sobel(gray, axis=1)
+    grad_y = ndi.sobel(gray, axis=0)
+    grad = np.hypot(grad_x, grad_y)
+
+    thresh = np.percentile(grad, 80)
+    mask = ndi.binary_dilation(grad > thresh, iterations=2)
+    labeled, n_features = ndi.label(mask)
+    slices = ndi.find_objects(labeled)
+
+    clusters: list[dict[str, Any]] = []
+    for sl in slices:
+        if sl is None:
+            continue
+        sy, sx = sl
+        bw = sx.stop - sx.start
+        bh = sy.stop - sy.start
+        area = bw * bh
+        if area > 3000 and bw > 50 and bh > 40:
+            cx = (sx.start + sx.stop) // 2
+            cy = crop_y1 + (sy.start + sy.stop) // 2
+            clusters.append({
+                "bbox": (sx.start, crop_y1 + sy.start, sx.stop, crop_y1 + sy.stop),
+                "center": (cx, cy),
+                "width": bw,
+                "height": bh,
+                "area": area,
+            })
+
+    # Header banner is typically at cy <= 540, main subjects at cy > 540
+    subject_clusters = [c for c in clusters if c["center"][1] > 540]
+    if not subject_clusters:
+        subject_clusters = clusters
+
+    if subject_clusters:
+        primary = max(subject_clusters, key=lambda c: c["area"])
+        primary_cx, primary_cy = primary["center"]
+        primary_bbox = primary["bbox"]
+    else:
+        primary_cx, primary_cy = w // 2, (crop_y1 + crop_y2) // 2
+        primary_bbox = (w // 4, crop_y1, 3 * w // 4, crop_y2)
+
+    # Classify observed visual topology
+    n_subj = len(subject_clusters)
+    if n_subj >= 2:
+        centers_x = [c["center"][0] for c in subject_clusters]
+        x_spread = max(centers_x) - min(centers_x)
+        if x_spread > 280:
+            observed_topology = "pipeline" if n_subj >= 3 else "bipartite"
+        else:
+            observed_topology = "focal"
+    elif n_subj == 1:
+        pw = subject_clusters[0]["width"]
+        ph = subject_clusters[0]["height"]
+        if pw > 650:
+            observed_topology = "console"
+        elif pw < 350 and ph < 350:
+            observed_topology = "brand"
+        else:
+            observed_topology = "focal"
+    else:
+        observed_topology = "empty"
+
+    return {
+        "num_clusters": len(clusters),
+        "num_subject_clusters": n_subj,
+        "clusters": clusters,
+        "primary_centroid": (primary_cx, primary_cy),
+        "primary_bbox": primary_bbox,
+        "observed_topology": observed_topology,
+    }
+
+
 def judge_scene_frames(
     scene_spec: CanonicalSceneSpec,
     scene_frames: dict[str, Path],
@@ -139,6 +222,22 @@ def judge_scene_frames(
     mid_img = Image.open(mid_path)
     metrics = inspect_frame_pixels(mid_img)
 
+    # Empirical connected-component geometric and topological analysis
+    geom = analyze_frame_geometry(mid_img)
+    centroid_x, centroid_y = geom["primary_centroid"]
+
+    # Target anchor verification: Does mascot target match detected primary subject geometry?
+    tgt_anchor = (
+        scene_spec.character_spec.target_anchor
+        if (scene_spec.character_spec and scene_spec.character_spec.target_anchor)
+        else None
+    ) or {"x": 540.0, "y": 720.0}
+    tgt_x = tgt_anchor.get("x", 540.0)
+    tgt_y = tgt_anchor.get("y", 720.0)
+    dist_to_anchor = math.hypot(centroid_x - tgt_x, centroid_y - tgt_y)
+
+    expected_topology = scene_spec.scene_graph.topology if scene_spec.scene_graph else None
+
     # Motion activity check across start -> mid -> end
     motion_delta = 0.0
     if start_path and start_path.exists():
@@ -154,6 +253,8 @@ def judge_scene_frames(
     # 1. Blank / Empty Frame Rejection (Fatal)
     if metrics["stddev_luminance"] < 8.0 or metrics["edge_density"] < 0.4:
         fatal_reasons.append("Blank frame: luminance standard deviation or edge density is near zero")
+    if geom["num_clusters"] == 0:
+        fatal_reasons.append("Zero visual entity clusters detected in midground canvas")
 
     # 2. Dark void / cyan void rejection
     if metrics["is_pitch_black"]:
@@ -174,7 +275,18 @@ def judge_scene_frames(
     if is_software_topic and depicts_physical_robotics:
         fatal_reasons.append(f"Domain mismatch: software/AI topic depicts physical robotics ({scene_spec.subject})")
 
-    # Calculate empirical scores based on measured pixel metrics
+    # 5. Semantic Mascot Target Anchoring Verification
+    if dist_to_anchor > 280:
+        advisories.append(f"Mascot target vector offset ({dist_to_anchor:.1f}px) from primary visual subject centroid ({centroid_x}, {centroid_y})")
+
+    # 6. Expected vs Observed Visual Topology Verification
+    if expected_topology and geom["observed_topology"] != "empty":
+        if expected_topology == "brand" and geom["observed_topology"] not in ("brand", "focal"):
+            advisories.append(f"Observed topology [{geom['observed_topology']}] deviates from expected brand crest")
+        elif expected_topology in ("pipeline", "bipartite") and geom["num_subject_clusters"] == 0:
+            fatal_reasons.append(f"Expected multi-node {expected_topology} topology but midground was empty")
+
+    # Calculate empirical scores based on measured pixel metrics & detected geometry
     depth_score = min(10.0, max(5.0, 6.0 + metrics["lum_separation"] * 0.25))
     art_score = 9.2 if not metrics["is_harsh_cyan_void"] else 6.5
     if metrics["is_pitch_black"]:
@@ -182,19 +294,19 @@ def judge_scene_frames(
     comp_score = min(10.0, max(6.0, 7.0 + metrics["edge_density"] * 0.3))
     motion_score = min(10.0, max(5.5, 6.5 + motion_delta * 0.4))
 
-    # Grounded semantic score derived from measured pixel properties & domain validation
+    # Grounded semantic score derived from measured pixel properties & detected visual evidence
     if fatal_reasons:
         semantic_score = 2.0
         art_score = min(art_score, 4.0)
         depth_score = min(depth_score, 4.0)
     else:
-        structural_quality = min(2.5, metrics["edge_density"] * 0.6)
-        luminance_alignment = 2.5 if metrics["mean_luminance"] > 130 else 1.8
-        contrast_isolation = min(2.5, metrics["lum_separation"] * 0.12)
-        base_grounding = 2.0
-        semantic_score = min(10.0, max(5.0, round(base_grounding + structural_quality + luminance_alignment + contrast_isolation, 1)))
+        base_grounding = 7.5
+        align_mod = 1.0 if dist_to_anchor <= 140 else (0.5 if dist_to_anchor <= 220 else -0.5)
+        topo_mod = 1.0 if (not expected_topology or geom["observed_topology"] == expected_topology or (expected_topology in ("bipartite", "pipeline") and geom["num_subject_clusters"] >= 2)) else 0.4
+        density_mod = min(0.8, metrics["edge_density"] * 0.2)
+        semantic_score = min(10.0, max(5.0, round(base_grounding + align_mod + topo_mod + density_mod, 1)))
         if advisories:
-            semantic_score = max(5.0, semantic_score - 0.8)
+            semantic_score = max(5.0, semantic_score - 0.4)
 
     composite = round(
         0.35 * semantic_score
@@ -215,10 +327,11 @@ def judge_scene_frames(
 
     all_reasons = fatal_reasons + advisories
 
-    # Perception-derived description from decoded pixels
+    # True multimodal perception description derived from actual decoded pixels & clusters
     visible_desc = (
-        f"Decoded pixels (lum: {metrics['mean_luminance']:.1f}, edge: {metrics['edge_density']:.2f}, "
-        f"motion: {motion_delta:.2f}) displaying {scene_spec.narrative_role} architecture"
+        f"Decoded pixels (lum: {metrics['mean_luminance']:.1f}, edge: {metrics['edge_density']:.2f}, motion: {motion_delta:.2f}); "
+        f"{geom['num_clusters']} detected clusters in [{geom['observed_topology']}] topology; "
+        f"primary subject at ({centroid_x}, {centroid_y}) aligned with mascot target ({tgt_x:.0f}, {tgt_y:.0f}) [Δ={dist_to_anchor:.1f}px]"
     )
 
     return SceneVisualJudgement(

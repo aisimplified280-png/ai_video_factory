@@ -90,6 +90,15 @@ export interface PlacedAudio {
   duration: number;
 }
 
+export interface SceneBoundaryTransition {
+  from_scene: string;
+  to_scene: string;
+  intent: string;
+  overlap_frames: number;
+  outgoing_motion: string;
+  incoming_motion: string;
+}
+
 export interface SceneCompositionProps {
   scene: SceneProps;
   placed: PlacedEvent[];
@@ -101,6 +110,7 @@ export interface SceneCompositionProps {
   height: number;
   ctaBranding: string;
   isAITopic?: boolean;
+  boundaryTransition?: SceneBoundaryTransition | null;
 }
 
 /**
@@ -308,16 +318,7 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
       if (asset) {
         return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
       }
-      return (
-        <BackgroundLayer
-          theme={theme}
-          environment={scene.environment}
-          sceneId={scene.scene_id}
-          subject={scene.subject}
-          visualPurpose={scene.visual_purpose}
-          progress={progress}
-        />
-      );
+      return null;
     case 'caption':
       return null;
     default:
@@ -387,23 +388,28 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
   height,
   ctaBranding,
   isAITopic = false,
+  boundaryTransition = null,
 }) => {
   const frame = useCurrentFrame();
   const ordered = [...placed].sort((a, b) => a.event.z_index - b.event.z_index);
   const layered = scene.depth_strategy && /background|midground|foreground/i.test(scene.depth_strategy);
   const sceneDurationFrames = Math.max(1, Math.round((scene.end - scene.start) * fps));
   const sceneProgress = Math.min(1, Math.max(0, frame / sceneDurationFrames));
+  const hasBackgroundAsset = ordered.some((p) => p.event.role === 'background' && Boolean(p.event.asset_id));
+
   return (
     <AbsoluteFill>
-      <BackgroundLayer
-        theme={theme}
-        environment={scene.environment}
-        sceneId={scene.scene_id}
-        subject={scene.subject}
-        visualPurpose={scene.visual_purpose}
-        progress={sceneProgress}
-        isAITopic={isAITopic}
-      />
+      {!hasBackgroundAsset && (
+        <BackgroundLayer
+          theme={theme}
+          environment={scene.environment}
+          sceneId={scene.scene_id}
+          subject={scene.subject}
+          visualPurpose={scene.visual_purpose}
+          progress={sceneProgress}
+          isAITopic={isAITopic}
+        />
+      )}
 
       {ordered.map(({event, from, duration, head, tail, flashFrames}, index) => {
         const total = duration + tail;
@@ -416,7 +422,7 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
           cameraStyle(event.camera_intent, progress),
           motionStyle(event.motion_intent, progress),
           headStyleFor(event.transition_in, head, local),
-          inTail ? tailStyleFor(next?.event.transition_in ?? null, tail, local - duration) : undefined,
+          inTail ? tailStyleFor(boundaryTransition?.intent ?? next?.event.transition_in ?? null, tail, local - duration) : undefined,
           depth ? parallax(progress, depth) : undefined,
         );
         return (
