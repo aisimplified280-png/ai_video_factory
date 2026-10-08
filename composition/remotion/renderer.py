@@ -44,6 +44,38 @@ def build_render_manifest(execution_log: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def extract_stream_properties(probe_data: dict[str, Any]) -> dict[str, Any]:
+    """Extract codec, resolution, fps, and audio presence from ffprobe JSON."""
+    props: dict[str, Any] = {}
+    streams = probe_data.get("streams", [])
+    video_stream = next((s for s in streams if s.get("codec_type") == "video"), None)
+    audio_stream = next((s for s in streams if s.get("codec_type") == "audio"), None)
+
+    if video_stream:
+        props["codec"] = video_stream.get("codec_name")
+        w = video_stream.get("width")
+        h = video_stream.get("height")
+        if w and h:
+            props["resolution"] = f"{w}x{h}"
+        rate_str = video_stream.get("r_frame_rate") or video_stream.get("avg_frame_rate")
+        if rate_str and "/" in rate_str:
+            num, den = rate_str.split("/", 1)
+            try:
+                den_val = float(den)
+                if den_val > 0:
+                    props["fps"] = round(float(num) / den_val)
+            except (ValueError, ZeroDivisionError):
+                pass
+        elif rate_str:
+            try:
+                props["fps"] = round(float(rate_str))
+            except ValueError:
+                pass
+    if audio_stream:
+        props["audio_present"] = True
+    return props
+
+
 def build_render_report(
     *,
     job: Any,
@@ -59,24 +91,73 @@ def build_render_report(
     warnings: list | None = None,
     audio_present: bool = False,
     parent_artifacts: list[dict] | None = None,
+    probe: dict[str, Any] | None = None,
+    profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Build the canonical render_report payload (validated by tests, persisted by workers)."""
+    """Build the canonical render_report payload.
+    
+    Render properties (codec, resolution, fps, audio) are derived authoritatively from:
+    1. Actual ffprobe output (from probe argument or by probing the output file)
+    2. Selected platform profile configuration
+    3. Job configuration
+    Hard-coded static values are forbidden.
+    """
     output_path = Path(output_path)
-    get = (lambda key: job.get(key)) if isinstance(job, dict) else (lambda key: getattr(job, key))
+    get = (lambda key, default=None: job.get(key, default)) if isinstance(job, dict) else (lambda key, default=None: getattr(job, key, default))
+
+    # Priority 1: Actual ffprobe output
+    probed_props: dict[str, Any] = {}
+    if probe is not None:
+        probed_props = extract_stream_properties(probe)
+    elif output_path.is_file() and shutil.which("ffprobe"):
+        try:
+            probed_props = extract_stream_properties(ffprobe_info(output_path))
+        except Exception:
+            pass
+
+    # Priority 2: Authoritative platform profile snapshot
+    profile_data = profile
+    if profile_data is None:
+        platform_val = get("platform")
+        if isinstance(platform_val, dict):
+            profile_data = platform_val
+        elif get("platform_profile"):
+            try:
+                p_path = Path(get("platform_profile"))
+                if p_path.is_file():
+                    profile_data = json.loads(p_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+
+    profile_res = None
+    profile_fps = None
+    profile_codec = None
+    if profile_data:
+        res = profile_data.get("resolution")
+        if isinstance(res, dict) and "width" in res and "height" in res:
+            profile_res = f"{res['width']}x{res['height']}"
+        profile_fps = profile_data.get("fps")
+        profile_codec = profile_data.get("codec")
+
+    codec = probed_props.get("codec") or profile_codec or get("codec") or get("output_format") or "h264"
+    resolution = probed_props.get("resolution") or profile_res or get("resolution") or "1080x1920"
+    fps = probed_props.get("fps") or profile_fps or get("fps") or 30
+    actual_audio = probed_props.get("audio_present", audio_present)
+
     return {
         "final_video_path": output_path.as_posix(),
         "duration_rendered": duration_rendered,
         "scenes_rendered": scenes_rendered,
         "render_runtime_used": get("runtime_id"),
-        "codec": "h264",
-        "resolution": "1080x1920",
-        "fps": 30,
+        "codec": codec,
+        "resolution": resolution,
+        "fps": fps,
         "file_size_bytes": output_path.stat().st_size if output_path.is_file() else None,
         "render_duration_seconds": render_duration_seconds,
         "scene_reports": scene_reports or [],
         "errors": errors or [],
         "warnings": warnings or [],
-        "audio_present": audio_present,
+        "audio_present": actual_audio,
         "environment": environment,
         "edit_artifact_version": get("edit_artifact_version"),
         "edit_artifact_hash": get("edit_artifact_hash"),

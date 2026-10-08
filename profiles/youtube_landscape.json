@@ -1,0 +1,13 @@
+{
+  "id": "youtube_landscape",
+  "platform": "youtube_video",
+  "resolution": {"width": 1920, "height": 1080},
+  "fps": 60,
+  "codec": "h264",
+  "duration_constraints": {"minimum_seconds": 30, "maximum_seconds": 600},
+  "safe_zones": {
+    "caption": "lower_center_safe",
+    "cta": "right_center_safe",
+    "brand": "top_right_safe"
+  }
+}
