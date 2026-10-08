@@ -36,10 +36,23 @@ from production.phase17.visual_qa import evaluate_visual_language
 
 def test_style_systems_registration():
     """Verify that dedicated style systems are registered with distinct parameters."""
-    assert StyleSystemId.CLAUDE_EDITORIAL in STYLE_SYSTEMS
-    assert StyleSystemId.APPLE_KEYNOTE in STYLE_SYSTEMS
-    assert StyleSystemId.LINEAR_LAUNCH in STYLE_SYSTEMS
-    assert StyleSystemId.BLOOMBERG_GRAPHICS in STYLE_SYSTEMS
+    for style_id in StyleSystemId:
+        assert style_id in STYLE_SYSTEMS, f"{style_id} declared in StyleSystemId enum but missing from STYLE_SYSTEMS"
+        system = STYLE_SYSTEMS[style_id]
+        assert system.system_id == style_id
+        assert system.primary_bg.startswith("#")
+        assert system.accent.startswith("#")
+        assert system.border_color.startswith("#")
+        assert system.corner_radius > 0
+        assert len(system.font_family) > 0
+
+        # Validate serialized tokens
+        d = system.to_dict()
+        assert d["system_id"] == style_id.value
+        assert "palette" in d
+        assert d["palette"]["primary_bg"] == system.primary_bg
+        assert d["palette"]["accent"] == system.accent
+        assert d["corner_radius"] == system.corner_radius
 
     claude = get_style_system("claude_editorial")
     assert claude.primary_bg == "#F8FAFC"
@@ -48,6 +61,10 @@ def test_style_systems_registration():
     apple = get_style_system("apple_keynote")
     assert apple.primary_bg == "#0B0D11"
     assert apple.accent == "#2997FF"
+
+    stripe = get_style_system("stripe_motion")
+    assert stripe.primary_bg == "#F6F9FC"
+    assert stripe.accent == "#635BFF"
 
 
 from production.phase17.environment_generator import (
