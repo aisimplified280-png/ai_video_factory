@@ -53,14 +53,14 @@ class EnvironmentDecision:
 import re
 
 
-def classify_topic_domain(topic: str = "", subject: str = "", visual_purpose: str = "") -> TopicDomain:
+def classify_topic_domain(topic: str = "", subject: str = "", visual_purpose: str = "", narration: str = "") -> TopicDomain:
     """Classifies topic into semantic domain using strict word-boundary checks."""
-    text = f"{topic} {subject} {visual_purpose}".lower()
+    text = f"{topic} {subject} {visual_purpose} {narration}".lower()
 
     # 1. Physical Robotics / Hardware (must be explicit physical hardware)
     is_explicit_hardware = bool(
         re.search(
-            r"\b(robot arm|robotic arm|industrial robot|manipulator|gripper|actuator|actuators|kinematics|tactile clamp|agv|warehouse robotics|six-axis)\b",
+            r"\b(robot arm|robotic arm|industrial robot|industrial robots|warehouse robots|warehouse robotics|manipulator|gripper|actuator|actuators|kinematics|tactile clamp|agv|six-axis)\b",
             text,
         )
     )

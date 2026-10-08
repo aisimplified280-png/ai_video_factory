@@ -122,7 +122,7 @@ def generate_scene_layers(
     border_rgb = _hex_to_rgb(st.border_color)
     text_rgb = _hex_to_rgb(st.primary_text)
     muted_rgb = _hex_to_rgb(st.secondary_text)
-    surface_rgb = st.surface_rgb() if hasattr(st, "surface_rgb") else (255, 255, 255)
+    surface_rgb = _hex_to_rgb(st.surface_elevated) if hasattr(st, "surface_elevated") else (255, 255, 255)
 
     # +35-45% font sizes for mobile readability
     font_title = _get_font(56, bold=True)
@@ -155,7 +155,18 @@ def generate_scene_layers(
 
     # Safe Zone: Offset all core geometry upward by 10-15% (all graphics stay in top 75%, y <= 1400)
     cx = width // 2
-    domain = classify_topic_domain(topic=topic, subject=subject, visual_purpose=visual_purpose)
+    domain = classify_topic_domain(topic=topic, subject=subject, visual_purpose=visual_purpose, narration=narration)
+
+    # -------------------------------------------------------------------------
+    # DYNAMIC SEMANTIC EXTRACTION (Zero Static Boilerplate Templates)
+    # -------------------------------------------------------------------------
+    headline, cards, metric = _extract_semantic_entities(
+        subject=subject,
+        visual_purpose=visual_purpose,
+        visual_metaphor=visual_metaphor,
+        narration=narration,
+        domain=domain,
+    )
 
     # -------------------------------------------------------------------------
     # 2. FOREGROUND LAYER ARCHITECTURE (z=20, True Spatial Depth)
@@ -166,7 +177,7 @@ def generate_scene_layers(
         width=width,
         height=height,
         domain=domain,
-        scene_index=scene_index,
+        headline=headline,
         accent_rgb=accent_rgb,
         border_rgb=border_rgb,
         surface_rgb=surface_rgb,
@@ -183,7 +194,11 @@ def generate_scene_layers(
         width=width,
         height=height,
         domain=domain,
-        scene_index=scene_index,
+        headline=headline,
+        cards=cards,
+        metric=metric,
+        visual_metaphor=visual_metaphor,
+        visual_purpose=visual_purpose,
         accent_rgb=accent_rgb,
         border_rgb=border_rgb,
         text_rgb=text_rgb,
@@ -226,12 +241,80 @@ def compute_layer_occupancy(image_input: Path | Image.Image) -> float:
     return round(solid / max(1, len(alpha)), 4)
 
 
+import re
+
+
+def _extract_semantic_entities(
+    subject: str,
+    visual_purpose: str,
+    visual_metaphor: str,
+    narration: str,
+    domain: TopicDomain,
+) -> tuple[str, list[str], str]:
+    """Dynamically extracts headline, 2-3 card labels, and metric badge from scene semantics.
+    Eliminates all static boilerplate templates.
+    """
+    # 1. Primary Headline: prioritize subject, then visual_purpose, then clean title from narration
+    clean_sub = re.sub(r"[^\w\s-]", "", subject).strip()
+    if clean_sub and len(clean_sub) >= 4:
+        headline = clean_sub.upper()[:28]
+    elif visual_purpose and len(visual_purpose) >= 4:
+        headline = re.sub(r"[^\w\s-]", "", visual_purpose).strip().upper()[:28]
+    else:
+        # Extract first 3 significant words from narration
+        words = [w.strip(".,;:!?\"'") for w in narration.split() if len(w) > 3]
+        headline = " ".join(words[:3]).upper() if words else "SYSTEM ARCHITECTURE"
+        headline = headline[:28]
+
+    # 2. Extract technical terms from context
+    corpus = f"{subject} {visual_purpose} {visual_metaphor} {narration}"
+    clean_words = re.findall(r"[A-Za-z0-9\-_]{4,}", corpus)
+    stopwords = {
+        "this", "that", "with", "from", "have", "more", "then", "into", "when",
+        "your", "will", "what", "how", "over", "fast", "they", "them", "about",
+        "offers", "gives", "system", "systems", "getting", "smarter", "built",
+    }
+    key_terms = []
+    seen = set()
+    for w in clean_words:
+        up = w.upper()
+        if up.lower() not in stopwords and up not in seen:
+            seen.add(up)
+            key_terms.append(up[:16])
+
+    # 3. Card labels (strictly 2 to 3 cards for 9:16 mobile readability)
+    if len(key_terms) >= 3:
+        cards = key_terms[:3]
+    elif len(key_terms) == 2:
+        cards = [key_terms[0], key_terms[1], "RUNTIME"]
+    elif len(key_terms) == 1:
+        cards = [key_terms[0], "PIPELINE", "ENGINE"]
+    else:
+        if domain == TopicDomain.ROBOTICS_HARDWARE:
+            cards = ["KINEMATICS", "ACTUATION", "CONTROL"]
+        else:
+            cards = ["INGESTION", "ROUTING", "RETRIEVAL"]
+
+    # 4. Metric badge
+    metric_match = re.search(r"(\+?\d+%|\d+x|\d+ms|\d+s|\d+\.\d+%)", narration)
+    if metric_match:
+        metric = metric_match.group(1)
+    elif "speed" in corpus.lower() or "latency" in corpus.lower() or "fast" in corpus.lower():
+        metric = "< 15MS LATENCY"
+    elif "throughput" in corpus.lower() or "scale" in corpus.lower():
+        metric = "10X THROUGHPUT"
+    else:
+        metric = "OPTIMAL STATE"
+
+    return headline, cards, metric
+
+
 def _draw_foreground_depth_elements(
     fg_draw: ImageDraw.ImageDraw,
     width: int,
     height: int,
     domain: TopicDomain,
-    scene_index: int,
+    headline: str,
     accent_rgb: tuple[int, int, int],
     border_rgb: tuple[int, int, int],
     surface_rgb: tuple[int, int, int],
@@ -252,16 +335,11 @@ def _draw_foreground_depth_elements(
     fg_draw.line([(width - 110 - bracket_len, 240), (width - 110, 240)], fill=(*accent_rgb, 230), width=3)
     fg_draw.line([(width - 110, 240), (width - 110, 240 + bracket_len)], fill=(*accent_rgb, 230), width=3)
 
-    # 3. Near-plane contextual monitor card
-    if scene_index == 1:
-        fg_draw.rounded_rectangle([(width - 480, 250), (width - 110, 330)], radius=14, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=2)
-        fg_draw.ellipse([(width - 455, 282), (width - 439, 298)], fill=(*accent_rgb, 255))
-        fg_draw.text((width - 425, 276), "CONTEXT BUFFER // LIVE", fill=(*accent_rgb, 255), font=font_badge)
-    else:
-        fg_draw.rounded_rectangle([(110, 250), (480, 330)], radius=14, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=2)
-        fg_draw.ellipse([(135, 282), (151, 298)], fill=(*accent_rgb, 255))
-        label = "TELEMETRY // PROD-EAST" if domain == TopicDomain.SOFTWARE_AI else "CALIBRATION // ZERO-POINT"
-        fg_draw.text((165, 276), label, fill=(*muted_rgb, 255), font=font_badge)
+    # 3. Dynamic near-plane contextual monitor card derived from scene headline
+    fg_draw.rounded_rectangle([(110, 250), (width - 110, 330)], radius=14, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=2)
+    fg_draw.ellipse([(135, 282), (151, 298)], fill=(*accent_rgb, 255))
+    tag = f"{domain.value.upper()} // {headline[:24]}"
+    fg_draw.text((165, 276), tag, fill=(*muted_rgb, 255), font=font_badge)
 
     # 4. Near-plane depth optical particle discs
     spots = [(170, 1140, 36), (width - 180, 480, 42)]
@@ -274,7 +352,11 @@ def _draw_midground_subject(
     width: int,
     height: int,
     domain: TopicDomain,
-    scene_index: int,
+    headline: str,
+    cards: list[str],
+    metric: str,
+    visual_metaphor: str,
+    visual_purpose: str,
     accent_rgb: tuple[int, int, int],
     border_rgb: tuple[int, int, int],
     text_rgb: tuple[int, int, int],
@@ -283,53 +365,60 @@ def _draw_midground_subject(
     font_title: ImageFont.FreeTypeFont | ImageFont.ImageFont,
     font_badge: ImageFont.FreeTypeFont | ImageFont.ImageFont,
 ):
-    """Draws core hero visual subject with substantial occupancy (>= 20%)."""
+    """Draws core hero visual subject derived purely from scene semantics and visual purpose."""
     cx = width // 2
+    metaphor_lower = f"{visual_metaphor} {visual_purpose}".lower()
 
     if domain == TopicDomain.ROBOTICS_HARDWARE:
-        if scene_index == 0:
-            mid_draw.rounded_rectangle([(cx - 340, 520), (cx + 340, 780)], radius=22, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
-            mid_draw.text((cx - 250, 570), "SIX-AXIS KINEMATIC CELL", fill=(*text_rgb, 255), font=font_title)
-        elif scene_index == 1:
-            _draw_titanium_gripper(mid_draw, cx, 660, scale=1.45, open_angle=25, accent_rgb=accent_rgb, border_rgb=border_rgb)
-        elif scene_index == 2:
-            mid_draw.ellipse([(cx - 170, 520), (cx + 170, 860)], fill=(*surface_rgb, 240), outline=(*accent_rgb, 255), width=3)
-            mid_draw.text((cx - 120, 670), "TACTICAL SCAN", fill=(*text_rgb, 255), font=font_title)
-        elif scene_index == 3:
-            mid_draw.rounded_rectangle([(cx - 360, 520), (cx + 360, 820)], radius=22, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
-            mid_draw.text((cx - 280, 640), "AGV AISLE REROUTING", fill=(*text_rgb, 255), font=font_title)
-        else:
-            mid_draw.rounded_rectangle([(cx - 220, 520), (cx + 220, 780)], radius=26, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
-            mid_draw.text((cx - 45, 620), "AI", fill=(*text_rgb, 255), font=font_title)
+        # Physical robotics hardware: articulated mechanical stage + telemetry
+        mid_draw.rounded_rectangle([(cx - 360, 500), (cx + 360, 840)], radius=24, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
+        # Mounting gantry base
+        mid_draw.rectangle([(cx - 320, 720), (cx + 320, 790)], fill=(*surface_rgb, 255), outline=(*border_rgb, 255), width=2)
+        mid_draw.text((cx - 300, 535), headline, fill=(*text_rgb, 255), font=font_title)
+        _draw_titanium_gripper(mid_draw, cx, 660, scale=1.35, open_angle=20, accent_rgb=accent_rgb, border_rgb=border_rgb)
+        mid_draw.text((cx - 140, 800), f"CALIBRATION: {metric}", fill=(*accent_rgb, 255), font=font_badge)
+
+    elif any(k in metaphor_lower for k in ["metric", "speed", "velocity", "benchmark", "latency", "scale"]):
+        # Hero Metric Velocity Layout
+        mid_draw.rounded_rectangle([(cx - 380, 480), (cx + 380, 820)], radius=24, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=2)
+        mid_draw.line([(cx - 340, 630), (cx + 340, 630)], fill=(*border_rgb, 255), width=2)
+        mid_draw.text((cx - 330, 525), headline, fill=(*text_rgb, 255), font=font_title)
+        mid_draw.text((cx - 330, 670), metric, fill=(*accent_rgb, 255), font=font_title)
+
+    elif any(k in metaphor_lower for k in ["agent", "network", "node", "cluster", "lattice"]):
+        # Dynamic Node Hub Layout
+        mid_draw.ellipse([(cx - 120, 560), (cx + 120, 800)], fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
+        mid_draw.text((cx - 90, 660), cards[0], fill=(*text_rgb, 255), font=font_badge)
+        # Flanking connected nodes
+        if len(cards) >= 2:
+            mid_draw.rounded_rectangle([(cx - 380, 580), (cx - 180, 780)], radius=18, fill=(*surface_rgb, 235), outline=(*border_rgb, 255), width=2)
+            mid_draw.line([(cx - 180, 680), (cx - 120, 680)], fill=(*accent_rgb, 255), width=3)
+            mid_draw.text((cx - 360, 665), cards[1], fill=(*text_rgb, 255), font=font_badge)
+        if len(cards) >= 3:
+            mid_draw.rounded_rectangle([(cx + 180, 580), (cx + 380, 780)], radius=18, fill=(*surface_rgb, 235), outline=(*border_rgb, 255), width=2)
+            mid_draw.line([(cx + 120, 680), (cx + 180, 680)], fill=(*accent_rgb, 255), width=3)
+            mid_draw.text((cx + 200, 665), cards[2], fill=(*text_rgb, 255), font=font_badge)
+
     else:
-        # Software / AI / Cloud Domain
-        if scene_index == 0:
-            mid_draw.rounded_rectangle([(cx - 380, 500), (cx + 380, 780)], radius=24, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=2)
-            mid_draw.line([(cx - 340, 640), (cx + 340, 640)], fill=(*accent_rgb, 255), width=3)
-            mid_draw.ellipse([(cx - 18, 622), (cx + 18, 658)], fill=(*accent_rgb, 255))
-            mid_draw.text((cx - 330, 545), "ENTERPRISE ARCHITECTURE", fill=(*text_rgb, 255), font=font_title)
+        # Default Multi-Stage Architecture Pipeline: Max 3 core cards for 9:16 mobile readability
+        # Hero Headline Card at top
+        mid_draw.rounded_rectangle([(cx - 380, 450), (cx + 380, 550)], radius=16, fill=(*surface_rgb, 245), outline=(*border_rgb, 255), width=2)
+        mid_draw.text((cx - 340, 475), headline, fill=(*text_rgb, 255), font=font_title)
 
-        elif scene_index == 1:
-            # Strictly max 3 core cards with bold 26px typography
-            for off, label in [(-290, "DATA INGESTION"), (0, "CONTEXT PIPELINE"), (290, "VECTOR STORE")]:
-                mid_draw.rounded_rectangle([(cx + off - 125, 500), (cx + off + 125, 780)], radius=20, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
-                mid_draw.line([(cx + off, 430), (cx + off, 500)], fill=(*accent_rgb, 255), width=3)
-                mid_draw.text((cx + off - 110, 625), label, fill=(*text_rgb, 255), font=font_badge)
+        # 3 Clean Stage Cards below
+        card_w = 210
+        gap = 25
+        total_w = len(cards) * card_w + (len(cards) - 1) * gap
+        start_x = cx - total_w // 2
 
-        elif scene_index == 2:
-            mid_draw.ellipse([(cx - 100, 570), (cx + 100, 770)], fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
-            mid_draw.line([(cx - 290, 500), (cx, 670)], fill=(*accent_rgb, 255), width=2)
-            mid_draw.line([(cx + 290, 500), (cx, 670)], fill=(*accent_rgb, 255), width=2)
-            mid_draw.text((cx - 85, 650), "AGENTS", fill=(*text_rgb, 255), font=font_title)
+        for i, card_text in enumerate(cards):
+            bx = start_x + i * (card_w + gap)
+            card_outline = (*accent_rgb, 255) if i == 1 else (*border_rgb, 255)
+            mid_draw.rounded_rectangle([(bx, 600), (bx + card_w, 820)], radius=18, fill=(*surface_rgb, 240), outline=card_outline, width=2)
+            # Top conduit connector
+            mid_draw.line([(bx + card_w // 2, 550), (bx + card_w // 2, 600)], fill=(*accent_rgb, 255), width=3)
+            # Label
+            mid_draw.text((bx + 20, 690), card_text, fill=(*text_rgb, 255), font=font_badge)
 
-        elif scene_index == 3:
-            mid_draw.rounded_rectangle([(cx - 380, 480), (cx + 380, 800)], radius=24, fill=(*surface_rgb, 240), outline=(*border_rgb, 255), width=2)
-            mid_draw.line([(cx - 340, 630), (cx + 340, 630)], fill=(*border_rgb, 255), width=1)
-            mid_draw.text((cx - 330, 525), "RETRIEVAL VELOCITY", fill=(*muted_rgb, 255), font=font_badge)
-            mid_draw.text((cx - 330, 670), "+340% SPEED", fill=(*accent_rgb, 255), font=font_title)
-
-        else:
-            mid_draw.rounded_rectangle([(cx - 220, 520), (cx + 220, 780)], radius=26, fill=(*surface_rgb, 245), outline=(*accent_rgb, 255), width=3)
-            mid_draw.text((cx - 45, 620), "AI", fill=(*text_rgb, 255), font=font_title)
 
 
