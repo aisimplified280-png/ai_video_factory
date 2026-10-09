@@ -1,11 +1,22 @@
 """Phase 18 Independent Visual Judge Ensemble & Strict Release Gate.
 
+Release priority (highest first):
+  1. Semantic correctness  — does the frame depict the narration's claim?
+  2. Visual clarity        — can a viewer tell subject, relationship and target at a glance?
+  3. Subject visibility / hierarchy
+  4. Mascot guidance accuracy
+  5. Motion                — deliberately LOW weight; static explanatory scenes are valid
+  6. Decorative richness   — never a goal; over-design is actively penalised
+
 Audits actual encoded MP4 frames and verifies:
-1. Perception-First Analysis: Extracts pixel entropy, edge density, luminance separation, and inter-frame motion.
-2. Semantic Grounding: Describes visible features first, then compares with VisualEvidenceContract.
-3. Domain Mismatch Rejection: Software topics depicting physical robotics fail immediately.
-4. Blank & Static Rejection: Blank frames (low entropy) or frozen sections fail immediately.
-5. Strict Gate Enforcement: Any failure raises VisualGateRejectionError and halts release.
+1. Perception-First Analysis: pixel entropy, edge balance, luminance separation, inter-frame motion.
+2. Semantic Grounding: describes visible features first, then compares with VisualEvidenceContract.
+3. Domain Mismatch Rejection: software topics depicting physical robotics fail immediately.
+4. Blank Frame Rejection: blank frames (no content at all) fail immediately. A calm,
+   mostly-static explanatory frame is NOT a failure.
+5. Over-design Detection: decorative framing and filler geometry far beyond the scene's
+   semantic content are flagged.
+6. Strict Gate Enforcement: any failure raises VisualGateRejectionError and halts release.
 """
 from __future__ import annotations
 
@@ -31,13 +42,15 @@ class SceneVisualJudgement(BaseModel):
     scene_id: str
     timestamp_seconds: float
     visible_description: str
-    semantic_grounding_score: float     # 0.0 to 10.0
+    semantic_grounding_score: float     # 0.0 to 10.0 — highest priority
+    visual_clarity_score: float = 0.0   # 0.0 to 10.0 — can the frame explain the spoken idea?
     art_direction_score: float          # 0.0 to 10.0
-    composition_score: float            # 0.0 to 10.0
-    motion_activity_score: float        # 0.0 to 10.0
+    composition_score: float            # 0.0 to 10.0 — subject visibility & hierarchy
+    motion_activity_score: float        # 0.0 to 10.0 — low importance by design
     depth_separation_score: float       # 0.0 to 10.0
     composite_score: float              # 0.0 to 10.0
     passed: bool
+    overdesigned: bool = False          # too much decoration for the semantic content present
     reasons: list[str] = Field(default_factory=list)
 
 
@@ -46,6 +59,7 @@ class VisualJudgeScorecard(BaseModel):
     passed: bool
     final_score: float
     semantic_grounding: float
+    visual_clarity: float = 0.0
     art_direction: float
     composition: float
     motion_activity: float
@@ -100,6 +114,28 @@ def inspect_frame_pixels(img: Image.Image) -> dict[str, Any]:
         "is_harsh_cyan_void": is_harsh_cyan_void,
         "layout_signature": norm_sig,
     }
+
+
+def _edge_balance(img: Image.Image) -> tuple[float, float]:
+    """Mean edge response in the outer frame band vs the central content area.
+
+    Decorative borders, side rails and HUD frames concentrate edge energy in the margins.
+    Explanatory content concentrates it in the centre. High border activity with quiet
+    centre activity is the signature of decoration standing in for meaning.
+    """
+    edges = np.asarray(img.convert("L").filter(ImageFilter.FIND_EDGES), dtype=np.float32)
+    h, w = edges.shape
+    bx = max(2, int(w * 0.10))
+    by = max(2, int(h * 0.10))
+    border = np.zeros((h, w), dtype=bool)
+    border[:by, :] = True
+    border[h - by:, :] = True
+    border[:, :bx] = True
+    border[:, w - bx:] = True
+    centre = ~border
+    border_val = float(edges[border].mean()) if border.any() else 0.0
+    centre_val = float(edges[centre].mean()) if centre.any() else 0.0
+    return border_val, centre_val
 
 
 def compute_frame_motion_delta(img_a: Image.Image, img_b: Image.Image) -> float:
@@ -262,9 +298,22 @@ def judge_scene_frames(
     if metrics["is_harsh_cyan_void"]:
         advisories.append("Harsh cyan/blue void syndrome")
 
-    # 3. Frozen Frame Rejection
-    if motion_delta < 0.8:
-        advisories.append("Low inter-frame motion: scene appears mostly static")
+    # 3. Over-design check (§23): decorative structure far beyond the scene's semantic content.
+    #    Static explanatory frames are explicitly allowed — calm is not a defect.
+    expected_nodes = len(scene_spec.scene_graph.nodes) if scene_spec.scene_graph else None
+    border_edge, centre_edge = _edge_balance(mid_img)
+    overdesigned = False
+    if expected_nodes and geom["num_clusters"] > expected_nodes * 3 + 3:
+        overdesigned = True
+        advisories.append(
+            f"Over-design: {geom['num_clusters']} visual clusters for {expected_nodes} semantic nodes — "
+            "filler geometry is standing in for explanation"
+        )
+    if border_edge > 12.0 and border_edge > centre_edge * 0.7:
+        overdesigned = True
+        advisories.append(
+            f"Over-design: frame margins are busier than the content (border {border_edge:.1f} vs centre {centre_edge:.1f})"
+        )
 
     # 4. Domain Alignment & Mismatch Check (Fatal)
     topic_lower = topic.lower()
@@ -289,41 +338,74 @@ def judge_scene_frames(
         elif expected_topology in ("object_transformation", "layered_architecture") and geom["num_clusters"] < 2:
             advisories.append(f"Expected rich {expected_topology} structure but detected insufficient cluster separation ({geom['num_clusters']} clusters)")
 
-    # Calculate empirical scores based on measured pixel metrics & detected geometry
+    # Empirical scores. Priority order: semantic correctness > clarity > hierarchy > motion.
     depth_score = min(10.0, max(5.0, 6.0 + metrics["lum_separation"] * 0.25))
     art_score = 9.2 if not metrics["is_harsh_cyan_void"] else 6.5
     if metrics["is_pitch_black"]:
         art_score = 2.0
-    comp_score = min(10.0, max(6.0, 7.0 + metrics["edge_density"] * 0.3))
-    motion_score = min(10.0, max(5.5, 6.5 + motion_delta * 0.4))
+    # Composition measures subject visibility and hierarchy (centre vs margin separation),
+    # never raw edge count: a busy frame is not automatically a clear frame.
+    comp_score = min(10.0, max(6.0, 7.0 + metrics["lum_separation"] * 0.06))
+    # Motion is deliberately low-impact. A still, perfectly explanatory scene scores fine.
+    motion_score = min(10.0, max(6.0, 6.5 + min(motion_delta, 12.0) * 0.12))
 
-    # Grounded semantic score derived from measured pixel properties & detected visual evidence
+    multi_topos = ("bipartite", "pipeline", "process_flow", "object_transformation", "layered_architecture")
+    expected_topology = scene_spec.scene_graph.topology if scene_spec.scene_graph else None
+
+    # 1) Semantic correctness: does the frame show the contract the narration implies?
     if fatal_reasons:
         semantic_score = 2.0
         art_score = min(art_score, 4.0)
         depth_score = min(depth_score, 4.0)
     else:
-        base_grounding = 7.5
-        align_mod = 1.0 if dist_to_anchor <= 140 else (0.5 if dist_to_anchor <= 220 else -0.5)
-        multi_topos = ("bipartite", "pipeline", "process_flow", "object_transformation", "layered_architecture")
-        topo_mod = 1.0 if (not expected_topology or geom["observed_topology"] == expected_topology or (expected_topology in multi_topos and geom["num_subject_clusters"] >= 2)) else 0.4
-        density_mod = min(0.8, metrics["edge_density"] * 0.2)
-        semantic_score = min(10.0, max(5.0, round(base_grounding + align_mod + topo_mod + density_mod, 1)))
+        base_grounding = 7.0
+        align_mod = 1.5 if dist_to_anchor <= 140 else (0.7 if dist_to_anchor <= 220 else -0.5)
+        topo_mod = 1.5 if (
+            not expected_topology
+            or geom["observed_topology"] == expected_topology
+            or (expected_topology in multi_topos and geom["num_subject_clusters"] >= 2)
+        ) else 0.4
+        presence_mod = 1.0 if geom["num_subject_clusters"] >= 1 else -1.5
+        semantic_score = min(10.0, max(0.0, round(base_grounding + align_mod + topo_mod + presence_mod, 1)))
         if advisories:
-            semantic_score = max(5.0, semantic_score - 0.4 * len(advisories))
+            semantic_score = max(0.0, semantic_score - 0.3 * len(advisories))
+
+    # 2) Visual clarity (§22): can this rendered frame explain the core spoken idea?
+    #    Correct subject, correct relationship, correct target, readable hierarchy.
+    clarity = 5.5
+    if geom["num_subject_clusters"] >= 1:
+        clarity += 1.5
+    if dist_to_anchor <= 140:
+        clarity += 1.5
+    elif dist_to_anchor <= 240:
+        clarity += 0.5
+    if (
+        not expected_topology
+        or geom["observed_topology"] == expected_topology
+        or (expected_topology in multi_topos and geom["num_subject_clusters"] >= 2)
+    ):
+        clarity += 1.0
+    clarity += min(1.5, metrics["lum_separation"] / 40.0)
+    if fatal_reasons:
+        clarity = min(clarity, 3.0)
+    if overdesigned:
+        clarity = max(0.0, clarity - 1.0)
+    clarity_score = round(min(10.0, max(0.0, clarity)), 1)
 
     composite = round(
         0.35 * semantic_score
-        + 0.25 * art_score
+        + 0.25 * clarity_score
         + 0.15 * comp_score
-        + 0.15 * depth_score
-        + 0.10 * motion_score,
+        + 0.10 * art_score
+        + 0.10 * depth_score
+        + 0.05 * motion_score,
         1
     )
 
     passed = (
         len(fatal_reasons) == 0
         and semantic_score >= 7.0
+        and clarity_score >= 6.5
         and art_score >= 6.5
         and comp_score >= 6.0
         and depth_score >= 5.5
@@ -335,7 +417,8 @@ def judge_scene_frames(
     visible_desc = (
         f"Decoded pixels (lum: {metrics['mean_luminance']:.1f}, edge: {metrics['edge_density']:.2f}, motion: {motion_delta:.2f}); "
         f"{geom['num_clusters']} detected clusters in [{geom['observed_topology']}] topology; "
-        f"primary subject at ({centroid_x}, {centroid_y}) aligned with mascot target ({tgt_x:.0f}, {tgt_y:.0f}) [Δ={dist_to_anchor:.1f}px]"
+        f"primary subject at ({centroid_x}, {centroid_y}) aligned with mascot target ({tgt_x:.0f}, {tgt_y:.0f}) [Δ={dist_to_anchor:.1f}px]; "
+        f"clarity {clarity_score:.1f}/10 (border {border_edge:.1f} vs centre {centre_edge:.1f} edge activity)"
     )
 
     return SceneVisualJudgement(
@@ -343,12 +426,14 @@ def judge_scene_frames(
         timestamp_seconds=round((scene_spec.start_seconds + scene_spec.end_seconds) / 2.0, 2),
         visible_description=visible_desc,
         semantic_grounding_score=round(semantic_score, 1),
+        visual_clarity_score=clarity_score,
         art_direction_score=round(art_score, 1),
         composition_score=round(comp_score, 1),
         motion_activity_score=round(motion_score, 1),
         depth_separation_score=round(depth_score, 1),
         composite_score=composite,
         passed=passed,
+        overdesigned=overdesigned,
         reasons=all_reasons,
     )
 
@@ -437,34 +522,38 @@ def evaluate_video_visual_truth(
             sig = inspect_frame_pixels(Image.open(sc_frames["mid"]))["layout_signature"]
             signatures.append(sig)
 
-    # 2. Cross-Scene Template Diversity Audit
-    diversity_failures: list[str] = []
+    # 2. Cross-scene layout audit — advisory only (§6): two scenes may legitimately look
+    #    similar when the explanation requires it. Clarity, not variety, is the success metric.
+    diversity_notes: list[str] = []
     if len(signatures) >= 3:
         for i in range(len(signatures) - 1):
             sim = cosine_similarity(signatures[i], signatures[i + 1])
             if sim > 0.985:
-                diversity_failures.append(
-                    f"Template monotony detected: Scene {i+1} and Scene {i+2} have nearly identical spatial layout (sim: {sim:.3f})"
+                diversity_notes.append(
+                    f"Note: Scene {i+1} and Scene {i+2} share a near-identical spatial layout (sim: {sim:.3f}); "
+                    "acceptable when the narration explains the same relationship"
                 )
 
     avg_semantic = round(sum(j.semantic_grounding_score for j in judgements) / max(1, len(judgements)), 1)
+    avg_clarity = round(sum(j.visual_clarity_score for j in judgements) / max(1, len(judgements)), 1)
     avg_art = round(sum(j.art_direction_score for j in judgements) / max(1, len(judgements)), 1)
     avg_comp = round(sum(j.composition_score for j in judgements) / max(1, len(judgements)), 1)
     avg_motion = round(sum(j.motion_activity_score for j in judgements) / max(1, len(judgements)), 1)
     avg_depth = round(sum(j.depth_separation_score for j in judgements) / max(1, len(judgements)), 1)
     final_score = round(sum(j.composite_score for j in judgements) / max(1, len(judgements)), 1)
 
-    all_passed = all(j.passed for j in judgements) and len(diversity_failures) == 0
+    all_passed = all(j.passed for j in judgements)
     all_reasons = []
     for j in judgements:
         all_reasons.extend(j.reasons)
-    all_reasons.extend(diversity_failures)
+    all_reasons.extend(diversity_notes)
 
     scorecard = VisualJudgeScorecard(
         production_id=visual_plan.production_id,
         passed=all_passed,
         final_score=final_score,
         semantic_grounding=avg_semantic,
+        visual_clarity=avg_clarity,
         art_direction=avg_art,
         composition=avg_comp,
         motion_activity=avg_motion,

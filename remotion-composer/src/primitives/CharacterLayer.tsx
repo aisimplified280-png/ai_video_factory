@@ -40,7 +40,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
   const isAnalyst = spec.role === 'analyst';
   const visorColor = isEngineer ? '#D97706' : (isAnalyst ? '#10B981' : theme.accent); // Amber, Emerald, or Royal Blue
 
-  // Dynamic targeting laser calculation
+  // Tap-vector direction: where the pointing arm extends (no drawn line).
   const handSvgX = 206;
   const handSvgY = 121;
   let targetSvgX = 280;
@@ -54,6 +54,19 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
     targetSvgY = handSvgY + dy;
   }
 
+  // One deliberate tap gesture toward the semantic target (CTA). Single shot, then perfectly still.
+  const tapExtend = spec.pose?.includes('tap')
+    ? interpolate(progress, [0.12, 0.22, 0.32], [0, 18, 0], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      })
+    : 0;
+  const tapDx = targetSvgX - handSvgX;
+  const tapDy = targetSvgY - handSvgY;
+  const tapLen = Math.hypot(tapDx, tapDy) || 1;
+  const tapTx = (tapDx / tapLen) * tapExtend;
+  const tapTy = (tapDy / tapLen) * tapExtend;
+
   return (
     <div
       style={{
@@ -63,7 +76,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
         transform: `translate(-50%, -50%) scale(${scale})`,
         transformOrigin: '50% 50%',
         pointerEvents: 'none',
-        zIndex: 15,
+        zIndex: spec.z_index ?? 15,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -203,10 +216,12 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
           <circle cx="36" cy="162" r="5" fill={visorColor} opacity="0.8" />
         </g>
 
-        {/* Right Arm (Dynamic Pointing or Tool Manipulation, zero shake) */}
-        {spec.pose?.includes('point') || spec.action?.includes('point') ? (
+        {/* Right Arm — deliberate pointing gesture toward a real semantic target (event-based, never oscillating).
+            No targeting line or crosshair: the mascot is PLACED by scene focus instead (§26).
+            When no target anchor exists the arm rests in a stable pose holding its tool. */}
+        {spec.target_anchor || spec.pose?.includes('point') || spec.action?.includes('point') ? (
           <g>
-            <g>
+            <g transform={`translate(${tapTx}, ${tapTy})`}>
               <rect
                 x="172"
                 y="110"
@@ -219,32 +234,6 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
               />
               <circle cx="206" cy="121" r="5" fill={visorColor} />
             </g>
-            <line
-              x1="210"
-              y1="121"
-              x2={targetSvgX}
-              y2={targetSvgY}
-              stroke={visorColor}
-              strokeWidth={2.5}
-              strokeDasharray="4 4"
-              opacity={0.85}
-            />
-            <circle
-              cx={targetSvgX}
-              cy={targetSvgY}
-              r={8}
-              fill="none"
-              stroke={visorColor}
-              strokeWidth={2}
-              opacity={0.9}
-            />
-            <circle
-              cx={targetSvgX}
-              cy={targetSvgY}
-              r={3}
-              fill={visorColor}
-              opacity={0.95}
-            />
           </g>
         ) : (
           <g>
@@ -301,44 +290,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
           </g>
         )}
       </svg>
-
-      {/* Kinetic Action Callout Chip */}
-      <div
-        style={{
-          marginTop: -10,
-          background: 'rgba(255, 255, 255, 0.92)',
-          backdropFilter: 'blur(12px)',
-          border: `1.5px solid ${visorColor}`,
-          borderRadius: 20,
-          padding: '6px 16px',
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: visorColor,
-            boxShadow: `0 0 8px ${visorColor}`,
-          }}
-        />
-        <span
-          style={{
-            fontFamily: theme.fontFamily,
-            fontSize: 14,
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: '#0F172A',
-          }}
-        >
-          {spec.action}
-        </span>
-      </div>
+      {/* Mascot behavior is communicated by the character itself — never by a caption chip. */}
     </div>
   );
 };

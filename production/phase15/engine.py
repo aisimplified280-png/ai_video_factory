@@ -61,7 +61,7 @@ def generate_phase15_plan(
     replan_count = 0
 
     while (
-        (not scorecard.passed or scorecard.visual_grounding < 7.0 or scorecard.claim_coverage < 0.75 or scorecard.visual_diversity < 6.5)
+        (not scorecard.passed or scorecard.visual_grounding < 7.0 or scorecard.claim_coverage < 0.75 or scorecard.visual_diversity < 4.0)
         and replan_count < max_retries
     ):
         replan_count += 1

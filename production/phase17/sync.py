@@ -113,9 +113,10 @@ def sync_phase17_production_artifacts(
     # 3. Synchronize art_direction
     art_payload = {
         "design_read": f"Phase 17 {style.name}: {style.description}",
-        "visual_variance": 9,
-        "motion_intensity": 8,
-        "information_density": 7,
+        # §6/§15/§4: clarity over variety, subtle motion, no filler content.
+        "visual_variance": 5,
+        "motion_intensity": 4,
+        "information_density": 4,
         "palette_discipline": {
             "primary": style.primary_bg,
             "accent_1": style.accent,
@@ -123,12 +124,12 @@ def sync_phase17_production_artifacts(
             "neutral": style.secondary_text,
         },
         "typography_personality": style.name,
-        "layout_language": "Multi-mode compositions with 3-layer parallax depth and intentional whitespace",
-        "signature_device": "Restrained editorial telemetry card",
+        "layout_language": "Single-subject explanatory composition with clear hierarchy and intentional whitespace",
+        "signature_device": "Consistent subject-first explanatory framing",
         "anti_patterns": [
-            "single background persisting > 8 seconds",
-            "flat 2D vector icons without depth",
-            "hard cuts between scenes",
+            "decoration without a narrative purpose (telemetry cards, side rails, HUD frames)",
+            "generic technical labels absent from the narration (STAGE 1, ENGINE, PIPELINE)",
+            "forced motion on a scene that simply states a fact",
             "glowing cyan wires in black void",
         ],
     }

@@ -24,6 +24,7 @@ env/
 .env
 .env.local
 .model_rank.json
+production/.llm_cache.json
 
 # Build outputs, benchmarks & heavy production artifacts
 output/

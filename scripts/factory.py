@@ -53,7 +53,7 @@ from production.phase9.mapper import map_edit_decisions
 from production.phase9.scoring import generate_editorial_score
 from production.phase10.models import ResearchPack, ResearchMode
 from production.phase10.researcher import research
-from production.phase11.scriptwriter import generate_shorts_script, generate_longform_script
+from production.phase11.scriptwriter import generate_shorts_script, generate_longform_script, resolve_working_topic
 from production.phase12.packager import generate_packaging
 from production.phase14.learning_engine import get_learning_system
 from production.phase14.models import VideoMetrics
@@ -101,6 +101,13 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     print(f"Provider    : {args.provider}")
     print(f"Freshness   : {args.freshness}")
     print("======================================================================\n")
+
+    # Topic intake: one- or two-word inputs are too thin to research, script,
+    # or ground visuals against — upscale them into a concrete working topic.
+    working_topic = resolve_working_topic(topic)
+    if working_topic != topic:
+        print(f"  -> [Topic Intake] '{topic}' expanded to: {working_topic}\n")
+        topic = working_topic
 
     # 1. RESEARCH
     _prog(0.12, "[1/8] Executing Live Research Engine (Phase 10)...")
@@ -420,7 +427,7 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
             visual_plan=visual_plan,
             output_dir=project_root / "qa",
         )
-        print(f"  -> Independent Visual Judge PASSED: Score = {judge_scorecard.final_score}/10.0 (Grounding: {judge_scorecard.semantic_grounding}, Art: {judge_scorecard.art_direction}, Comp: {judge_scorecard.composition}, Depth: {judge_scorecard.depth_separation})")
+        print(f"  -> Independent Visual Judge PASSED: Score = {judge_scorecard.final_score}/10.0 (Semantic: {judge_scorecard.semantic_grounding}, Clarity: {judge_scorecard.visual_clarity}, Art: {judge_scorecard.art_direction}, Comp: {judge_scorecard.composition}, Depth: {judge_scorecard.depth_separation})")
     except VisualGateRejectionError as e:
         print(f"  [ERROR] Visual Gate Rejection: {e}")
         return 1
@@ -483,10 +490,30 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     print(f"  -> Contact Sheet Generated: {contact_sheet.name}")
 
     # Phase 17 Visual Language Scorecard
+    # Depth evidence comes from the assets ACTUALLY rendered per scene (multi_layer_timeline),
+    # not from plan metadata that never carried depth_strategy — the QA reports what was built.
+    _LAYER_SUFFIX = {"bg": "background", "mid": "midground", "fg": "foreground"}
+    _LAYER_ORDER = ["background", "midground", "foreground"]
+    layers_by_scene: dict[str, set[str]] = {}
+    for _ev in mapped_data.get("multi_layer_timeline") or []:
+        _aid = str(_ev.get("asset_id") or "")
+        _suffix = _aid.rsplit("_", 1)[-1]
+        if _suffix in _LAYER_SUFFIX:
+            layers_by_scene.setdefault(str(_ev.get("scene_id")), set()).add(_LAYER_SUFFIX[_suffix])
+    vl_scenes = []
+    for _sc in visual_plan.scenes:
+        _layers = layers_by_scene.get(_sc.scene_id, set())
+        vl_scenes.append({
+            "scene_id": _sc.scene_id,
+            "environment": getattr(_sc, "environment", "") or "default",
+            "start_seconds": _sc.start_seconds,
+            "end_seconds": _sc.end_seconds,
+            "depth_strategy": " ".join([l for l in _LAYER_ORDER if l in _layers]),
+        })
     from production.phase17.visual_qa import evaluate_visual_language
     vl_eval = evaluate_visual_language(
         project_root,
-        plan_data.get("scene_concepts", []),
+        vl_scenes,
         mapped_data.get("timeline", []),
         frames_dir=qa_frames_dir,
     )

@@ -441,7 +441,9 @@ def test_phase18_2_enhancements():
         assert spec.target_anchor is not None, f"Scene {s_idx} missing target_anchor"
         assert "x" in spec.target_anchor and "y" in spec.target_anchor
 
-    # 2. Zero fabricated numbers
+    # 2. Zero fabricated numbers AND zero fabricated qualitative claims.
+    # When the narration carries no metric, there is no metric: never a generic
+    # "VERIFIED STATE" chip asserting a verification that never happened.
     narr_no_numbers = "The query parser directs tokens into the unindexed vector table."
     headline, cards, metric = _extract_semantic_entities(
         subject="Enterprise Architecture Gateway",
@@ -450,9 +452,20 @@ def test_phase18_2_enhancements():
         narration=narr_no_numbers,
         domain=TopicDomain.SOFTWARE_AI,
     )
-    assert metric == "VERIFIED STATE", f"Expected qualitative status, got fabricated: {metric}"
+    assert metric == "", f"Expected no metric, got fabricated: {metric}"
+    assert "VERIFIED" not in metric.upper(), "Unproven verification claim must never be rendered"
     assert not headline.endswith(" GA"), f"Headline truncated mid-word: {headline}"
     assert "ENTERPRISE ARCHITECTURE" in headline
+    # Card labels are only ever narration concepts. Template padding words are allowed only
+    # when the narration itself uses them — never as filler invented by the renderer.
+    forbidden_padding = {"RUNTIME", "PIPELINE", "ENGINE", "INGESTION", "ROUTING", "RETRIEVAL"}
+    source_upper = (
+        "ENTERPRISE ARCHITECTURE GATEWAY MULTI-AGENT ORCHESTRATION MESH ENGINE "
+        f"DATA PIPELINE {narr_no_numbers}"
+    ).upper()
+    for card in cards:
+        if card in forbidden_padding:
+            assert card in source_upper, f"Ungrounded template label leaked into visuals: {card}"
 
     # 3. Preserves real metrics when present in narration
     narr_with_number = "Throughput increases by 40% with sub-10ms response."

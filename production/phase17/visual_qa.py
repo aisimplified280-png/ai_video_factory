@@ -1,17 +1,21 @@
 """Phase 17 Visual Language Quality Evaluator.
 
-Enforces Requirement 6: VisualLanguageScore
-Evaluates:
-1. Environment Variety: No single background survives > 8 seconds (verified from frames).
-2. Depth & Parallax: Verified depth strategy and multi-layer composition evidence.
-3. Transformative Transitions: Forbidden cuts/fades rejected; transformational handoffs rewarded.
-4. Scale & Progression: Micro -> Machine -> Spatial Tactical -> Fleet -> Brand.
-5. Perceived Production Quality: Typography hierarchy, intentional whitespace, cinematic contrast.
+Priority: does the sequence explain the narration clearly?
+
+Evaluates from rendered pixels:
+1. Subject presence: the explained content actually occupies the frame.
+2. Depth & Parallax: verified depth strategy and multi-layer composition evidence.
+3. Transition continuity: simple cuts/dissolves are correct; only unsupported intents fail.
+4. Layout progression: advisory — two scenes may legitimately look alike when the
+   explanation requires it (clarity beats variety).
+5. Perceived production quality: typography hierarchy, contrast, intentional whitespace.
 
 Evidence-based & Fail-closed:
 - Evaluates actual encoded frame pixels.
-- Fails closed with 0.0 score if frame evidence is missing or visually static.
+- Fails closed if frame evidence is missing entirely.
+- A calm, mostly-static explanatory scene is NOT a failure (§14): motion is never a floor.
 - Produces structured scene-level evidence with motion_delta, layout_signature, and background_similarity.
+  Observations that do not block comprehension are reported as advisory notes, not rejections.
 """
 from __future__ import annotations
 
@@ -36,6 +40,7 @@ class VisualLanguageEvaluation:
     visual_language_score: float       # 0-10: Composite weighted score
     passed: bool
     rejection_reasons: list[str] = field(default_factory=list)
+    advisory_notes: list[str] = field(default_factory=list)
     scene_evaluations: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -48,6 +53,7 @@ class VisualLanguageEvaluation:
             "visual_language_score": round(self.visual_language_score, 2),
             "passed": self.passed,
             "rejection_reasons": self.rejection_reasons,
+            "advisory_notes": self.advisory_notes,
             "scene_evaluations": self.scene_evaluations,
         }
 
@@ -112,11 +118,13 @@ def _background_similarity(img1: Image.Image, img2: Image.Image) -> float:
 
 
 def _measure_layer_occupancy(img: Image.Image) -> float:
-    """Measure structural depth occupancy based on non-background high-contrast content."""
+    """Measure structural content occupancy from contrast variance.
+
+    A blank frame measures 0 — an empty render must never read as "healthy depth".
+    """
     stat = ImageStat.Stat(img.convert("L"))
     std = stat.stddev[0]
-    # Healthy multi-layer depth has significant contrast variance across planes
-    return min(100.0, max(5.0, round(std * 1.5, 2)))
+    return min(100.0, max(0.0, round(std * 1.5, 2)))
 
 
 def _find_frame_files(search_dirs: list[Path]) -> list[Path]:
@@ -138,10 +146,12 @@ def evaluate_visual_language(
     video_path: Path | None = None,
 ) -> VisualLanguageEvaluation:
     """Evaluates the perceived cinematic visual language of a production.
-    
-    FAIL-CLOSED: If frames are missing or visually static, evaluation fails.
+
+    FAIL-CLOSED: If no frame evidence exists at all, evaluation fails.
+    Static explanatory scenes and simple cuts are valid outcomes, not failures.
     """
     rejection_reasons: list[str] = []
+    advisory_notes: list[str] = []
     scene_evals: list[dict[str, Any]] = []
 
     # 1. Locate Frame Samples
@@ -251,18 +261,16 @@ def evaluate_visual_language(
 
         prev_scene_last_img = images[-1]
 
-        # Static scene detection: motionless across multiple samples or near zero delta
+        # §14: a still explanatory scene is valid. Motion is evidence, never a floor.
         is_static = len(images) >= 2 and scene_motion_delta < 2.0
         if is_static:
             static_scenes_count += 1
-            rejection_reasons.append(
-                f"Scene {sc_id} is visually static (measured motion delta {scene_motion_delta:.2f} < 2.0)."
+            advisory_notes.append(
+                f"Scene {sc_id} is still (motion delta {scene_motion_delta:.2f}) — appropriate when the narration states one idea."
             )
 
-        # Scene score
-        scene_score = min(10.0, max(2.0, 7.0 + min(2.0, scene_motion_delta / 8.0) + min(1.0, occupancy / 50.0)))
-        if is_static:
-            scene_score = min(4.0, scene_score)
+        # Scene score: how much explained content is present; motion contributes only a little.
+        scene_score = min(10.0, max(2.0, 7.0 + min(2.0, occupancy / 30.0) + min(1.0, scene_motion_delta / 12.0)))
 
         scene_evals.append({
             "scene_id": sc_id,
@@ -288,16 +296,16 @@ def evaluate_visual_language(
 
     longest_env = max(env_durations.values(), default=0.0)
     if longest_env > 8.0:
-        rejection_reasons.append(f"Environment persists for {longest_env:.1f}s (maximum allowed is 8.0s).")
-        env_score = max(3.0, 10.0 - (longest_env - 8.0) * 1.5)
+        advisory_notes.append(f"Environment persists for {longest_env:.1f}s (editorial guideline is 8.0s).")
+        env_score = max(6.0, 10.0 - (longest_env - 8.0) * 0.3)
     else:
         env_score = 9.8
 
     # Check for visual environment repetition from evidence
     avg_bg_sim = sum(ev["evidence"]["background_similarity"] for ev in scene_evals[1:]) / max(1, len(scene_evals) - 1)
     if avg_bg_sim > 0.85:
-        env_score = min(env_score, 5.0)
-        rejection_reasons.append(f"High inter-scene background similarity detected ({avg_bg_sim:.2f} > 0.85).")
+        env_score = min(env_score, 7.0)
+        advisory_notes.append(f"Successive scenes share a similar background ({avg_bg_sim:.2f}); acceptable when the subject is continuous.")
 
     # 4. Depth & Parallax Verification (Pixel contrast + Strategy)
     depth_strategies = [sc.get("depth_strategy") for sc in scenes_data]
@@ -307,30 +315,40 @@ def evaluate_visual_language(
     if not has_layered_depth:
         rejection_reasons.append("Missing 3-layer parallax depth strategy in metadata.")
         depth_score = 4.0
-    elif avg_occupancy < 10.0:
-        rejection_reasons.append(f"Insufficient visual depth occupancy ({avg_occupancy:.1f}% < 10.0%).")
-        depth_score = 5.0
+    elif avg_occupancy < 1.0:
+        # Nothing is depicted at all. This fails regardless of motion: the explained
+        # subject must be visible (§21). Stillness alone is never the problem (§14).
+        rejection_reasons.append(
+            f"No visual content detected (occupancy {avg_occupancy:.1f}%): the frames are empty, so the explained subject is missing."
+        )
+        depth_score = 3.0
+    elif avg_occupancy < 5.0:
+        # §4: don't fill empty space — but the explained subject must be readable.
+        advisory_notes.append(f"Low content occupancy ({avg_occupancy:.1f}%): the subject may be too small to read.")
+        depth_score = 6.0
     else:
         depth_score = min(10.0, 8.5 + (avg_occupancy / 50.0))
 
-    # 5. Transformative Transitions Verification
+    # 5. Transition continuity: simple cuts/dissolves are correct for explanation (§16).
     transitions_used = [ev.get("transition_in") for ev in timeline_events if ev.get("transition_in")]
     bad_transitions = [t for t in transitions_used if str(t).lower() in FORBIDDEN_TRANSITIONS]
     if bad_transitions:
-        rejection_reasons.append(f"Forbidden static transitions detected: {bad_transitions}")
+        rejection_reasons.append(f"Unresolvable transitions detected: {bad_transitions}")
         trans_score = max(2.0, 10.0 - len(bad_transitions) * 2.5)
     elif near_identical_transitions > 0:
-        rejection_reasons.append(f"Detected {near_identical_transitions} scene boundary transitions with near-zero pixel transformation.")
-        trans_score = 5.0
+        advisory_notes.append(
+            f"{near_identical_transitions} scene boundaries changed very little in pixels — fine when the subject is continuous."
+        )
+        trans_score = 8.0
     else:
         trans_score = 9.5
 
-    # 6. Scale Progression & Cinematic Feel from Frame Pixels
+    # 6. Layout progression & cinematic feel from frame pixels (variety is advisory, §6)
     unique_layouts = len(set(all_layout_signatures))
     layout_diversity_ratio = unique_layouts / max(1, len(all_layout_signatures))
     if layout_diversity_ratio < 0.4:
-        rejection_reasons.append("Monotonous layout progression: scenes share near-identical quadrant mass.")
-        scale_score = 5.0
+        advisory_notes.append("Scenes share a similar layout — allowed when the explanation repeats a relationship.")
+        scale_score = 7.0
     else:
         scale_score = min(10.0, 7.5 + (layout_diversity_ratio * 2.5))
 
@@ -347,14 +365,13 @@ def evaluate_visual_language(
     if stats:
         avg_stddev = sum(s["stddev"] for s in stats) / len(stats)
         cinematic_score = round(min(10.0, max(5.0, 6.5 + (avg_stddev / 18.0))), 2)
+        if avg_occupancy < 1.0:
+            # No contrast anywhere: there is no picture to grade.
+            cinematic_score = 2.0
     else:
         cinematic_score = 5.0
 
-    # Overall static check penalty
-    if static_scenes_count > 0:
-        env_score = min(env_score, 4.0)
-        depth_score = min(depth_score, 4.0)
-        trans_score = min(trans_score, 4.0)
+    # No global penalty for stillness: §14 explicitly permits static explanatory scenes.
 
     # Composite Visual Language Score
     # 25% Environment + 25% Depth + 25% Transitions + 15% Scale + 10% Cinematic
@@ -377,6 +394,7 @@ def evaluate_visual_language(
         visual_language_score=round(vl_score, 2),
         passed=passed,
         rejection_reasons=rejection_reasons,
+        advisory_notes=advisory_notes,
         scene_evaluations=scene_evals,
     )
 

@@ -17,6 +17,75 @@ from .semantic_analyzer import SemanticSceneIntent
 from .claim_grounder import evaluate_claim_grounding
 
 
+def _narration_subject(spoken_text: str, key_entities: Optional[list[str]] = None) -> str:
+    """Short subject phrase taken from the narrator's own first clause.
+
+    Keeps the on-screen subject aligned with what is being said ("How do RAGs
+    retrieve answers") instead of a joined entity list or a template string.
+    Trailing function words are trimmed so the phrase reads like a subject,
+    not a cut-off sentence. If the 7-word cut would strand a named entity
+    ("...directly control" with "physical robots" left out), the cut extends
+    just far enough to include it.
+    """
+    if not spoken_text:
+        return ""
+    # A bare leading sequencer ("First, cameras...") would become the whole subject —
+    # drop it and read the next clause instead. A sequencer inside a real clause
+    # ("Next time the virus appears") stays: it carries meaning.
+    first_clause = re.split(r"[,.;:;!?\n]", spoken_text, maxsplit=1)[0]
+    sequencers = {
+        "first", "then", "next", "finally", "so", "and", "but", "now", "also",
+        "firstly", "secondly", "lastly",
+    }
+    working = spoken_text
+    if first_clause.strip().lower().strip("'\"“”‘’,") in sequencers and "," in working:
+        working = working.split(",", 1)[1].lstrip()
+    head = re.split(r"[,.;:;!?\n]", working, maxsplit=1)[0]
+    words = head.split()
+    if len(words) > 7:
+        # Entity-aware cut: never truncate a narrated entity out of the subject.
+        stems = set()
+        for ent in key_entities or []:
+            for w in re.findall(r"[A-Za-z0-9][A-Za-z0-9\-']{3,}", str(ent)):
+                stems.add(w[:5].lower())
+        cut = 7
+        if stems:
+            for i, w in enumerate(words[:12], start=1):
+                wl = w.lower().strip("'\"“”‘’")
+                if any(wl.startswith(s) for s in stems):
+                    cut = max(cut, i)
+                    break
+        words = words[:cut]
+    trailing = {
+        "a", "an", "the", "to", "of", "in", "on", "for", "with", "and", "that",
+        "which", "who", "can", "could", "will", "would", "is", "are", "it", "as",
+        "at", "by", "into", "over", "through", "around", "without", "across",
+        "during", "within", "toward", "towards", "than", "then", "so", "many",
+        "each", "every", "more", "most", "some", "any", "all", "very", "just",
+        "also", "really",
+    }
+    while len(words) > 2 and words[-1].lower().strip("'\"“”‘’") in trailing:
+        words.pop()
+    # A 7-word cut can strand an article before its noun ("...a harmless").
+    while (
+        len(words) > 2
+        and words[-2].lower().strip("'\"“”‘’") in {"a", "an", "the"}
+    ):
+        words.pop()
+        while len(words) > 2 and words[-1].lower().strip("'\"“”‘’") in trailing:
+            words.pop()
+    subject = " ".join(words).strip()
+    # Hard safety: an on-screen title never runs past ~75 characters.
+    while len(subject) > 75 and len(words) > 4:
+        words.pop()
+        subject = " ".join(words).strip()
+    # Dropping words can orphan a quote/parenthesis — keep it balanced.
+    for ch in ("'", '"'):
+        if subject.count(ch) % 2:
+            subject = subject.replace(ch, "")
+    return subject.strip("?!:;, ")
+
+
 class VisualMemory:
     """Historical buffer of recent directorial choices within the video."""
 
@@ -407,17 +476,9 @@ class ShotDirector:
         chosen_mode = intent.recommended_mode
         claim_plan = intent.claim_plan
 
-        # Enforce Rule: No more than 2 consecutive scenes may use the same visual mode
-        if self.memory.consecutive_mode_count(chosen_mode) >= 2:
-            for alt in intent.fallback_modes:
-                if self.memory.consecutive_mode_count(alt) < 2 and alt.value not in prohibited["visual_modes"]:
-                    chosen_mode = alt
-                    break
-            else:
-                for candidate_mode in VisualMode:
-                    if candidate_mode != chosen_mode and self.memory.consecutive_mode_count(candidate_mode) == 0:
-                        chosen_mode = candidate_mode
-                        break
+        # §6: the visual mode follows the narration's meaning. Scenes are NOT rotated
+        # through modes to manufacture variety — two scenes explaining the same kind of
+        # relationship may (and should) look alike. Clarity beats variety.
 
         # Gather palette options
         palette_options = list(DIRECTORIAL_PALETTES.get(chosen_mode, DIRECTORIAL_PALETTES[VisualMode.LITERAL]))
@@ -443,6 +504,10 @@ class ShotDirector:
             elif any(k in act_lower for k in ["matrix", "attention", "transformer", "embedding", "vector", "layer", "latent", "space"]):
                 sem_camera = "slow_pan"
                 sem_composition = "layered_depth"
+            elif any(k in act_lower for k in ["control", "command", "sensor", "actuator", "motor"]):
+                # Cause -> effect: follow the command path from source to machine.
+                sem_camera = "tracking"
+                sem_composition = "cause_effect_path"
             elif any(k in act_lower for k in ["contrast", "vs", "versus", "comparison", "difference", "delta"]):
                 sem_camera = "static"
                 sem_composition = "split_comparison"
@@ -456,13 +521,13 @@ class ShotDirector:
             if chosen_mode == VisualMode.BRAND_CTA:
                 custom_shot_type = "clean_minimalist_studio"
             elif scene_idx == 0:
-                custom_shot_type = "extreme_macro_probe" if is_rob else "systems_architecture_overview"
+                custom_shot_type = "extreme_macro_probe" if is_rob else "clean_establishing_shot"
             elif chosen_mode == VisualMode.LITERAL:
-                custom_shot_type = "industrial_arm_command_medium" if is_rob else "pipeline_data_flow_medium"
+                custom_shot_type = "industrial_arm_command_medium" if is_rob else "clean_subject_medium_shot"
             elif chosen_mode == VisualMode.DEMONSTRATION:
-                custom_shot_type = "dynamic_obstacle_reroute_overhead" if is_rob else "multi_agent_coordination_mesh"
+                custom_shot_type = "dynamic_obstacle_reroute_overhead" if is_rob else "dynamic_action_sequence"
             elif chosen_mode == VisualMode.SCALE:
-                custom_shot_type = "high_throughput_logistics_flow" if is_rob else "enterprise_cloud_telemetry_dashboard"
+                custom_shot_type = "high_throughput_logistics_flow" if is_rob else "expansive_scale_overview"
             else:
                 custom_shot_type = f"{chosen_mode.value}_grounded_execution"
 
@@ -471,25 +536,39 @@ class ShotDirector:
                 "camera_motion": "push_in" if scene_idx == 0 else sem_camera,
                 "camera_angle": "macro_probe_level" if (scene_idx == 0 and is_rob) else "eye_level_three_quarter",
                 "composition": "tight_macro_crop" if (scene_idx == 0 and is_rob) else sem_composition,
-                "subject": ", ".join(claim_plan.entities) or intent.what_is_said,
+                "subject": (
+                    ", ".join(claim_plan.entities)
+                    if chosen_mode == VisualMode.BRAND_CTA
+                    else (
+                        _narration_subject(
+                            getattr(intent, "spoken_text", "") or "",
+                            list(claim_plan.entities) if claim_plan else None,
+                        )
+                        or ", ".join(claim_plan.entities)
+                        or intent.what_is_said
+                    )
+                ),
                 "action": claim_plan.action,
                 "environment": claim_plan.environment,
                 "lens_feel": "24mm_macro_probe" if (scene_idx == 0 and is_rob) else "35mm_standard",
                 "depth": "extreme_shallow_dof" if (scene_idx == 0 and is_rob) else "medium_depth",
                 "visual_metaphor": claim_plan.relationship,
                 "lighting": "sharp high-contrast directional lighting with cool specular highlights",
-                "motion_intensity": 8.0 if scene_idx == 0 else 7.0,
+                # §15: subtle motion. A scene may be still; nothing is forced to move.
+                "motion_intensity": 4.0 if scene_idx == 0 else 3.5,
                 "transition_in": "hard_cut",
                 "transition_out": "hard_cut",
-                "overlay_strategy": "none_initial_cut" if scene_idx == 0 else ("brand_lock" if chosen_mode == VisualMode.BRAND_CTA else "subtle_telemetry"),
-                "graphic_strategy": "none" if scene_idx == 0 else "telemetry_hud",
+                # §5: no telemetry/HUD decoration — overlays appear only when narrated.
+                "overlay_strategy": "none_initial_cut" if scene_idx == 0 else ("brand_lock" if chosen_mode == VisualMode.BRAND_CTA else "none"),
+                "graphic_strategy": "none",
                 "asset_strategy": "generated_background",
             }
             # Add custom_opt as top priority
             palette_options.insert(0, custom_opt)
 
-        # Step 22 Selection Formula:
-        # score = grounding_score * 0.35 + claim_coverage * 0.25 + narrative_alignment * 0.20 + visual_clarity * 0.10 + diversity * 0.10
+        # Selection formula (priority order):
+        # semantic grounding * 0.40 + claim coverage * 0.25 + narrative fit * 0.15 + clarity * 0.20
+        # Repetition is NOT scored: a repeated layout that explains is correct (§6).
         best_option = palette_options[0]
         best_score = -999.0
         best_eval = None
@@ -521,20 +600,17 @@ class ShotDirector:
                 coverage_s = 1.0
                 eval_record = None
 
-            # Repetition penalty (diversity)
-            rep_penalty = self.memory.compute_repetition_penalty(opt, chosen_mode)
-            diversity_norm = max(0.0, min(10.0, 10.0 + rep_penalty))
+            # Repetition carries no penalty: clarity, not variety, is the success metric (§6).
 
             # Narrative alignment
             narrative_align = 9.0 if chosen_mode == intent.recommended_mode else 7.5
             visual_clarity = 8.5
 
             composite_score = (
-                grounding_s * 0.35
+                grounding_s * 0.40
                 + (coverage_s * 10.0) * 0.25
-                + narrative_align * 0.20
-                + visual_clarity * 0.10
-                + diversity_norm * 0.10
+                + narrative_align * 0.15
+                + visual_clarity * 0.20
             )
 
             if composite_score > best_score:

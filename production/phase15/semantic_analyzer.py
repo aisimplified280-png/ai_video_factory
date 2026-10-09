@@ -77,30 +77,68 @@ def analyze_scene_intent(
 
     # Honor grounded claim visual plan directly if available
     if claim_plan and claim_plan.preferred_visualization:
+        rec_mode: Optional[VisualMode] = None
+        fallbacks: list[VisualMode] = []
         if is_cta:
             rec_mode = VisualMode.BRAND_CTA
             fallbacks = [VisualMode.ABSTRACT, VisualMode.DATA_INTERFACE]
         elif scene_idx == 0 or role == "hook":
-            rec_mode = VisualMode.INTERFACE if is_nlp_topic else (VisualMode.DETAIL if "robot" in topic_lower else VisualMode.LITERAL)
-            fallbacks = [VisualMode.LITERAL, VisualMode.DATA_VISUALIZATION]
-        elif any(w in text_lower for w in ["control", "motor", "actuator", "direct"]) and any(w in text_lower for w in ["physical", "robot", "arm"]):
-            rec_mode = VisualMode.LITERAL
-            fallbacks = [VisualMode.MECHANISM, VisualMode.DEMONSTRATION]
-        elif any(w in text_lower for w in ["neural", "signal", "synapse", "flow", "weights", "latent"]):
-            rec_mode = VisualMode.METAPHOR
-            fallbacks = [VisualMode.ABSTRACT, VisualMode.DATA_INTERFACE]
-        elif claim_plan.claim_type == ClaimType.BUSINESS_IMPACT:
-            rec_mode = VisualMode.SCALE
-            fallbacks = [VisualMode.DATA_VISUALIZATION, VisualMode.DEMONSTRATION]
-        elif claim_plan.claim_type == ClaimType.DEMONSTRATION or any(w in text_lower for w in ["adapt", "obstacle", "fleet", "reroute"]):
-            rec_mode = VisualMode.DEMONSTRATION
-            fallbacks = [VisualMode.MECHANISM, VisualMode.COMPARISON]
-        elif claim_plan.claim_type == ClaimType.MECHANISM:
-            rec_mode = VisualMode.DATA_VISUALIZATION if is_nlp_topic else VisualMode.MECHANISM
-            fallbacks = [VisualMode.INTERFACE, VisualMode.DEMONSTRATION]
-        else:
-            rec_mode = VisualMode.LITERAL
-            fallbacks = [VisualMode.DEMONSTRATION, VisualMode.ENVIRONMENT]
+            # NLP and robot topics keep a defined hook character; every other hook
+            # follows the meaning of its own narration (same chain as body scenes).
+            if is_nlp_topic:
+                rec_mode = VisualMode.INTERFACE
+                fallbacks = [VisualMode.LITERAL, VisualMode.DATA_VISUALIZATION]
+            elif "robot" in topic_lower:
+                rec_mode = VisualMode.DETAIL
+                fallbacks = [VisualMode.LITERAL, VisualMode.MECHANISM]
+
+        if rec_mode is None:
+            # The mode follows the narration's meaning (§6): comparison words carry a
+            # comparison, speed/size words carry scale, sequence words carry the
+            # mechanism, and so on. LITERAL is the honest default — never a rotation.
+            if re.search(r"\bwhile\b|\bversus\b|\bvs\.?\b|\bthan\b", text_lower) or any(
+                w in text_lower for w in ["compare", "comparison", "contrast", "difference"]
+            ):
+                rec_mode = VisualMode.COMPARISON
+                fallbacks = [VisualMode.LITERAL, VisualMode.METAPHOR]
+            elif any(w in text_lower for w in ["control", "motor", "actuator", "direct"]) and any(w in text_lower for w in ["physical", "robot", "arm"]):
+                rec_mode = VisualMode.LITERAL
+                fallbacks = [VisualMode.MECHANISM, VisualMode.DEMONSTRATION]
+            elif any(w in text_lower for w in ["neural", "signal", "synapse", "flow", "weights", "latent"]):
+                rec_mode = VisualMode.METAPHOR
+                fallbacks = [VisualMode.ABSTRACT, VisualMode.DATA_INTERFACE]
+            elif claim_plan.claim_type == ClaimType.BUSINESS_IMPACT:
+                rec_mode = VisualMode.SCALE
+                fallbacks = [VisualMode.DATA_VISUALIZATION, VisualMode.DEMONSTRATION]
+            elif claim_plan.claim_type == ClaimType.DEMONSTRATION or any(w in text_lower for w in ["adapt", "obstacle", "fleet", "reroute"]):
+                rec_mode = VisualMode.DEMONSTRATION
+                fallbacks = [VisualMode.MECHANISM, VisualMode.COMPARISON]
+            elif claim_plan.claim_type == ClaimType.MECHANISM:
+                rec_mode = VisualMode.DATA_VISUALIZATION if is_nlp_topic else VisualMode.MECHANISM
+                fallbacks = [VisualMode.INTERFACE, VisualMode.DEMONSTRATION]
+            elif any(w in text_lower for w in ["huge", "tiny", "massive", "giant", "enormous", "many times", "each second", "every second", "hours", "days", "weeks", "overnight", "weekly", "faster", "slower", "millions", "billions"]):
+                # Speed/size contrast — the narration is about magnitude.
+                rec_mode = VisualMode.SCALE
+                fallbacks = [VisualMode.LITERAL, VisualMode.DATA_VISUALIZATION]
+            elif re.search(r"\bfirst\b|\bthen\b|\bnext\b|\bfinally\b|\bbreak down\b|\bsteps?\b|\btechnique\b|\bchunk|\bbuild\b|\bcombines?\b|\bprocess\b|\bsequence\b", text_lower):
+                # The narration walks through a how-to — show the mechanism.
+                rec_mode = VisualMode.MECHANISM
+                fallbacks = [VisualMode.LITERAL, VisualMode.INTERFACE]
+            elif any(w in text_lower for w in ["shows", "show how", "scan", "watch", "demonstrat", "reacts", "executes"]):
+                # The narration describes something being done on screen — demonstrate it.
+                rec_mode = VisualMode.DEMONSTRATION
+                fallbacks = [VisualMode.LITERAL, VisualMode.MECHANISM]
+            elif any(w in text_lower for w in ["like a", "similar to", "just as", "imagine", "as if"]):
+                # The narration makes a comparison — the visual should carry the analogy.
+                rec_mode = VisualMode.METAPHOR
+                fallbacks = [VisualMode.LITERAL, VisualMode.DATA_VISUALIZATION]
+            elif re.search(r"\bso\b", text_lower) or any(w in text_lower for w in ["quickly", "enables", "means ", "result", "so that", "wins", "saves"]):
+                # The narration states the payoff — show the outcome/interface.
+                rec_mode = VisualMode.INTERFACE
+                fallbacks = [VisualMode.LITERAL, VisualMode.DATA_VISUALIZATION]
+            else:
+                rec_mode = VisualMode.LITERAL
+                fallbacks = [VisualMode.DEMONSTRATION, VisualMode.ENVIRONMENT]
 
         return SemanticSceneIntent(
             section_id=sec_id,
@@ -153,7 +191,7 @@ def analyze_scene_intent(
                 spoken_text=text,
                 narrative_role="hook",
                 primary_intent="emerge",
-                what_is_said="Unprecedented breakthrough in frontier capability",
+                what_is_said=text,
                 what_viewer_sees="Dramatic high-contrast focal reveal of core computational architecture",
                 what_viewer_feels="High stakes urgency and immediate curiosity",
                 recommended_mode=VisualMode.DETAIL,

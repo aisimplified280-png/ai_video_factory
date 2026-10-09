@@ -84,19 +84,30 @@ class SemanticSceneGraph(BaseModel):
         return self.model_dump()
 
 
+_STOPWORDS: set[str] = {
+    "this", "that", "with", "from", "have", "more", "then", "into", "when",
+    "your", "will", "what", "how", "over", "fast", "they", "them", "about",
+    "offers", "gives", "system", "systems", "getting", "smarter", "built",
+    "dark", "minimalist", "studio", "obsidian", "matrix", "wireframe",
+    "graphic", "visual", "concept", "slide", "scene", "clean", "just",
+    "happened", "unprecedented", "today", "daily", "frontier", "does", "actually",
+    "thin", "only", "entirely", "across", "within", "beyond", "under", "hood",
+    "using", "where", "which", "being", "been", "each", "both", "such",
+    # Conjunctions / glue words are never meaningful visual labels
+    "and", "are", "was", "were", "not", "has", "its", "can", "may",
+    "all", "any", "one", "two", "new", "also", "than", "while", "some",
+    "very", "much", "most", "like", "still", "even", "make", "made", "get",
+    # Pronouns & quantifiers name no visual concept
+    "those", "these", "their", "there", "them", "another", "others", "several",
+    "smaller", "larger", "bigger", "various", "multiple", "different",
+    "current", "previous", "second", "third", "every", "nothing", "everything",
+}
+
+
 def _clean_entity_terms(text: str, domain: TopicDomain) -> list[str]:
     """Extract clean entity nouns and technical terms from text without noise."""
     tokens = re.findall(r"[A-Za-z0-9\-_]{3,}", text)
-    stopwords = {
-        "this", "that", "with", "from", "have", "more", "then", "into", "when",
-        "your", "will", "what", "how", "over", "fast", "they", "them", "about",
-        "offers", "gives", "system", "systems", "getting", "smarter", "built",
-        "dark", "minimalist", "studio", "obsidian", "matrix", "wireframe",
-        "graphic", "visual", "concept", "slide", "scene", "clean", "just",
-        "happened", "unprecedented", "today", "daily", "frontier", "does", "actually",
-        "thin", "only", "entirely", "across", "within", "beyond", "under", "hood",
-        "using", "where", "which", "being", "been", "each", "both", "such",
-    }
+    stopwords = _STOPWORDS
     clean_terms: list[str] = []
     seen: set[str] = set()
     for tok in tokens:
@@ -107,20 +118,194 @@ def _clean_entity_terms(text: str, domain: TopicDomain) -> list[str]:
     return clean_terms
 
 
+def _trim_clause_to_limit(clause: str, hi: int = 48) -> str:
+    """Cut a long clause on a word boundary within `hi`, dropping stranded glue words."""
+    kept: list[str] = []
+    for w in clause.split():
+        if len(" ".join(kept + [w])) > hi:
+            break
+        kept.append(w)
+    glue = {
+        "a", "an", "the", "of", "to", "and", "or", "in", "on", "at", "for",
+        "with", "that", "which", "while", "each", "every", "is", "are", "as",
+        "into", "from", "by", "without", "through", "across", "around",
+    }
+    while kept and kept[-1].strip("?!:;,.\"'“”‘’").lower() in glue:
+        kept.pop()
+    return " ".join(kept).strip()
+
+
 def _extract_real_phrases_from_speech(speech: str, max_phrases: int = 2) -> list[str]:
     """Extract genuine factual snippets directly from spoken text with zero hallucinated boilerplate."""
-    clauses = re.split(r"[,;.]|(?:\s+and\s+)|\b(?:while|unlike|which|to)\b", speech, flags=re.IGNORECASE)
+    clauses = re.split(
+        r"[,;.?!:]|(?:\s+and\s+)|\b(?:while|unlike|which|that|to)\b",
+        speech,
+        flags=re.IGNORECASE,
+    )
     clean_clauses: list[str] = []
     for c in clauses:
         c_str = c.strip()
-        # Clean leading prepositions
-        c_str = re.sub(r"^(that|into|with|from|by|at|for|the|a|an)\s+", "", c_str, flags=re.IGNORECASE).strip()
-        if 8 <= len(c_str) <= 45:
+        # Clean leading prepositions and trailing punctuation
+        c_str = re.sub(r"^(that|into|with|from|by|at|for|the|a|an)\s+", "", c_str, flags=re.IGNORECASE)
+        c_str = c_str.strip("?!:;,\"'“”‘’").strip()
+        if not c_str:
+            continue
+        if len(c_str) > 48:
+            # Never discard a real sentence — trim it to the card limit instead
+            # (empty cards are a worse sin than a slightly shortened phrase).
+            c_str = _trim_clause_to_limit(c_str)
+        if 8 <= len(c_str) <= 48:
             # Title case short phrase
             clean_clauses.append(c_str.capitalize())
         if len(clean_clauses) >= max_phrases:
             break
     return clean_clauses
+
+
+def _narrative_label_pool(subject: str, speech: str, topic: str) -> list[str]:
+    """Ordered pool of node labels derived strictly from what the narrator actually says.
+
+    Subject words come first (they name the scene's subject), then spoken content words,
+    then topic words. Generic technical words ("STAGE 1", "PIPELINE", "ENGINE") are never
+    invented: if the narration does not name it, the node does not either.
+    """
+    pool: list[str] = []
+    for src in (subject, speech, topic):
+        for word in re.findall(r"[A-Za-z0-9\-_]{3,}", str(src or "")):
+            up = word.upper()
+            if up.lower() in _STOPWORDS or up in pool:
+                continue
+            pool.append(up)
+    return pool
+
+
+def _clip_words(text: str, limit: int) -> str:
+    """Cut on a word boundary with an ellipsis — labels never break mid-word (§21)."""
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(" ", 1)[0].rstrip()
+    return (cut or text[:limit]) + "…"
+
+
+def _label_at(pool: list[str], idx: int, subject: str) -> str:
+    """Label for the idx-th node, or the narration subject when the pool is exhausted."""
+    if idx < len(pool):
+        return pool[idx]
+    subj = re.sub(r"[^\w\s-]", "", subject or "").strip().upper()
+    return _clip_words(subj, 40)
+
+
+def _content_words(text: str, limit: int | None = None) -> list[str]:
+    """Meaningful narration words (glue words and quantifiers removed), in spoken order."""
+    out: list[str] = []
+    for word in re.findall(r"[A-Za-z][A-Za-z'\-]{2,}", text or ""):
+        if word.lower() in _STOPWORDS:
+            continue
+        up = word.upper()
+        if up not in out:
+            out.append(up)
+        if limit is not None and len(out) >= limit:
+            break
+    return out
+
+
+def _transformation_labels(speech: str) -> Optional[tuple[str, str, str]]:
+    """Read an actual transformation out of the narration: "<source> <action> into <result>".
+
+    Example: "Documents are split into several smaller chunks."
+      -> ("DOCUMENTS", "SPLIT", "CHUNKS")
+    Returns None when the narration does not phrase a transformation this way, so the caller
+    can fall back to the subject-word pool instead of inventing labels.
+    """
+    speech_lower = (speech or "").lower()
+    conn = re.search(r"\s(into|to|as)\s", speech_lower)
+    if not conn:
+        return None
+    left = (speech or "")[: conn.start()]
+    right = (speech or "")[conn.end():]
+
+    left_words = _content_words(left)
+    dst_words = _content_words(right, limit=2)
+    # The final word of the left side is the action; everything before it names the source.
+    if len(left_words) < 2 or not dst_words:
+        return None
+    action = left_words[-1]
+    src_words = left_words[:-1][:2]
+    return " ".join(src_words), action, " ".join(dst_words)
+
+
+_ACTION_STEMS: tuple[str, ...] = (
+    "parse", "chunk", "split", "convert", "embed", "token", "store", "index",
+    "retriev", "fetch", "rank", "route", "connect", "generat", "train", "infer",
+    "decode", "encode", "extract", "load", "stream", "deploy", "monitor",
+    "verif", "valid", "launch", "scale", "optimi", "search", "learn", "predict",
+)
+
+
+def _action_clauses(speech: str) -> list[str]:
+    """Narration clauses that describe something actually happening."""
+    clauses = re.split(
+        r"[,;.]|\b(?:and|then|while|before|after|until|finally|next)\b",
+        (speech or "").lower(),
+    )
+    return [c.strip() for c in clauses if len(c.strip()) > 3 and any(k in c for k in _ACTION_STEMS)]
+
+
+def _action_clause_count(speech: str) -> int:
+    """Whether the narration describes a multi-step process (>= 2 action clauses).
+
+    Used to decide whether the narration describes a multi-step process (draw a flow)
+    or one single concept (draw one clear object instead of filler boxes).
+    """
+    return len(_action_clauses(speech))
+
+
+def _action_clause_labels(speech: str, limit: int = 3) -> list[str]:
+    """One node label per narrated step — literally the action the narrator names.
+
+    "Documents are chunked, embedded, and stored in an index."
+      -> ["CHUNKED", "EMBEDDED", "STORED"]
+    """
+    labels: list[str] = []
+    for clause in _action_clauses(speech):
+        stem = next((k for k in _ACTION_STEMS if k in clause), None)
+        words = _content_words(clause)
+        if not words:
+            continue
+        match = next((w for w in words if stem and stem in w.lower()), words[0])
+        if match not in labels:
+            labels.append(match)
+        if len(labels) >= limit:
+            break
+    return labels
+
+
+def _contrast_labels(subject: str, speech: str) -> Optional[tuple[str, str]]:
+    """Read the two compared sides out of the narration instead of guessing them.
+
+    "Keyword Search vs Semantic Retrieval" / "Unlike keyword search, semantic retrieval..."
+      -> ("KEYWORD SEARCH", "SEMANTIC RETRIEVAL")
+    """
+    for marker in (r"\bvs\.?\b", r"\bversus\b", r"\bagainst\b"):
+        m = re.search(marker, subject or "", flags=re.IGNORECASE)
+        if m:
+            left = re.sub(r"[^\w\s-]", " ", (subject or "")[: m.start()]).strip()
+            right = re.sub(r"[^\w\s-]", " ", (subject or "")[m.end():]).strip()
+            if left and right:
+                return _clip_words(left.upper(), 28), _clip_words(right.upper(), 28)
+
+    speech_lower = (speech or "").lower()
+    for marker in (r"\bunlike\b", r"\binstead of\b", r"\bversus\b", r"\bvs\b"):
+        m = re.search(marker, speech_lower)
+        if not m:
+            continue
+        left_clause = (speech or "")[: m.start()]
+        right_clause = re.split(r"[,;.]", (speech or "")[m.end():])[0]
+        left_words = _content_words(left_clause, limit=2)
+        right_words = _content_words(right_clause, limit=2)
+        if left_words and right_words:
+            return " ".join(left_words), " ".join(right_words)
+    return None
 
 
 def build_semantic_scene_graph(
@@ -150,6 +335,8 @@ def build_semantic_scene_graph(
     combined_ctx = f"{subj_lower} {speech_lower} {visual_purpose.lower()} {visual_metaphor.lower()}"
     clean_terms = _clean_entity_terms(f"{subject} {speech} {research_claim}", domain)
     real_facts = _extract_real_phrases_from_speech(speech, max_phrases=3)
+    # Every node label must be traceable to the narration (subject -> speech -> topic).
+    label_pool = _narrative_label_pool(subject, speech, topic)
 
     # Metric extraction (only if present in narration/claim)
     metric_match = re.search(r"(\+?\d+%|\d+x|\d+ms|\d+s|\d+\.\d+%)", speech + " " + research_claim)
@@ -163,7 +350,7 @@ def build_semantic_scene_graph(
             id="brand_crest",
             label="AI SIMPLIFIED LAB",
             node_type=SceneNodeType.BRAND,
-            details=["FRONTIER ARCHITECTURE BRIEFINGS", "VERIFIED RESEARCH"],
+            details=real_facts[:1],  # spoken CTA copy only — never an invented claim
             bounds=(340, 580, 740, 860),
             is_primary=True,
             shape_style="card",
@@ -179,7 +366,7 @@ def build_semantic_scene_graph(
             composition_intent="brand_identity",
             character_intent="welcoming_salute",
             interaction_target_id="brand_crest",
-            required_visual_evidence=["AI SIMPLIFIED LAB", "BRIEFINGS"],
+            required_visual_evidence=["AI SIMPLIFIED LAB"],
             forbidden_visuals=["generic error boxes", "unrelated schematics"],
         )
         return SemanticSceneGraph(
@@ -198,16 +385,16 @@ def build_semantic_scene_graph(
     # 2. LAYERED ARCHITECTURE TOPOLOGY (Evaluated before transformation to avoid 'transformer' matching 'transform')
     # e.g. "Transformer using multi-head self-attention across sequences simultaneously" or "technology stack"
     is_stack = any(k in combined_ctx for k in ["transformer", "self-attention", "attention matrix", "stack", "hierarch", "depth layer", "multi-head"])
-    if is_stack:
-        top_label = clean_terms[0] if len(clean_terms) > 0 else "INPUT SEQUENCE"
-        mid_label = clean_terms[1] if len(clean_terms) > 1 else "ATTENTION MATRIX"
-        bot_label = clean_terms[2] if len(clean_terms) > 2 else "REPRESENTATION LAYER"
+    if is_stack and len(label_pool) >= 3:
+        top_label = label_pool[0]
+        mid_label = label_pool[1]
+        bot_label = label_pool[2]
 
         node_top = SceneNode(
             id="stack_top",
             label=top_label,
             node_type=SceneNodeType.ENTITY,
-            details=[real_facts[0]] if real_facts else [f"{top_label.lower()} layer"],
+            details=[real_facts[0]] if real_facts else [],
             bounds=(180, 510, 900, 610),
             is_primary=False,
             shape_style="stack_layer",
@@ -216,7 +403,7 @@ def build_semantic_scene_graph(
             id="stack_core",
             label=mid_label,
             node_type=SceneNodeType.TRANSFORM,
-            details=[real_facts[1]] if len(real_facts) > 1 else ["Multi-head self-attention"],
+            details=[real_facts[1]] if len(real_facts) > 1 else [],
             bounds=(140, 630, 940, 770),
             is_primary=True,
             shape_style="matrix_grid",
@@ -225,7 +412,7 @@ def build_semantic_scene_graph(
             id="stack_base",
             label=bot_label,
             node_type=SceneNodeType.ENTITY,
-            details=[real_facts[2]] if len(real_facts) > 2 else [f"{bot_label.lower()} layer"],
+            details=[real_facts[2]] if len(real_facts) > 2 else [],
             bounds=(200, 790, 880, 890),
             is_primary=False,
             shape_style="stack_layer",
@@ -262,17 +449,25 @@ def build_semantic_scene_graph(
 
     # 3. OBJECT TRANSFORMATION TOPOLOGY
     # e.g. "Documents are parsed and converted into vectors" or "diffusion noise reversed into image"
-    is_transform = any(k in combined_ctx for k in ["convert", "vector embedding", "tokenized", "diffusion", "denois", "reverse gaussian", "synthesize entirely novel"]) or ("transform" in combined_ctx and "transformer" not in combined_ctx)
+    # A transformation must be stated by the narration: either a strong transform verb, or a
+    # weak one ("split", "chunk") paired with an explicit "<source> <action> into <result>" phrase.
+    strong_transform = any(k in combined_ctx for k in ["convert", "vector embedding", "tokenized", "parse", "diffusion", "denois", "reverse gaussian", "synthesize entirely novel"]) or ("transform" in combined_ctx and "transformer" not in combined_ctx)
+    weak_transform = any(k in combined_ctx for k in ["split", "chunk", "divid", "shard"])
+    transform_labels = _transformation_labels(speech) if (strong_transform or weak_transform) else None
+    is_transform = (strong_transform or (weak_transform and transform_labels is not None)) and (
+        transform_labels is not None or len(label_pool) >= 3
+    )
     if is_transform:
-        src_label = clean_terms[0] if len(clean_terms) > 0 else "SOURCE DATA"
-        trn_label = clean_terms[1] if len(clean_terms) > 1 else "TRANSFORM KERNEL"
-        dst_label = clean_terms[2] if len(clean_terms) > 2 else "EMBEDDING SPACE"
+        if transform_labels:
+            src_label, trn_label, dst_label = transform_labels
+        else:
+            src_label, trn_label, dst_label = label_pool[0], label_pool[1], label_pool[2]
 
         node_src = SceneNode(
             id="transform_source",
             label=src_label,
             node_type=SceneNodeType.STORAGE,
-            details=[real_facts[0]] if real_facts else [f"Raw {src_label.lower()}"],
+            details=[real_facts[0]] if real_facts else [],
             bounds=(140, 590, 380, 830),
             is_primary=False,
             shape_style="card",
@@ -281,7 +476,7 @@ def build_semantic_scene_graph(
             id="transform_kernel",
             label=trn_label,
             node_type=SceneNodeType.TRANSFORM,
-            details=[real_facts[1]] if len(real_facts) > 1 else ["Transformation process"],
+            details=[real_facts[1]] if len(real_facts) > 1 else [],
             bounds=(420, 550, 660, 870),
             is_primary=True,
             shape_style="transform_kernel",
@@ -290,7 +485,7 @@ def build_semantic_scene_graph(
             id="transform_result",
             label=dst_label,
             node_type=SceneNodeType.ENTITY,
-            details=[real_facts[2]] if len(real_facts) > 2 else [f"Synthesized {dst_label.lower()}"],
+            details=[real_facts[2]] if len(real_facts) > 2 else [],
             bounds=(700, 590, 940, 830),
             is_primary=False,
             shape_style="card",
@@ -327,16 +522,19 @@ def build_semantic_scene_graph(
 
     # 4. BIPARTITE COMPARISON TOPOLOGY
     # e.g. "Unlike classical AI that only classifies existing data, generative models learn probability distributions"
-    is_contrast = any(k in speech_lower for k in ["unlike", "instead of", "versus", "vs", "classif", "balance"])
-    if is_contrast:
-        left_label = clean_terms[0] if clean_terms else "CLASSIFICATION"
-        right_label = clean_terms[1] if len(clean_terms) > 1 else "GENERATIVE SYNTHESIS"
+    is_contrast = any(k in speech_lower for k in ["unlike", "instead of", "versus", "vs", "classif", "balance"]) or bool(re.search(r"\bvs\.?\b|\bversus\b", subject or "", flags=re.IGNORECASE))
+    contrast_labels = _contrast_labels(subject, speech) if is_contrast else None
+    if is_contrast and (contrast_labels or len(label_pool) >= 2):
+        if contrast_labels:
+            left_label, right_label = contrast_labels
+        else:
+            left_label, right_label = label_pool[0], label_pool[1]
 
         node_left = SceneNode(
             id="contrast_left",
             label=left_label,
             node_type=SceneNodeType.ENTITY,
-            details=[real_facts[0]] if real_facts else [f"Existing {left_label.lower()}"],
+            details=[real_facts[0]] if real_facts else [],
             bounds=(150, 560, 500, 860),
             is_primary=False,
             shape_style="card",
@@ -345,7 +543,7 @@ def build_semantic_scene_graph(
             id="contrast_right",
             label=right_label,
             node_type=SceneNodeType.ENTITY,
-            details=[real_facts[1]] if len(real_facts) > 1 else [f"Novel {right_label.lower()}"],
+            details=[real_facts[1]] if len(real_facts) > 1 else [],
             bounds=(580, 560, 930, 860),
             is_primary=True,
             shape_style="card",
@@ -379,10 +577,15 @@ def build_semantic_scene_graph(
             evidence_contract=contract,
         )
 
-    # 5. PROCESS FLOW TOPOLOGY (Dynamically sized by entity count)
-    # e.g. RAG database connect, client authorization flow, etc.
-    if len(clean_terms) >= 3 or any(k in speech_lower for k in ["connect", "route", "database", "retrieval", "grounding", "step"]):
-        n_entities = min(3, max(2, len(clean_terms)))
+    # 5. PROCESS FLOW TOPOLOGY (only when the narration describes a multi-step process)
+    # A flow diagram is never drawn just to fill space: it requires narration with at least two
+    # clauses describing action, and its node count never exceeds the concepts the narration names.
+    if len(label_pool) >= 2 and _action_clause_count(speech) >= 2:
+        # Node labels are the steps the narrator actually names.
+        flow_labels = _action_clause_labels(speech)
+        if len(flow_labels) < 2:
+            flow_labels = [_label_at(label_pool, i, subject) for i in range(min(3, len(label_pool)))]
+        n_entities = max(2, min(3, len(flow_labels)))
         margin = 130
         total_w = 1080 - 2 * margin
         spacing = 28
@@ -393,7 +596,7 @@ def build_semantic_scene_graph(
         for i in range(n_entities):
             bx1 = margin + i * (box_w + spacing)
             bx2 = bx1 + box_w
-            lbl = clean_terms[i] if i < len(clean_terms) else f"STAGE {i+1}"
+            lbl = flow_labels[i]
             is_p = (i == 1) or (i == n_entities - 1)
             f_detail = [real_facts[i]] if i < len(real_facts) else []
             flow_nodes.append(SceneNode(
@@ -443,15 +646,15 @@ def build_semantic_scene_graph(
             evidence_contract=contract,
         )
 
-    # 6. FOCAL EXPLANATION TOPOLOGY (Core Architectural Subject & Real Fact Callouts)
-    hero_term = clean_terms[0] if clean_terms else (subject.split()[0].upper() if subject else "SYSTEM")
-    sub_term = clean_terms[1] if len(clean_terms) > 1 else (subject.split()[-1].upper() if subject else "ARCHITECTURE")
+    # 6. FOCAL EXPLANATION TOPOLOGY (One clear subject, sized to the narration — no filler nodes)
+    hero_label = (subject or topic or (label_pool[0] if label_pool else "")).strip().upper()
+    hero_label = _clip_words(re.sub(r"[^\w\s/&-]", "", hero_label).strip(), 70)
 
     hero_node = SceneNode(
         id="focal_hero",
-        label=f"{hero_term} // {sub_term}",
+        label=hero_label,
         node_type=SceneNodeType.ENTITY,
-        details=real_facts if real_facts else [f"{hero_term} verified core structure"],
+        details=real_facts,
         bounds=(200, 550, 880, 860),
         is_primary=True,
         shape_style="card",
@@ -460,25 +663,25 @@ def build_semantic_scene_graph(
         scene_id=scene_id,
         subject=subject,
         subject_type="focal_explanation",
-        entities=[hero_term, sub_term],
+        entities=[hero_label],
         relationship="focal_inspection",
-        action=f"inspecting {hero_term} architecture",
+        action=f"inspecting {hero_label.lower()}",
         environment=f"{domain.value} facility",
         composition_intent="focal_explanation",
         character_intent="guide_focus",
         interaction_target_id="focal_hero",
-        required_visual_evidence=[hero_term, sub_term],
+        required_visual_evidence=[hero_label],
         forbidden_visuals=["template cards"],
     )
     return SemanticSceneGraph(
         scene_id=scene_id,
         topic_domain=domain.value,
-        central_subject=f"{hero_term} Focal Explanation",
+        central_subject=hero_label,
         narrative_role=narrative_role,
         topology="focal",
         nodes=[hero_node],
         edges=[],
         primary_anchor=(540.0, 705.0),
-        required_visual_evidence=[hero_term, sub_term],
+        required_visual_evidence=[hero_label],
         evidence_contract=contract,
     )

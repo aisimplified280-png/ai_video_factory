@@ -17,63 +17,40 @@ from ..phase11.models import ScriptArtifact
 from .models import TitleCandidate, TopicPackage
 
 
-def generate_title_candidates(topic: str, research_pack: ResearchPack) -> list[TitleCandidate]:
-    """Generate 10 psychologically compelling, channel-aware YouTube titles."""
-    topic_clean = topic.strip()
-    topic_lower = topic_clean.lower()
+# Fabricated-event / hype markers that titles must never contain (honest packaging).
+_TITLE_RED_FLAGS = (
+    "breakthrough", "unprecedented", "revolution", "game-changing",
+    "changes everything", "just happened", "leaked", "secret new",
+    "is panicking", "took another", "milestone", "solved a massive",
+)
 
-    if "robot" in topic_lower or "astra" in topic_lower or "warehouse" in topic_lower:
-        candidates: list[tuple[str, str, float, float]] = [
-            ("Robots Just Took Another Human Job", "shock_revelation", 9.6, 9.7),
-            ("This Warehouse AI Is Learning Too Fast", "curiosity_gap", 9.5, 9.6),
-            ("OpenAI's New Robot System Changes Everything", "authority", 9.4, 9.2),
-            ("Why Warehouses Are Replacing Humans In 2026", "extreme_shift", 9.3, 9.4),
-            ("What Happens When GPT-6 Controls Physical Machines", "curiosity_gap", 9.2, 9.5),
-            ("The Embodied AI Shift You Missed", "insider_breakdown", 9.0, 9.1),
-            ("Inside The Secret New Robotics Benchmark", "metric_proof", 8.9, 9.0),
-            ("They Finally Connected Frontier AI To Real Robots", "direct_reality", 9.1, 9.3),
-            ("This Autonomous Breakthrough Is Quietly Changing Logistics", "quiet_urgency", 8.8, 8.9),
-            ("The Frontier Robotics Race Just Escalated", "escalation", 8.7, 8.8),
-        ]
-    elif "chip" in topic_lower or "hardware" in topic_lower:
-        candidates = [
-            ("This AI Hardware Breakthrough Changes Everything", "shock_revelation", 9.5, 9.6),
-            ("Why Silicon Engineering Just Hit An Inflection Point", "authority", 9.3, 9.2),
-            ("The Secret Datacenter Architecture You Didn't See", "curiosity_gap", 9.4, 9.5),
-            ("Inside The Massive New Compute Milestone", "metric_proof", 9.0, 9.1),
-            ("How This New Chip Design Solves The AI Power Wall", "extreme_shift", 8.9, 9.0),
-            ("They Found A Way To 10x Neural Processing Speed", "speed_shock", 9.2, 9.4),
-            ("What The Next Generation Of AI Datacenters Looks Like", "realistic_preview", 8.8, 8.9),
-            ("The Semiconductor Race Just Took A Dramatic Turn", "escalation", 8.9, 9.0),
-            ("Why Big Tech Is Panicking Over Physical Compute", "controversy", 9.1, 9.3),
-            ("Frontier Compute: The 2026 Infrastructure Shift", "digest", 8.6, 8.7),
-        ]
-    elif any(k in topic_lower for k in ("term", "token", "embedding", "attention", "transformer", "concept", "glossary", "explained")):
-        candidates = [
-            ("How AI Actually Understands Human Words", "curiosity_gap", 9.7, 9.8),
-            ("Tokens, Vectors, and Attention Explained Simply", "authority", 9.6, 9.5),
-            ("The Mathematical Core Powering All Modern AI", "insider_breakdown", 9.4, 9.5),
-            ("What Actually Happens Inside A Neural Network", "curiosity_gap", 9.5, 9.6),
-            ("How Self-Attention Rewrote Artificial Intelligence", "shock_revelation", 9.3, 9.4),
-            ("Why Tokens Are The Foundation Of Frontier Models", "authority", 9.1, 9.2),
-            ("Inside The High-Dimensional Vector Space", "metric_proof", 9.0, 9.2),
-            ("How Transformer Models Predict The Next Token", "direct_reality", 9.2, 9.3),
-            ("The AI Concepts You Need To Understand In 2026", "quiet_urgency", 9.1, 9.2),
-            ("Demystifying Modern AI: From Tokens To Attention", "digest", 8.9, 9.0),
-        ]
-    else:
-        candidates = [
-            (f"Something Unprecedented Just Happened In {topic_clean}", "curiosity_gap", 9.5, 9.6),
-            (f"The New {topic_clean} Breakthrough No One Saw Coming", "shock_revelation", 9.3, 9.4),
-            (f"Why {topic_clean} Is Accelerating Faster Than Expected", "authority", 9.2, 9.3),
-            (f"This AI Milestone Quietly Solved A Massive Problem", "curiosity_gap", 9.1, 9.2),
-            (f"Inside The Latest Frontier Benchmark For {topic_clean}", "metric_proof", 8.9, 9.0),
-            (f"What Actually Changed In {topic_clean} This Week", "insider_breakdown", 9.0, 9.1),
-            (f"Why Researchers Are Paying Close Attention To {topic_clean}", "quiet_urgency", 8.8, 8.9),
-            (f"The Shift Happening Right Now In Autonomous AI", "escalation", 8.9, 9.0),
-            (f"Are We Ready For Where {topic_clean} Is Heading?", "controversy", 9.0, 9.2),
-            (f"{topic_clean}: The Frontier AI Briefing", "digest", 8.6, 8.7),
-        ]
+
+def _honest_thumbnail_text(topic: str) -> str:
+    """Topic-derived thumbnail text (max 4 words) — honest, never a fake event."""
+    words = [w for w in re.split(r"[^A-Za-z0-9+#]+", topic) if w][:4]
+    return " ".join(w.upper() for w in words) if words else "AI SIMPLIFIED"
+
+
+def generate_title_candidates(topic: str, research_pack: ResearchPack) -> list[TitleCandidate]:
+    """Generate 10 compelling, channel-aware YouTube titles.
+
+    Honest packaging: curiosity is aimed at the TOPIC itself (how it works,
+    its trade-offs, its place in the stack) — never at invented events,
+    releases, or crises.
+    """
+    topic_clean = topic.strip()
+    candidates: list[tuple[str, str, float, float]] = [
+        (f"{topic_clean}, Explained In Plain English", "authority", 9.4, 9.3),
+        (f"How {topic_clean} Actually Works, Step By Step", "curiosity_gap", 9.5, 9.6),
+        (f"The Simple Mental Model For {topic_clean}", "insider_breakdown", 9.2, 9.3),
+        (f"Inside {topic_clean}: The Parts That Matter Most", "shock_revelation", 9.1, 9.2),
+        (f"{topic_clean} In Under A Minute", "direct_reality", 9.3, 9.4),
+        (f"Where {topic_clean} Fits In The Modern AI Stack", "authority", 9.0, 9.1),
+        (f"{topic_clean}: Real Trade-Offs, No Hype", "quiet_urgency", 9.2, 9.3),
+        (f"The One Picture That Makes {topic_clean} Click", "digest", 9.1, 9.2),
+        (f"{topic_clean} vs The Alternatives: What Actually Changes", "escalation", 8.9, 9.0),
+        (f"{topic_clean}: The Frontier AI Briefing", "digest", 8.6, 8.8),
+    ]
 
     return [
         TitleCandidate(title=t, angle=a, title_score=ts, curiosity_score=cs)
@@ -140,6 +117,7 @@ def generate_packaging(
 ) -> TopicPackage:
     """Generate the complete topic packaging artifact."""
     llm_pkg = _llm_generate_packaging_metadata(topic, script_shorts, research_pack, channel_name)
+    title_candidates: list[TitleCandidate] = []
     if llm_pkg:
         title_candidates = [
             TitleCandidate(
@@ -151,7 +129,17 @@ def generate_packaging(
             for t in llm_pkg.get("title_candidates", [])
             if str(t.get("title", "")).strip()
         ]
-        raw_thumb = str(llm_pkg.get("thumbnail_text", "NEW BREAKTHROUGH")).upper().strip()
+        # Honest packaging gate: drop hype / fabricated-event titles; fewer
+        # than 4 survivors means the whole LLM sample is discarded.
+        title_candidates = [
+            t for t in title_candidates
+            if not any(flag in t.title.lower() for flag in _TITLE_RED_FLAGS)
+        ]
+
+    if llm_pkg and len(title_candidates) >= 4:
+        raw_thumb = str(llm_pkg.get("thumbnail_text", "")).upper().strip() or _honest_thumbnail_text(topic)
+        if any(flag in raw_thumb.lower() for flag in _TITLE_RED_FLAGS):
+            raw_thumb = _honest_thumbnail_text(topic)
         words = raw_thumb.split()
         thumbnail_text = " ".join(words[:4]) if len(words) > 4 else raw_thumb
         raw_prompt = str(llm_pkg.get("thumbnail_prompt", "")).strip()
@@ -159,19 +147,23 @@ def generate_packaging(
             thumbnail_prompt = f"Cinematic documentary photography: {raw_prompt}"
         else:
             thumbnail_prompt = raw_prompt
+        # Packaging contract: exactly 10 candidates. Cap extras, then top up
+        # from the honest procedural pool when filtering removed some.
+        title_candidates = title_candidates[:10]
+        if len(title_candidates) < 10:
+            seen = {t.title.lower() for t in title_candidates}
+            for cand in generate_title_candidates(topic, research_pack):
+                if cand.title.lower() in seen:
+                    continue
+                title_candidates.append(cand)
+                seen.add(cand.title.lower())
+                if len(title_candidates) >= 10:
+                    break
         print(f"  -> [Packaging Intelligence] Generated authentic titles & thumbnail metadata via LLM ({len(title_candidates)} titles).")
     else:
         print("  -> [Packaging Fallback] Using procedural heuristic title templates.")
         title_candidates = generate_title_candidates(topic, research_pack)
-        topic_lower = topic.lower()
-        if "robot" in topic_lower or "astra" in topic_lower:
-            thumbnail_text = "ROBOTS UNLEASHED"
-        elif "chip" in topic_lower or "hardware" in topic_lower:
-            thumbnail_text = "HARDWARE SHOCK"
-        elif "leak" in topic_lower:
-            thumbnail_text = "LEAKED BENCHMARK"
-        else:
-            thumbnail_text = "NEW BREAKTHROUGH"
+        thumbnail_text = _honest_thumbnail_text(topic)
         thumbnail_prompt = (
             f"Ultra-detailed cinematic documentary photography inside a modern tech facility, "
             f"dramatic lighting, 8k resolution, photorealistic, clean negative space for text overlay."

@@ -83,6 +83,33 @@ def sync_authoritative_artifacts(
     manifest_assets = []
     all_ready = True
     for sc in visual_plan.scenes:
+        # Flow-like topologies render as a NATIVE vector diagram in Remotion:
+        # nodes/edges from the semantic scene graph, so elements themselves
+        # animate in sequence (element motion) instead of the page moving.
+        graph = getattr(sc, "scene_graph", None)
+        diagram_spec = None
+        if graph is not None and graph.nodes and graph.topology in (
+            "process_flow", "object_transformation", "layered_architecture", "bipartite",
+        ):
+            diagram_spec = {
+                "nodes": [
+                    {
+                        "id": n.id,
+                        "label": n.label,
+                        "details": list(n.details[:3]),
+                        "primary": bool(n.is_primary),
+                        "x": (n.bounds[0] + n.bounds[2]) / 2.0,
+                        "y": (n.bounds[1] + n.bounds[3]) / 2.0,
+                        "w": float(n.bounds[2] - n.bounds[0]),
+                        "h": float(n.bounds[3] - n.bounds[1]),
+                    }
+                    for n in graph.nodes
+                ],
+                "connectors": [
+                    {"from": e.from_node, "to": e.to_node, "label": e.label or ""}
+                    for e in graph.edges
+                ],
+            }
         for lyr in sc.layers:
             full_path = Path(lyr.relative_path)
             if not full_path.is_absolute():
@@ -102,7 +129,9 @@ def sync_authoritative_artifacts(
                 "source": "generated",
                 "status": "ready" if is_valid else "pending",
                 "file_path": lyr.relative_path,
-                "diagram_spec": None,
+                # The PNG stays registered (QA/fallback); nativeSpec makes the
+                # renderer prefer the animated vector diagram when eligible.
+                "diagram_spec": diagram_spec if lyr.role == "midground" else None,
             })
 
     manifest_payload = {
@@ -127,9 +156,10 @@ def sync_authoritative_artifacts(
     # -------------------------------------------------------------
     art_payload = {
         "design_read": f"Phase 18 {style_system.name}: {style_system.description}",
-        "visual_variance": 9,
-        "motion_intensity": 8,
-        "information_density": 8,
+        # §6/§15/§4: clarity over variety, subtle motion, no filler content.
+        "visual_variance": 5,
+        "motion_intensity": 4,
+        "information_density": 4,
         "palette_discipline": {
             "primary": style_system.primary_bg,
             "accent_1": style_system.accent,
@@ -137,12 +167,12 @@ def sync_authoritative_artifacts(
             "neutral": style_system.secondary_text,
         },
         "typography_personality": style_system.name,
-        "layout_language": "Multi-mode compositions with 4-layer parallax depth and intentional whitespace",
-        "signature_device": "Restrained editorial telemetry card",
+        "layout_language": "Single-subject explanatory composition with clear hierarchy and intentional whitespace",
+        "signature_device": "Consistent subject-first explanatory framing",
         "anti_patterns": [
-            "single background persisting > 8 seconds",
-            "flat 2D vector icons without depth",
-            "hard cuts between scenes",
+            "decoration without a narrative purpose (telemetry cards, side rails, HUD frames)",
+            "generic technical labels absent from the narration (STAGE 1, ENGINE, PIPELINE)",
+            "forced motion on a scene that simply states a fact",
             "glowing cyan wires in black void",
         ],
     }

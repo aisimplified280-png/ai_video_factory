@@ -71,13 +71,17 @@ def evaluate_visual_diversity(
     env_ratio = unique_environments / n
     subj_ratio = unique_subjects / n
 
-    # Check consecutive visual mode rule (<= 2 consecutive same mode)
+    # Check for visual stagnation (§6: repetition of a mode is fine when the
+    # narration repeats a relationship — only flag when NOTHING changes: same mode,
+    # same subject, same environment, same action three scenes in a row).
     consecutive_violations = 0
     for i in range(len(scene_plans) - 2):
+        a, b, c = scene_plans[i], scene_plans[i + 1], scene_plans[i + 2]
         if (
-            scene_plans[i].visual_mode
-            == scene_plans[i + 1].visual_mode
-            == scene_plans[i + 2].visual_mode
+            a.visual_mode == b.visual_mode == c.visual_mode
+            and a.subject == b.subject == c.subject
+            and a.environment == b.environment == c.environment
+            and a.action == b.action == c.action
         ):
             consecutive_violations += 1
 
@@ -187,28 +191,29 @@ def evaluate_visual_diversity(
         visual_novelty = round(max(0.0, visual_novelty - frame_similarity_penalty), 1)
 
     # Phase 15B Overall Scorecard Formula (Grounding & Evidence prioritized):
-    # Overall = Grounding (35%) + Coverage (25%) + Diversity (15%) + Narrative Alignment (15%) + Text Restraint (10%)
+    # Overall = Grounding (40%) + Coverage (25%) + Narrative Alignment (15%) + Diversity (10%) + Text Restraint (10%)
     overall = round(
-        (avg_grounding * 0.35)
+        (avg_grounding * 0.40)
         + ((avg_coverage * 10.0) * 0.25)
-        + (visual_diversity * 0.15)
         + (narrative_alignment * 0.15)
+        + (visual_diversity * 0.10)
         + (text_restraint * 0.10),
         1,
     )
 
     # Mandatory Quality Gates (Phase 15B Step 29):
     # - visual_grounding >= 7.0
-    # - claim_coverage >= 0.8
+    # - claim_coverage >= 0.75
     # - contradiction_count == 0
-    # - visual_diversity >= 6.5
+    # - visual_diversity >= 4.0 (degeneracy guard only: fails when the sequence
+    #   repeats one scene verbatim — NOT when scenes share a mode or look alike)
     # - overall >= 7.5
-    # - consecutive_violations == 0
+    # - no three consecutive scenes with identical mode AND identical content
     passed = (
         avg_grounding >= 7.0
         and avg_coverage >= 0.75
         and contradictions == 0
-        and visual_diversity >= 6.5
+        and visual_diversity >= 4.0
         and overall >= 7.5
         and consecutive_violations == 0
     )
@@ -222,10 +227,12 @@ def evaluate_visual_diversity(
             reasons.append(f"Claim evidence coverage ({avg_coverage*100:.0f}%) is below required 80% threshold")
         if contradictions > 0:
             reasons.append(f"Detected {contradictions} narrative-visual contradiction(s)")
-        if visual_diversity < 6.5:
-            reasons.append(f"Visual diversity score ({visual_diversity}/10.0) is below required 6.5 threshold")
+        if visual_diversity < 4.0:
+            reasons.append(f"Visual diversity score ({visual_diversity}/10.0) is below required 4.0 threshold")
         if consecutive_violations > 0:
-            reasons.append(f"Found {consecutive_violations} instances of >2 consecutive scenes using identical visual modes")
+            reasons.append(
+                f"Found {consecutive_violations} instances of >2 consecutive scenes using identical visual modes and identical content"
+            )
         if overall < 7.5:
             reasons.append(f"Overall visual score ({overall}/10.0) is below required 7.5 threshold")
         rejection = "; ".join(reasons)

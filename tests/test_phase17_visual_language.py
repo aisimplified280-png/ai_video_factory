@@ -209,7 +209,11 @@ def test_multi_layer_depth_separation(tmp_path: Path):
 
 
 def test_transformative_transitions():
-    """Verify forbidden cuts/fades are rejected and authoritative N-1 boundary transitions are assigned."""
+    """Verify N-1 boundary transitions are assigned with continuity-first, simple intents.
+
+    §16: cuts and gentle dissolves are the correct default for explanatory scenes.
+    Only unresolvable / unsupported intents are rejected.
+    """
     from production.phase17.transition_director import assign_boundary_transitions, SceneBoundaryTransition
 
     # 1 scene: exactly 0 transitions (no phantom final transition)
@@ -263,10 +267,15 @@ def test_transformative_transitions():
     assert b_custom[1].from_scene_id == "concept"
     assert b_custom[1].to_scene_id == "outro"
 
-    # Test rejection of forbidden cuts and fades
-    invalid, errs_bad = validate_transition_integrity(["hard_cut", "fade"])
+    # Simple continuity transitions are explicitly valid — never a failure.
+    valid_simple, errs_simple = validate_transition_integrity(["hard_cut", "fade"])
+    assert valid_simple is True
+    assert len(errs_simple) == 0
+
+    # Unresolvable or unsupported intents are still rejected.
+    invalid, errs_bad = validate_transition_integrity(["hard_cut", "not_a_real_transition"])
     assert invalid is False
-    assert len(errs_bad) == 2
+    assert len(errs_bad) == 1
 
 
 
@@ -288,11 +297,15 @@ def test_visual_language_qa_fails_when_no_frames(tmp_path: Path):
 
 
 def test_visual_language_qa_fails_on_visually_static_render(tmp_path: Path):
-    """Verify that a visually static render with perfect metadata FAILS closed."""
+    """Verify that an EMPTY render (no depicted content) fails closed.
+
+    Stillness alone is allowed (§14); a blank frame with nothing depicted is not —
+    the explained subject must be visible (§21).
+    """
     qa_dir = tmp_path / "qa"
     qa_dir.mkdir(parents=True, exist_ok=True)
     
-    # Save identical black/static images for all scenes
+    # Save identical blank images for all scenes: no subject, no structure
     blank = Image.new("RGB", (200, 350), color=(15, 23, 42))
     for i in range(5):
         # 2 identical frames per scene
@@ -310,7 +323,7 @@ def test_visual_language_qa_fails_on_visually_static_render(tmp_path: Path):
 
     eval_res = evaluate_visual_language(tmp_path, scenes, timeline)
     assert eval_res.passed is False
-    assert any("visually static" in r for r in eval_res.rejection_reasons)
+    assert any("no visual content" in r.lower() for r in eval_res.rejection_reasons)
     assert eval_res.visual_language_score < 7.0
 
 

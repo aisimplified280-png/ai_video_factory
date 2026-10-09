@@ -78,10 +78,10 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
     boundaryMap.set(currScene.scene_id, boundary);
     sceneTails.set(currScene.scene_id, overlap);
 
-    // Apply tail frames to currScene visual events
+    // Apply tail frames to currScene visual events (the mascot crossfades too)
     const currEvents = byScene.get(currScene.scene_id) ?? [];
     for (const evt of currEvents) {
-      if (evt.role === 'midground' || evt.role === 'primary_visual' || evt.role === 'background' || evt.role === 'foreground') {
+      if (evt.role === 'midground' || evt.role === 'primary_visual' || evt.role === 'background' || evt.role === 'foreground' || evt.role === 'character') {
         eventTails.set(evt.event_id, overlap);
       }
     }
@@ -112,7 +112,7 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
         const sceneTail = sceneTails.get(scene.scene_id) ?? 0;
         const placed: PlacedEvent[] = (byScene.get(scene.scene_id) ?? []).map((event) => {
           const range = eventFrames(event.start, event.end, fps);
-          const isVisual = event.role === 'midground' || event.role === 'primary_visual' || event.role === 'background' || event.role === 'foreground';
+          const isVisual = event.role === 'midground' || event.role === 'primary_visual' || event.role === 'background' || event.role === 'foreground' || event.role === 'character';
           const tail = eventTails.get(event.event_id) ?? 0;
           return {
             event,
@@ -150,7 +150,13 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
           </Sequence>
         );
       })}
-      <CaptionTrack theme={props.theme} captions={props.captions} fps={fps} mode="emphasis_words" />
+      <CaptionTrack
+        theme={props.theme}
+        captions={props.captions}
+        fps={fps}
+        mode="emphasis_words"
+        ctaStart={props.cta.start ?? undefined}
+      />
     </AbsoluteFill>
   );
 };

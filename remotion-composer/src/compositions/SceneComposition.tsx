@@ -40,7 +40,36 @@ import {SvgLayer} from '../primitives/SvgLayer';
 import {TextLayer} from '../primitives/TextLayer';
 import {VideoLayer} from '../primitives/VideoLayer';
 import {assetById, requireAssetUrl} from '../runtime/loader';
-import type {AssetProps, AudioRefProps, EditEventProps, SceneProps, ThemeProps} from '../runtime/props';
+import type {AssetProps, AudioRefProps, CharacterSpec, EditEventProps, SceneProps, ThemeProps} from '../runtime/props';
+
+/** True when this scene is the closing call-to-action scene. */
+export function isCtaScene(scene: SceneProps): boolean {
+  return scene.narrative_role?.toLowerCase() === 'cta' || Boolean(scene.scene_id?.toLowerCase().includes('cta'));
+}
+
+/**
+ * Canvas anchor of the subscribe control inside the CTA card.
+ * Must stay in sync with the CTA card layout rendered in SceneComposition.
+ */
+export function ctaSubscribeAnchor(width: number, height: number): {x: number; y: number} {
+  return {x: width * 0.5, y: height * 0.854};
+}
+
+/**
+ * On the CTA the mascot performs exactly one deliberate tap on the subscribe control
+ * and then holds still. The target is the real rendered control, not a generic point.
+ */
+export function ctaMascotSpec(spec: CharacterSpec, width: number, height: number): CharacterSpec {
+  return {
+    ...spec,
+    pose: 'point_tap_subscribe',
+    action: 'tapping the subscribe control',
+    target: 'subscribe control',
+    target_anchor: ctaSubscribeAnchor(width, height),
+    tool_held: null,
+    z_index: 120,
+  };
+}
 
 export interface PlacedEvent {
   event: EditEventProps;
@@ -228,8 +257,8 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
         throw new Error(`Event ${event.event_id} requires an asset but references none.`);
       }
       const spec = (asset.nativeSpec ?? {}) as {
-        nodes?: {id: string; label: string; x: number; y: number}[];
-        connectors?: {from: string; to: string}[];
+        nodes?: {id: string; label: string; x: number; y: number; details?: string[]; primary?: boolean; w?: number; h?: number}[];
+        connectors?: {from: string; to: string; label?: string}[];
         bars?: {label: string; value: number}[];
         shapes?: {shape: 'circle' | 'rect' | 'line'; x: number; y: number; size: number; length?: number; color: string}[];
         path?: string;
@@ -252,7 +281,9 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
             height={height}
             nodes={(spec.nodes ?? []).map((node, index) => ({...node, x: node.x || width / 2, y: node.y || 300 + index * 260}))}
             connectors={spec.connectors ?? []}
-            reveal={event.motion_intent === 'assemble' || event.motion_intent === 'connect' ? progress : 1}
+            /* Element entrance completes within the first ~12% of the scene (~0.6s):
+             * visuals are on screen while the narrator is already saying them. */
+            reveal={event.motion_intent === 'assemble' || event.motion_intent === 'connect' ? Math.min(1, progress / 0.12) : 1}
           />
         );
       }
@@ -269,7 +300,8 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
       return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
     }
     case 'character': {
-      const charSpec = event.character_spec ?? scene.character_spec;
+      const baseSpec = event.character_spec ?? scene.character_spec;
+      const charSpec = baseSpec && isCtaScene(scene) ? ctaMascotSpec(baseSpec, width, height) : baseSpec;
       if (charSpec) {
         return (
           <CharacterLayer
@@ -296,7 +328,7 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
       if (!asset) {
         throw new Error(`Diagram event ${event.event_id} references no asset.`);
       }
-      const spec = (asset.nativeSpec ?? {}) as {nodes?: {id: string; label: string; x: number; y: number}[]; connectors?: {from: string; to: string}[]};
+      const spec = (asset.nativeSpec ?? {}) as {nodes?: {id: string; label: string; x: number; y: number; details?: string[]; primary?: boolean; w?: number; h?: number}[]; connectors?: {from: string; to: string; label?: string}[]};
       return (
         <DiagramLayer
           theme={theme}
@@ -304,7 +336,7 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
           height={height}
           nodes={(spec.nodes ?? []).map((node, index) => ({...node, x: node.x || width / 2, y: node.y || 300 + index * 260}))}
           connectors={spec.connectors ?? []}
-          reveal={progress}
+          reveal={Math.min(1, progress / 0.4)}
         />
       );
     }
@@ -397,6 +429,23 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
   const sceneProgress = Math.min(1, Math.max(0, frame / sceneDurationFrames));
   const hasBackgroundAsset = ordered.some((p) => p.event.role === 'background' && Boolean(p.event.asset_id));
 
+  // §17 CTA choreography — one short deliberate sequence, then a stable branded ending:
+  // 0.00–0.125 composition appears | 0.12–0.32 mascot taps the control | 0.30–0.40 control responds | 0.40+ settles.
+  const ctaScene = isCtaScene(scene);
+  const ctaAppear = Math.min(1, sceneProgress / 0.08);
+  const ctaPress =
+    ctaScene && sceneProgress >= 0.3 && sceneProgress < 0.4
+      ? sceneProgress < 0.35
+        ? (sceneProgress - 0.3) / 0.05
+        : 1 - (sceneProgress - 0.35) / 0.05
+      : 0;
+  const ctaSubscribed = ctaScene && sceneProgress >= 0.4;
+  const ctaButtonScale = 1 - 0.08 * ctaPress;
+  // YouTube-red affordance pre-click (universal recognition), green resolved state.
+  const ctaButtonBg = ctaSubscribed ? '#16A34A' : ctaPress > 0 ? '#CC0000' : '#FF0000';
+  const ctaMascotSpecResolved =
+    scene.character_spec && ctaScene ? ctaMascotSpec(scene.character_spec, width, height) : scene.character_spec;
+
   return (
     <AbsoluteFill>
       {!hasBackgroundAsset && (
@@ -445,9 +494,9 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
         );
       })}
 
-      {scene.character_spec && !ordered.some((item) => item.event.role === 'character') && (
+      {ctaMascotSpecResolved && !ordered.some((item) => item.event.role === 'character') && (
         <CharacterLayer
-          spec={scene.character_spec}
+          spec={ctaMascotSpecResolved}
           progress={sceneProgress}
           width={width}
           height={height}
@@ -460,7 +509,9 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
           style={{
             width: '100%',
             height: '100%',
-            transform: `scale(${1 + sceneProgress * 0.05})`,
+            // No default page-level zoom: camera motion is decided per scene by
+            // camera_intent; element motion lives inside the layers themselves.
+            transform: 'none',
             transformOrigin: '50% 45%',
             pointerEvents: 'none',
           }}
@@ -478,7 +529,53 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
         </div>
       )}
 
-      {(scene.narrative_role?.toLowerCase() === 'cta' || scene.scene_id?.toLowerCase().includes('cta')) && (
+      {/* Channel brand lockup — logo mark + full channel name, set large above the
+          subscribe card so the ending reads as a proper branded CTA. */}
+      {ctaScene && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 470,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 22,
+            opacity: ctaAppear,
+            transform: `translateY(${(1 - ctaAppear) * 24}px)`,
+            zIndex: 100,
+            pointerEvents: 'none',
+          }}
+        >
+          <svg width={64} height={64} viewBox="0 0 46 46" aria-hidden>
+            <defs>
+              <linearGradient id="ctaWordmarkGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#3B82F6" />
+                <stop offset="100%" stopColor="#1D4ED8" />
+              </linearGradient>
+            </defs>
+            <rect x="1" y="1" width="44" height="44" rx="13" fill="url(#ctaWordmarkGrad)" />
+            <rect x="1" y="1" width="44" height="44" rx="13" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
+            <path d="M11 33 L18.5 13 L23 13 L30.5 33" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <path d="M14.6 26.5 H26.9" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+            <circle cx="35.5" cy="14.5" r="4" fill="#F59E0B" />
+          </svg>
+          <span
+            style={{
+              fontFamily: theme.fontFamily,
+              fontSize: 60,
+              fontWeight: 800,
+              letterSpacing: '0.13em',
+              color: '#0F172A',
+            }}
+          >
+            {ctaBranding.toUpperCase()}
+          </span>
+        </div>
+      )}
+
+      {ctaScene && (
         <div
           style={{
             position: 'absolute',
@@ -489,32 +586,37 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
             backgroundColor: 'rgba(15, 23, 42, 0.94)',
             borderRadius: 28,
             border: '2px solid rgba(59, 130, 246, 0.5)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 40px rgba(37, 99, 235, 0.3)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 16,
+            gap: 22,
             zIndex: 100,
-            transform: `translateY(${Math.max(0, 1 - sceneProgress * 2.5) * 50}px)`,
-            opacity: Math.min(1, sceneProgress * 3.0),
+            transform: `translateY(${(1 - ctaAppear) * 50}px)`,
+            opacity: ctaAppear,
           }}
         >
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
+              gap: 14,
             }}
           >
-            <div
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: '50%',
-                backgroundColor: '#3B82F6',
-                boxShadow: '0 0 12px #3B82F6',
-              }}
-            />
+            {/* Channel logo mark — rounded-square monogram with the brand's blue/amber accents. */}
+            <svg width={46} height={46} viewBox="0 0 46 46" aria-hidden>
+              <defs>
+                <linearGradient id="ctaLogoGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#3B82F6" />
+                  <stop offset="100%" stopColor="#1D4ED8" />
+                </linearGradient>
+              </defs>
+              <rect x="1" y="1" width="44" height="44" rx="13" fill="url(#ctaLogoGrad)" />
+              <rect x="1" y="1" width="44" height="44" rx="13" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
+              <path d="M11 33 L18.5 13 L23 13 L30.5 33" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <path d="M14.6 26.5 H26.9" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+              <circle cx="35.5" cy="14.5" r="4" fill="#F59E0B" />
+            </svg>
             <span
               style={{
                 fontFamily: theme.fontFamily,
@@ -529,23 +631,12 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
             </span>
           </div>
 
-          <div
-            style={{
-              fontFamily: theme.fontFamily,
-              fontSize: 20,
-              color: '#94A3B8',
-              letterSpacing: '0.04em',
-              textAlign: 'center',
-            }}
-          >
-            Daily Frontier AI Architecture Briefings
-          </div>
-
+          {/* One deliberate response to the mascot tap, then a stable branded ending. */}
           <div
             style={{
               marginTop: 6,
               padding: '12px 36px',
-              backgroundColor: '#2563EB',
+              backgroundColor: ctaButtonBg,
               borderRadius: 999,
               color: '#FFFFFF',
               fontFamily: theme.fontFamily,
@@ -556,10 +647,12 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
               alignItems: 'center',
               gap: 10,
               boxShadow: '0 8px 24px rgba(37, 99, 235, 0.45)',
+              transform: `scale(${ctaButtonScale})`,
+              transformOrigin: 'center center',
             }}
           >
-            <span>SUBSCRIBE</span>
-            <span style={{fontSize: 18}}>🔔</span>
+            <span>{ctaSubscribed ? 'SUBSCRIBED' : 'SUBSCRIBE'}</span>
+            <span style={{fontSize: 18}}>{ctaSubscribed ? '✓' : '▶'}</span>
           </div>
         </div>
       )}

@@ -139,8 +139,6 @@ def generate_vector_latent_space_bg(width: int = 1080, height: int = 1920, style
             px, py = cx + ox, cy + oy
             draw.ellipse([(px - 6, py - 6), (px + 6, py + 6)], fill=point_col)
             draw.line([(cx, cy), (px, py)], fill=grid_col, width=2)
-
-    draw.text((120, 160), "LATENT_DIMENSION // 1536-D HYPERPLANE", fill=dim_col)
     return img
 
 
@@ -184,9 +182,7 @@ def generate_cloud_topology_mesh_bg(width: int = 1080, height: int = 1920, style
         # Lateral endpoints
         draw.rounded_rectangle([(120, branch_y - 18), (240, branch_y + 18)], radius=8, fill=hub_fill, outline=bus_col, width=1)
         draw.rounded_rectangle([(width - 240, branch_y - 18), (width - 120, branch_y + 18)], radius=8, fill=hub_fill, outline=bus_col, width=1)
-        draw.text((130, branch_y - 8), "VPC_GATEWAY", fill=tag_col)
 
-    draw.text((120, 160), "TOPOLOGY_MAP // SERVERLESS CLOUD FABRIC", fill=tag_col)
     return img
 
 
@@ -200,16 +196,12 @@ def generate_neural_attention_lattice_bg(width: int = 1080, height: int = 1920, 
     draw = ImageDraw.Draw(img)
 
     mesh_col = (226, 232, 240) if is_light else (24, 32, 47)
-    gold_accent = (217, 119, 6) if is_light else (245, 158, 11)
-    tag_col = (100, 116, 139) if is_light else (71, 85, 105)
 
     # Diagonal cross-attention ray weave
     for i in range(0, width + 400, 120):
         draw.line([(i, 200), (i - 300, 1400)], fill=mesh_col, width=1)
         draw.line([(i - 300, 200), (i, 1400)], fill=mesh_col, width=1)
 
-    draw.line([(width // 2, 280), (width // 2, 1320)], fill=gold_accent, width=2)
-    draw.text((120, 160), "CROSS_ATTENTION // Q-K-V MATRIX WEAVE", fill=tag_col)
     return img
 
 
@@ -233,7 +225,6 @@ def generate_distributed_cluster_bg(width: int = 1080, height: int = 1920, style
         for ry in range(400, 1350, 140):
             draw.rectangle([(x - 30, ry), (x + 30, ry + 12)], outline=rack_col, fill=None)
 
-    draw.text((120, 160), "CLUSTER_TOPOLOGY // ZERO-DOWNTIME DISTRIBUTED SYSTEM", fill=telemetry_col)
     return img
 
 
@@ -317,10 +308,8 @@ def generate_blueprint_cad_bg(width: int = 1080, height: int = 1920, style: Styl
 
     for x in range(0, width, grid_size * 4):
         draw.line([(x, 0), (x, height)], fill=major_col, width=1)
-        draw.text((x + 6, 80), f"X:{x:04d}", fill=txt_col)
     for y in range(0, height, grid_size * 4):
         draw.line([(0, y), (width, y)], fill=major_col, width=1)
-        draw.text((12, y + 6), f"Y:{y:04d}", fill=txt_col)
 
     cross_targets = [(100, 160), (width - 100, 160), (100, height - 160), (width - 100, height - 160)]
     for tx, ty in cross_targets:
@@ -478,7 +467,6 @@ def generate_molecular_lattice_bg(width: int = 1080, height: int = 1920, style: 
                 draw.line([(cx, cy), (x, y)], fill=bond_col, width=1)
                 draw.ellipse([(x - 4, y - 4), (x + 4, y + 4)], fill=node_col)
 
-    draw.text((120, 160), "MOLECULAR_STRUCTURE // GENOMIC MESH", fill=node_col)
     return img
 
 
@@ -501,13 +489,11 @@ def generate_candlestick_matrix_bg(width: int = 1080, height: int = 1920, style:
     # Horizontal price levels
     for y in range(300, 1400, 100):
         draw.line([(80, y), (width - 80, y)], fill=grid_col, width=1)
-        draw.text((90, y - 18), f"{(1500 - y) * 2.4:.2f}", fill=(148, 163, 184))
 
     # Vertical time intervals
     for x in range(160, width - 80, 140):
         draw.line([(x, 300), (x, 1400)], fill=grid_col, width=1)
 
-    draw.text((120, 160), "FINANCIAL_MARKET // ORDER_BOOK_DEPTH", fill=amber_col)
     return img
 
 
@@ -529,7 +515,6 @@ def generate_isometric_grid_bg(width: int = 1080, height: int = 1920, style: Sty
         for y in range(200, height - 160, 80):
             draw.ellipse([(x - 2, y - 2), (x + 2, y + 2)], fill=dot_col)
 
-    draw.text((120, 160), "TECHNICAL_INDEX // SPECIFICATION_STAGE", fill=dot_col)
     return img
 
 
@@ -576,6 +561,24 @@ DOMAIN_GENERATOR_MAP: dict[TopicDomain, list[tuple[str, Any]]] = {
 }
 
 
+def _archetype_index(
+    generators: list[tuple[str, Any]],
+    scene_index: int,
+    subject: str = "",
+    visual_purpose: str = "",
+) -> int:
+    """Pick an environment archetype from scene MEANING, not from position (§3).
+
+    Two scenes about the same subject keep the same environment (continuity);
+    different subjects may differ. `scene_index` is only a fallback when no scene
+    content is available at all — the environment never rotates for "variety".
+    """
+    content = f"{subject} {visual_purpose}".strip().lower()
+    if content.strip():
+        return sum(ord(ch) for ch in content) % len(generators)
+    return min(max(scene_index, 0), len(generators) - 1)
+
+
 def resolve_environment_decision(
     scene_index: int,
     topic: str = "",
@@ -587,18 +590,18 @@ def resolve_environment_decision(
     domain = classify_topic_domain(topic=topic, subject=subject, visual_purpose=visual_purpose)
     generators = DOMAIN_GENERATOR_MAP.get(domain, DOMAIN_GENERATOR_MAP[TopicDomain.GENERAL_TECH])
 
-    key_idx = min(scene_index, len(generators) - 1)
+    key_idx = _archetype_index(generators, scene_index, subject=subject, visual_purpose=visual_purpose)
     arch_name, _ = generators[key_idx]
 
     rationale = (
         f"Domain '{domain.value}' chosen for topic '{topic}'. "
-        f"Scene {scene_index + 1} ({narrative_role or 'content'}) assigned '{arch_name}' "
+        f"Scene content ({narrative_role or 'content'}{f': {subject}' if subject else ''}) assigned '{arch_name}' "
         f"to prevent mechanical robotics templates from leaking into software topics."
     )
     structural_features = [
         f"Domain: {domain.value}",
         f"Archetype: {arch_name}",
-        f"SceneIndex: {scene_index}",
+        f"Derived from: {'scene content' if (subject or visual_purpose) else f'scene index {scene_index}'}",
     ]
 
     return EnvironmentDecision(
@@ -636,8 +639,8 @@ def generate_environment_for_scene(
 
     domain = TopicDomain(decision.domain)
     generators = DOMAIN_GENERATOR_MAP.get(domain, DOMAIN_GENERATOR_MAP[TopicDomain.GENERAL_TECH])
-    key_idx = min(scene_index, len(generators) - 1)
-    _, generator_fn = generators[key_idx]
+    # Single source of truth: render exactly the archetype the decision recorded.
+    generator_fn = {name: fn for name, fn in generators}.get(decision.archetype, generators[0][1])
 
     img = generator_fn(width, height, style)
     # Store decision in image info for QA auditing

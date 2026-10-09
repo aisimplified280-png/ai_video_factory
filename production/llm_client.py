@@ -1,9 +1,10 @@
 """Unified LLM Client for Autonomous Video Factory (Phase 11, 12, 15).
 
 Provides resilient JSON structured generation with multi-provider failover:
-1. Google Gemini (gemini-2.5-flash, gemini-flash-latest)
-2. OpenRouter (nvidia/nemotron-3.5-lightning:free, meta-llama/llama-3.3-70b-instruct:free)
-3. OpenAI (gpt-4o-mini)
+1. Local Ollama (first — free, offline, no quota)
+2. Google Gemini (gemini-2.5-flash, gemini-flash-latest)
+3. OpenRouter (nvidia/nemotron-3.5-lightning:free, meta-llama/llama-3.3-70b-instruct:free)
+4. OpenAI (gpt-4o-mini)
 
 Returns parsed Python dict if any provider succeeds, or None if all fail.
 """
@@ -13,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+from pathlib import Path
 from typing import Any, Optional
 
 try:
@@ -24,6 +26,53 @@ except Exception:
 import requests
 
 _LLM_CACHE: dict[str, dict] = {}
+# Persistent memoization: identical prompts (same topic, rules, research context) reuse the
+# same synthesis result across processes, so end-to-end runs are reproducible and repeat
+# calls never re-pay for the same generation. Delete this file to force fresh synthesis.
+_LLM_CACHE_PATH = Path(__file__).resolve().with_name(".llm_cache.json")
+_LLM_CACHE_LOADED = False
+
+
+def _llm_cache_load() -> None:
+    global _LLM_CACHE_LOADED
+    if _LLM_CACHE_LOADED:
+        return
+    _LLM_CACHE_LOADED = True
+    try:
+        if _LLM_CACHE_PATH.is_file():
+            data = json.loads(_LLM_CACHE_PATH.read_text("utf-8"))
+            if isinstance(data, dict):
+                _LLM_CACHE.update({k: v for k, v in data.items() if isinstance(v, dict)})
+    except Exception:
+        pass
+
+
+def _llm_cache_store(key: str, value: dict) -> None:
+    _LLM_CACHE[key] = value
+    try:
+        _LLM_CACHE_PATH.write_text(json.dumps(_LLM_CACHE, ensure_ascii=False), "utf-8")
+    except Exception:
+        pass
+
+
+def bust_llm_cache(prompt: str) -> None:
+    """Drop one prompt's cached response (memory + disk).
+
+    Used when a cached sample fails the pipeline's quality gates: the next
+    call for the same prompt must fetch a fresh generation instead of
+    re-serving the rejected sample.
+    """
+    _llm_cache_load()
+    cache_key = hashlib.md5(prompt.encode("utf-8")).hexdigest()
+    _LLM_CACHE.pop(cache_key, None)
+    try:
+        if _LLM_CACHE_PATH.is_file():
+            data = json.loads(_LLM_CACHE_PATH.read_text("utf-8"))
+            if isinstance(data, dict) and cache_key in data:
+                data.pop(cache_key, None)
+                _LLM_CACHE_PATH.write_text(json.dumps(data, ensure_ascii=False), "utf-8")
+    except Exception:
+        pass
 
 
 def _strip_markdown_json(text: str) -> str:
@@ -57,10 +106,11 @@ def _call_gemini_json(prompt: str) -> Optional[dict]:
                     "temperature": 0.4,
                 },
             }
-            resp = requests.post(url, json=payload, timeout=6)
+            resp = requests.post(url, json=payload, timeout=15)
             if resp.status_code == 429:
-                # Quota exceeded; fail fast to next provider
-                break
+                # Free-tier quota is per MODEL (see quotaDimensions in the error) — try the
+                # next model in this provider before falling through to the next provider.
+                continue
             if resp.status_code != 200:
                 continue
             data = resp.json()
@@ -160,28 +210,92 @@ def _call_openai_json(prompt: str) -> Optional[dict]:
     return None
 
 
+def _call_ollama_json(prompt: str) -> Optional[dict]:
+    """Local Ollama model — free, unlimited, no quota, works offline.
+
+    Tried first so narration synthesis always has a working path even when every
+    cloud provider is rate-limited or out of credits (§25 end-to-end validation
+    must not silently degrade to the generic fallback template).
+    """
+    model = _ollama_model()
+    if not model:
+        return None
+
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "format": "json",
+        "stream": False,
+        # Moderate temperature: low values make small models echo the schema example
+        # instead of writing content; 0.4 follows the editorial rules with real prose.
+        "options": {"temperature": 0.4},
+    }
+    try:
+        resp = requests.post("http://localhost:11434/api/chat", json=payload, timeout=120)
+        if resp.status_code == 200:
+            raw_text = resp.json().get("message", {}).get("content", "")
+            if raw_text:
+                cleaned = _strip_markdown_json(raw_text)
+                parsed = json.loads(cleaned)
+                if isinstance(parsed, dict):
+                    return parsed
+    except Exception:
+        pass
+    return None
+
+
+_OLLAMA_MODEL: Optional[str] = None
+
+
+def _ollama_model() -> Optional[str]:
+    """Resolve the local model once: OLLAMA_MODEL env, else whatever ollama has pulled."""
+    global _OLLAMA_MODEL
+    if os.getenv("AI_FACTORY_DISABLE_LOCAL_LLM", "").strip().lower() in ("1", "true", "yes"):
+        return None
+    if _OLLAMA_MODEL is not None:
+        return _OLLAMA_MODEL or None
+    env_model = os.getenv("OLLAMA_MODEL", "").strip()
+    if env_model:
+        _OLLAMA_MODEL = env_model
+        return env_model
+    try:
+        resp = requests.get("http://localhost:11434/api/tags", timeout=3)
+        models = resp.json().get("models", [])
+        _OLLAMA_MODEL = str(models[0].get("name", "")) if models else ""
+    except Exception:
+        _OLLAMA_MODEL = ""
+    return _OLLAMA_MODEL or None
+
+
 def call_llm_json(prompt: str) -> Optional[dict]:
     """Execute LLM call across active providers with in-memory caching and fail-fast timeouts."""
+    _llm_cache_load()
     cache_key = hashlib.md5(prompt.encode("utf-8")).hexdigest()
     if cache_key in _LLM_CACHE:
         return _LLM_CACHE[cache_key]
 
-    # 1. Try Gemini
+    # 1. Try local Ollama (no quota, no network dependency)
+    res = _call_ollama_json(prompt)
+    if res and isinstance(res, dict):
+        _llm_cache_store(cache_key, res)
+        return res
+
+    # 2. Try Gemini
     res = _call_gemini_json(prompt)
     if res and isinstance(res, dict):
-        _LLM_CACHE[cache_key] = res
+        _llm_cache_store(cache_key, res)
         return res
 
-    # 2. Try OpenRouter (reliable free frontier models)
+    # 3. Try OpenRouter (reliable free frontier models)
     res = _call_openrouter_json(prompt)
     if res and isinstance(res, dict):
-        _LLM_CACHE[cache_key] = res
+        _llm_cache_store(cache_key, res)
         return res
 
-    # 3. Try OpenAI
+    # 4. Try OpenAI
     res = _call_openai_json(prompt)
     if res and isinstance(res, dict):
-        _LLM_CACHE[cache_key] = res
+        _llm_cache_store(cache_key, res)
         return res
 
     return None

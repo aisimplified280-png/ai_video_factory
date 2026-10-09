@@ -104,19 +104,21 @@ def direct_scene_character(
             pos_x, pos_y = 780.0, 1040.0
 
     # 2. Derive Character Role, Pose, and Tool strictly from Scene Meaning
+    # CTA -> the mascot performs exactly one deliberate action: notice the subscribe
+    # control, tap it once, then hold a stable welcoming pose.
     if is_cta:
         return CharacterSpec(
             role=MascotRole.GUIDE,
-            pose="welcoming_salute",
-            action="gesturing towards subscriber briefing badge",
-            target="AI Simplified Lab emblem",
+            pose="point_tap_subscribe",
+            action="tapping the subscribe control",
+            target="subscribe control",
             scale=1.05,
             depth_plane="midground",
             position={"x": 540.0, "y": 1050.0},
-            target_anchor={"x": 540.0, "y": 710.0},
+            target_anchor={"x": 540.0, "y": 1640.0},  # subscribe control centre (see SceneComposition CTA card)
             motion=MascotMotion.STATIC,
             emotion="confident_inviting",
-            tool_held="briefing_tablet",
+            tool_held=None,
         )
 
     # Hook / Topic Introduction -> Explorer

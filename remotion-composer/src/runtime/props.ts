@@ -84,6 +84,8 @@ export interface CharacterSpec {
   motion: string;
   emotion: string;
   tool_held?: string | null;
+  /** Optional render order override (e.g. the mascot must sit above the CTA card to tap it). */
+  z_index?: number | null;
 }
 
 export interface EditEventProps {

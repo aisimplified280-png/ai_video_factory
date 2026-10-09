@@ -17,6 +17,109 @@ from .models import (
 )
 
 
+# Settings the narrator explicitly names. If the spoken line places the scene
+# somewhere ("the robotics plant", "a warehouse", "the control room"), the scene
+# happens there. Nothing here is invented: only narration-mentioned places qualify,
+# and with no place named we fall back to a neutral topic context.
+_ENVIRONMENT_CUES = [
+    "control room", "control center", "command center", "operations center",
+    "robotics plant", "robotics lab", "robotics facility", "cleanroom", "clean room",
+    "data center", "datacenter", "server room", "loading dock", "assembly line",
+    "power plant", "warehouse", "factory", "foundry", "workshop", "laboratory",
+    "facility", "plant", "office", "studio", "kitchen", "garden", "classroom",
+    "hospital", "showroom", "store", "lab",
+]
+
+
+def _environment_from_narration(text: str, topic: str) -> str:
+    """Return the narrated setting (earliest mentioned place) or a neutral fallback."""
+    text_lower = (text or "").lower()
+    found: list[tuple[int, int, str]] = []
+    for cue in _ENVIRONMENT_CUES:
+        m = re.search(rf"\b{re.escape(cue)}\b", text_lower)
+        if m:
+            found.append((m.start(), -len(cue), cue))
+    if found:
+        return min(found)[2]
+    return f"{topic} explanatory context"
+
+
+def _narration_grounded_claim(
+    *,
+    sec_id: str,
+    scene_id: str,
+    text: str,
+    topic: str,
+    claim_type: ClaimType = ClaimType.ABSTRACT_CONCEPT,
+    research_text: str = "",
+    research_entities: Optional[list[str]] = None,
+) -> ClaimVisualPlan:
+    """Build a claim plan strictly from what the narrator actually says (§26).
+
+    No canned numbers, no invented SLAs or percentages, no generic technical
+    adjectives: if the narration does not state it, the plan never requires it
+    visually. Every field is traceable back to the spoken words. Verified phase-10
+    research may extend the plan (real sourced facts, never templates): a setting
+    named in the research is used only when the narration names none, and research
+    entities are appended after the narrated ones.
+    """
+    glue = {
+        "the", "and", "for", "with", "that", "this", "from", "into", "are", "was", "were",
+        "have", "has", "its", "can", "will", "would", "they", "them", "their", "when",
+        "while", "which", "what", "how", "why", "who", "not", "but", "than", "then",
+        "also", "just", "very", "more", "most", "some", "any", "all", "one", "two",
+        "you", "your", "it", "about", "over", "under", "between", "through",
+    }
+    words = [w for w in re.findall(r"[A-Za-z][A-Za-z'-]{2,}", text or "") if w.lower() not in glue]
+    subject_phrase = " ".join(words[:4]).strip()
+    entities: list[str] = []
+    if topic and topic.strip():
+        entities.append(topic.strip())
+    if subject_phrase:
+        phrase = subject_phrase[:60]
+        if phrase.lower() not in {e.lower() for e in entities}:
+            entities.append(phrase)
+    if not entities:
+        entities = ["the narrated subject"]
+    # Verified research entities extend (never replace) the narrated ones.
+    for ent in research_entities or []:
+        if len(entities) >= 4:
+            break
+        if ent and ent.strip() and ent.strip().lower() not in {e.lower() for e in entities}:
+            entities.append(ent.strip())
+
+    # Evidence phrases are clauses of the narration itself, never invented claims.
+    clauses = [c.strip() for c in re.split(r"[,;.]\s*|\s+and\s+|\s+while\s+", text or "") if len(c.strip()) > 6]
+    evidence = clauses[:3] or ([text[:60]] if text else [])
+    summary = (text or "").strip()[:200] or f"Explanation of {topic}"
+
+    # Setting: the narration's own place wins; a place named in verified research
+    # is the fallback; only then the neutral topic context.
+    setting_source = f"{(text or '').strip()} {(research_text or '').strip()}".strip()
+
+    return ClaimVisualPlan(
+        claim_id=f"claim_{scene_id}",
+        section_id=sec_id,
+        scene_id=scene_id,
+        narration_text=text,
+        claim_type=claim_type,
+        entities=entities,
+        action=summary,
+        object=subject_phrase or topic,
+        environment=_environment_from_narration(setting_source, topic),
+        relationship=summary,
+        required_visual_evidence=evidence,
+        preferred_visualization=f"Explanatory visual that depicts this spoken claim: {summary}",
+        acceptable_alternatives=[f"A single clear depiction of {subject_phrase or topic}"],
+        unacceptable_visuals=[
+            "metrics or percentages absent from the narration",
+            "cartoon",
+            "generic meme imagery",
+        ],
+        grounding_level=GroundingLevel.LEVEL_3.value,
+    )
+
+
 def extract_claim_visual_plan(
     section: dict[str, Any],
     scene_idx: int,
@@ -82,315 +185,38 @@ def extract_claim_visual_plan(
             grounding_level=GroundingLevel.LEVEL_4.value,
         )
 
-    # 2. NLP / AI Terminology Branch (Tokens, Embeddings, Attention)
-    is_nlp_topic = any(k in topic_lower or k in text_lower for k in [
-        "token", "tokens", "embedding", "embeddings", "attention", "transformer", "vocabulary", "subword"
-    ])
-    if is_nlp_topic:
-        if scene_idx == 0 or role == "hook" or any(k in text_lower for k in ["how ai", "understands", "language", "human words"]):
-            return ClaimVisualPlan(
-                claim_id=f"claim_{scene_id}",
-                section_id=sec_id,
-                scene_id=scene_id,
-                narration_text=text,
-                claim_type=ClaimType.CAPABILITY,
-                entities=["natural language prompt input", "raw text stream", "interactive command prompt"],
-                action="raw user prompt typing into terminal input box, keywords illuminating with glowing accents and splitting into word chips",
-                object="interactive prompt box and raw text stream",
-                environment="deep tech minimalist command console with subtle ambient slate glow",
-                relationship="AI decodes human language by breaking sentences into discrete computational inputs",
-                required_visual_evidence=[
-                    "animated typing prompt box",
-                    "text tokenization",
-                    "word highlights",
-                    "absence of warehouse robotics",
-                ],
-                preferred_visualization="Animated typing prompt box where raw English text flows in, instantly highlighting words and breaking them apart with an energetic glow",
-                acceptable_alternatives=[
-                    "Terminal prompt receiving human sentence with real-time character cursor and glowing keyword tokens",
-                    "Splitting text stream with glowing bounding brackets around individual words",
-                ],
-                unacceptable_visuals=[
-                    "warehouse robots",
-                    "conveyor belt",
-                    "robotic gripper clamp",
-                    "forklift",
-                    "unrelated factory floor",
-                ],
-                grounding_level=GroundingLevel.LEVEL_4.value,
-            )
-        elif any(k in text_lower for k in ["token", "shatter", "fragment", "numerical", "bpe", "vocab", "id"]):
-            return ClaimVisualPlan(
-                claim_id=f"claim_{scene_id}",
-                section_id=sec_id,
-                scene_id=scene_id,
-                narration_text=text,
-                claim_type=ClaimType.MECHANISM,
-                entities=["text tokens", "numeric token IDs", "numerical coordinate matrix"],
-                action="words exploding into numeric token ID chips ([2044], [9301], [124]) cascading into a 3D matrix coordinate space",
-                object="numeric token chips and high-dimensional matrix",
-                environment="cyber navy high-density data coordinate space",
-                relationship="raw vocabulary maps into mathematical IDs that computers calculate",
-                required_visual_evidence=[
-                    "exploding token chips",
-                    "numeric token IDs",
-                    "numerical coordinate matrix",
-                    "absence of robotic arms",
-                ],
-                preferred_visualization="Words exploding into numeric ID chips ([2044], #99301, [124]) cascading into a 3D matrix coordinate space",
-                acceptable_alternatives=[
-                    "Cascading stream of colored token chips with discrete ID numbers entering tensor memory",
-                    "Subword split breakdown showing byte-pair encoding IDs",
-                ],
-                unacceptable_visuals=[
-                    "robotic arms",
-                    "conveyor belts",
-                    "warehouse agv",
-                    "factory floor",
-                ],
-                grounding_level=GroundingLevel.LEVEL_4.value,
-            )
-        elif any(k in text_lower for k in ["attention", "self-attention", "weight", "weights", "multi-head", "query", "key"]):
-            return ClaimVisualPlan(
-                claim_id=f"claim_{scene_id}",
-                section_id=sec_id,
-                scene_id=scene_id,
-                narration_text=text,
-                claim_type=ClaimType.MECHANISM,
-                entities=["multi-head self-attention", "token nodes", "dynamic attention weight connections"],
-                action="token nodes connecting via dynamic glowing weight lines that thicken and brighten based on calculated attention strength",
-                object="interactive neural graph network and attention weight matrix",
-                environment="dark indigo neural graph space with electric violet and amber lines",
-                relationship="attention mechanism computes simultaneous contextual dependencies across all tokens",
-                required_visual_evidence=[
-                    "interactive neural graph",
-                    "token nodes",
-                    "dynamic glowing attention lines",
-                    "scaling weight thickness",
-                    "absence of warehouse obstacle maps",
-                ],
-                preferred_visualization="Interactive neural graph network where token nodes connect to each other via dynamic glowing lines that thicken based on attention strength",
-                acceptable_alternatives=[
-                    "Attention heatmap matrix grid lighting up cross-token dependency scores",
-                    "Query-Key-Value vector projection with dynamic line intensity",
-                ],
-                unacceptable_visuals=[
-                    "warehouse agv top-down map",
-                    "obstacle rover",
-                    "conveyor table",
-                    "factory floor",
-                ],
-                grounding_level=GroundingLevel.LEVEL_4.value,
-            )
-        elif any(k in text_lower for k in ["vector", "embedding", "mastering", "latent", "space", "model", "mechanics"]):
-            return ClaimVisualPlan(
-                claim_id=f"claim_{scene_id}",
-                section_id=sec_id,
-                scene_id=scene_id,
-                narration_text=text,
-                claim_type=ClaimType.CAPABILITY,
-                entities=["high-dimensional vector space", "3D vector point cloud", "cosine similarity vectors"],
-                action="rotating 3D vector point cloud showing cluster points floating in space with distance vectors connecting semantic neighbors",
-                object="3D coordinate space and semantic word vectors",
-                environment="pitch black coordinate space with cyan and gold point cloud",
-                relationship="tokens with similar semantic meaning cluster together in high-dimensional vector space",
-                required_visual_evidence=[
-                    "3D vector point cloud",
-                    "semantic cluster points",
-                    "distance vectors",
-                    "cosine angle metrics",
-                    "absence of logistics fleet",
-                ],
-                preferred_visualization="Rotating 3D vector point cloud showing cluster points floating in space with distance vectors connecting semantic neighbors",
-                acceptable_alternatives=[
-                    "3D coordinate axes with directional vector arrows and cosine similarity arc",
-                    "Semantic clustering manifold rotating in dark obsidian space",
-                ],
-                unacceptable_visuals=[
-                    "warehouse agvs",
-                    "forklifts",
-                    "conveyor lines",
-                    "static tree diagram",
-                ],
-                grounding_level=GroundingLevel.LEVEL_4.value,
-            )
+    # 2. Physical-domain templates (robotics / logistics) are reserved for topics that
+    # are actually about physical machines. Software and AI topics never inherit them:
+    # their claims fall through to _narration_grounded_claim (what the narrator says).
+    # The old NLP-terminology and enterprise/FDE template branches were removed: they
+    # invented entities ("SQL DWH", "prompt input") the narrator never said.
+    is_physical_domain = any(
+        k in topic_lower
+        for k in (
+            "robot", "astra", "agv", "rover", "gripper", "humanoid", "warehouse",
+            "logistics", "fleet", "conveyor", "fulfillment", "actuator",
+            "industrial", "pallet", "forklift",
+        )
+    )
 
-    # 3. Enterprise Architecture, FDE, AI Agents & Cloud Pipeline Branch
-    is_fde_or_enterprise = any(k in topic_lower or k in text_lower for k in [
-        "fde", "forward deployed", "enterprise", "architecture", "pipeline", "agentic",
-        "orchestrat", "workflows", "integration", "software", "production delivery", "cloud",
-        "solutions", "infrastructure", "developer", "data lake", "erp", "rag"
-    ])
-    if is_fde_or_enterprise:
-        if scene_idx == 0 or role == "hook":
-            return ClaimVisualPlan(
-                claim_id=f"claim_{scene_id}",
-                section_id=sec_id,
-                scene_id=scene_id,
-                narration_text=text,
-                claim_type=ClaimType.CAPABILITY,
-                entities=["Enterprise Architecture Gateway", "Frontier Model Core", "Mission-Critical Telemetry Bus"],
-                action="forward deployed engineer connects legacy enterprise data lakes and ERP workflows to frontier model reasoning cores",
-                object="enterprise architecture bridge and secure real-time data bus",
-                environment="modern enterprise technology operations center with high-contrast architectural systems grid",
-                relationship="forward deployed engineer establishes live production bridge between frontier AI and enterprise software",
-                required_visual_evidence=[
-                    "enterprise architecture gateway",
-                    "frontier model core",
-                    "production telemetry bus",
-                    "absence of warehouse robotics",
-                ],
-                preferred_visualization="Enterprise architecture gateway bridging client ERP systems directly into frontier reasoning core with active data bus telemetry",
-                acceptable_alternatives=[
-                    "Clean high-contrast architectural topology showing production gateway and secure data conduits",
-                    "Interactive enterprise system diagram with bidirectional model integration",
-                ],
-                unacceptable_visuals=[
-                    "warehouse robots",
-                    "conveyor belt",
-                    "robotic gripper clamp",
-                    "forklift",
-                    "pneumatic actuator",
-                ],
-                grounding_level=GroundingLevel.LEVEL_4.value,
-            )
-        elif scene_idx == 1 or any(k in text_lower for k in ["data", "ingest", "pipeline", "stream", "lake", "warehouse", "etl", "rag"]):
-            return ClaimVisualPlan(
-                claim_id=f"claim_{scene_id}",
-                section_id=sec_id,
-                scene_id=scene_id,
-                narration_text=text,
-                claim_type=ClaimType.MECHANISM,
-                entities=["High-Throughput Production Data Pipeline", "Enterprise SQL DWH", "Context Injection Bus"],
-                action="ingesting raw enterprise data streams and unstructured repositories into real-time context buffer",
-                object="multi-stage production pipeline channels and context buffer",
-                environment="cloud data infrastructure and high-throughput ingestion corridors",
-                relationship="data engineering pipeline supplies validated real-time context to frontier models",
-                required_visual_evidence=[
-                    "data pipeline channels",
-                    "context streaming buffer",
-                    "throughput telemetry",
-                    "absence of robotic arms",
-                ],
-                preferred_visualization="Multi-stage production data pipeline streaming unstructured documents and SQL records into real-time context buffer",
-                acceptable_alternatives=[
-                    "Three-stage ingestion channel with data validation badges and high-speed telemetry",
-                    "Real-time context injection bus routing enterprise data streams",
-                ],
-                unacceptable_visuals=[
-                    "robotic arms",
-                    "conveyor belts",
-                    "pneumatic clamps",
-                    "warehouse rovers",
-                ],
-                grounding_level=GroundingLevel.LEVEL_4.value,
-            )
-        elif scene_idx == 2 or any(k in text_lower for k in ["agent", "orchestrat", "tool", "debug", "error", "reasoning", "coordinate"]):
-            return ClaimVisualPlan(
-                claim_id=f"claim_{scene_id}",
-                section_id=sec_id,
-                scene_id=scene_id,
-                narration_text=text,
-                claim_type=ClaimType.DEMONSTRATION,
-                entities=["Multi-Agent Orchestration Mesh", "Enterprise Tool Runner", "API Gateway & Reasoning Core"],
-                action="autonomous reasoning agents coordinating multi-step decisions, invoking enterprise tools, and resolving exceptions on the fly",
-                object="agent orchestration mesh nodes, tool runner interfaces, and verification loops",
-                environment="distributed cloud architecture coordination console",
-                relationship="agentic systems execute complex enterprise workflows with autonomous self-healing and tool integration",
-                required_visual_evidence=[
-                    "agent orchestration mesh",
-                    "enterprise tool runner",
-                    "real-time verification loop",
-                    "absence of warehouse obstacles",
-                ],
-                preferred_visualization="Multi-agent orchestration mesh connecting API gateway to autonomous reasoning agent, RAG vector store, and enterprise tool runner",
-                acceptable_alternatives=[
-                    "Interactive agent topology executing automated tool calls and self-correction loop",
-                    "Distributed systems coordination map with live task status nodes",
-                ],
-                unacceptable_visuals=[
-                    "warehouse obstacles",
-                    "conveyor belts",
-                    "robotic claws",
-                    "rover collision",
-                ],
-                grounding_level=GroundingLevel.LEVEL_4.value,
-            )
-        else:
-            return ClaimVisualPlan(
-                claim_id=f"claim_{scene_id}",
-                section_id=sec_id,
-                scene_id=scene_id,
-                narration_text=text,
-                claim_type=ClaimType.BUSINESS_IMPACT,
-                entities=["Enterprise Cloud Performance Dashboard", "Deployment Velocity Telemetry", "99.99% SLA Uptime Grid"],
-                action="enterprise delivery velocity scaling by 340% with 99.99% uptime SLA across global cloud clusters",
-                object="real-time performance analytics and cloud telemetry grid",
-                environment="global enterprise operations command center / cloud telemetry hub",
-                relationship="production deployment accelerates enterprise time-to-market from months to weeks",
-                required_visual_evidence=[
-                    "velocity metrics (+340%)",
-                    "99.99% uptime SLA",
-                    "enterprise impact dashboard",
-                    "absence of warehouse rovers",
-                ],
-                preferred_visualization="Enterprise business impact dashboard showing deployment cycle compression from 6 months to 2 weeks and 99.99% SLA uptime",
-                acceptable_alternatives=[
-                    "Cloud performance metrics panel with latency counter and 340% velocity uplift",
-                    "Enterprise ROI comparison chart with production reliability gauges",
-                ],
-                unacceptable_visuals=[
-                    "warehouse rovers",
-                    "forklifts",
-                    "conveyor line",
-                    "pallet storage",
-                ],
-                grounding_level=GroundingLevel.LEVEL_4.value,
-            )
-
-    # 4. Hook / Immediate Dramatic Capability (Robotics & Physical Automation)
+    # 3. Hook scenes are narration-grounded in EVERY domain. The opening line is the
+    # most topic-specific sentence of the video — a fixed template would invent a
+    # subject the narrator never said (e.g. a "precision gripper" hook for an
+    # obstacle-avoidance video). The narration carries the claim; the mode/shot
+    # layer below still gives physical hooks their machine-flavored treatment.
     if scene_idx == 0 or role == "hook":
-        # Extract subject from topic
-        subject_ent = "warehouse robots"
-        if "astra" in topic_lower or "gpt-6" in topic_lower:
-            subject_ent = "GPT-6 Astra controlled robotic mechanism"
-        elif "robot" in topic_lower:
-            subject_ent = "autonomous industrial robot"
-
-        return ClaimVisualPlan(
-            claim_id=f"claim_{scene_id}",
-            section_id=sec_id,
+        return _narration_grounded_claim(
+            sec_id=sec_id,
             scene_id=scene_id,
-            narration_text=text,
-            claim_type=ClaimType.CAPABILITY,
-            entities=[subject_ent, "industrial hardware", "precision gripper"],
-            action="rapid high-speed pneumatic clamp executing sub-millimeter precision manipulation with zero play",
-            object="physical industrial component",
-            environment="industrial robotics testing rig / modern automated logistics facility",
-            relationship="AI intelligence directly drives physical mechanical speed and precision",
-            required_visual_evidence=[
-                "robotic mechanism",
-                "physical robot action",
-                "precision mechanical execution",
-                "absence of cartoon stylization",
-            ],
-            preferred_visualization="Extreme macro probe close-up of industrial robotic gripper clamping onto component with razor-sharp specular highlights and high speed",
-            acceptable_alternatives=[
-                "Close-up of multi-axis robotic joints pivoting rapidly with zero tolerance",
-                "Dynamic tracking of robotic end-effector engaging a workpiece",
-            ],
-            unacceptable_visuals=[
-                "cartoon stylization",
-                "generic server racks",
-                "static robot sitting idle",
-                "abstract neural brain with no machine",
-                "unrelated futuristic city",
-            ],
-            grounding_level=GroundingLevel.LEVEL_3.value,
+            text=text,
+            topic=topic,
+            claim_type=ClaimType.CAPABILITY if is_physical_domain else ClaimType.ABSTRACT_CONCEPT,
+            research_text=research_context,
+            research_entities=research_entities,
         )
 
-    # 3. Direct AI Control of Physical Machine (Capability / Direct Command)
-    if any(k in text_lower for k in ["directly control", "control physical", "neural network", "sensor feedback", "motor", "actuator"]):
+    # 4. Direct AI Control of Physical Machine (Capability / Direct Command)
+    if is_physical_domain and any(k in text_lower for k in ["directly control", "control physical", "neural network", "sensor feedback", "motor", "actuator"]):
         ai_entity = "GPT-6 Astra" if "astra" in topic_lower or "gpt" in topic_lower else "Advanced neural network"
         return ClaimVisualPlan(
             claim_id=f"claim_{scene_id}",
@@ -399,7 +225,7 @@ def extract_claim_visual_plan(
             narration_text=text,
             claim_type=ClaimType.CAPABILITY,
             entities=[ai_entity, "industrial robotic arm", "sensor feedback loop"],
-            action="AI control system sends direct low-latency motor commands causing physical robotic arm to articulate precisely",
+            action="AI control system sends motor commands that cause the physical robotic arm to articulate precisely",
             object="multi-axis robotic actuators and physical end-effector",
             environment="industrial robotics automated workcell with real-time telemetry HUD",
             relationship="AI control source directly drives physical machine actuators with closed-loop sensor feedback",
@@ -411,7 +237,7 @@ def extract_claim_visual_plan(
             ],
             preferred_visualization="Multi-axis industrial robotic arm executing precision manipulation while visible optical telemetry conduits and control HUD show real-time command feedback",
             acceptable_alternatives=[
-                "Split visual showing AI command latency HUD and robotic actuator articulation",
+                "Split visual showing the AI commands on one side and the resulting robotic actuator articulation",
                 "Close-up of robot joint motors pivoting with live optical sensor feedback lines",
             ],
             unacceptable_visuals=[
@@ -427,8 +253,8 @@ def extract_claim_visual_plan(
             grounding_level=GroundingLevel.LEVEL_4.value,
         )
 
-    # 4. Dynamic Adaptation / Obstacle Avoidance (Adaptation / Mechanism)
-    if any(k in text_lower for k in ["adapt", "obstacle", "rigid", "pre-programmed", "dynamically", "routines", "shift"]):
+    # 5. Dynamic Adaptation / Obstacle Avoidance (Adaptation / Mechanism)
+    if is_physical_domain and any(k in text_lower for k in ["adapt", "obstacle", "rigid", "pre-programmed", "dynamically", "routines", "shift"]):
         return ClaimVisualPlan(
             claim_id=f"claim_{scene_id}",
             section_id=sec_id,
@@ -462,8 +288,8 @@ def extract_claim_visual_plan(
             grounding_level=GroundingLevel.LEVEL_4.value,
         )
 
-    # 5. Business Impact / Throughput / Fewer Delays
-    if any(k in text_lower for k in ["inventory", "faster", "delay", "delays", "fewer delays", "throughput", "human intervention", "facilities"]):
+    # 6. Business Impact / Throughput / Fewer Delays
+    if is_physical_domain and any(k in text_lower for k in ["inventory", "faster", "delay", "delays", "fewer delays", "throughput", "human intervention", "facilities"]):
         return ClaimVisualPlan(
             claim_id=f"claim_{scene_id}",
             section_id=sec_id,
@@ -496,27 +322,15 @@ def extract_claim_visual_plan(
             grounding_level=GroundingLevel.LEVEL_3.value,
         )
 
-    # General Fallback Claim
-    return ClaimVisualPlan(
-        claim_id=f"claim_{scene_id}",
-        section_id=sec_id,
+    # General Fallback Claim — grounded in the narration itself (§26)
+    return _narration_grounded_claim(
+        sec_id=sec_id,
         scene_id=scene_id,
-        narration_text=text,
-        claim_type=ClaimType.TECHNICAL_CHANGE,
-        entities=[topic, "technological system"],
-        action="technical system operating with high precision",
-        object="hardware and software elements",
-        environment="technology testing lab or deployment facility",
-        relationship="system performs automated operations",
-        required_visual_evidence=[
-            "relevant technology subject",
-            "active mechanical or digital operation",
-            "clear domain context",
-        ],
-        preferred_visualization=f"High-contrast technical visualization depicting {topic} in an authentic operational environment",
-        acceptable_alternatives=["Technical demonstration in modern research setting"],
-        unacceptable_visuals=["cartoon", "generic meme imagery", "unrelated stock photography"],
-        grounding_level=GroundingLevel.LEVEL_3.value,
+        text=text,
+        topic=topic,
+        claim_type=ClaimType.ABSTRACT_CONCEPT,
+        research_text=research_context,
+        research_entities=research_entities,
     )
 
 

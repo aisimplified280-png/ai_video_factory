@@ -76,7 +76,8 @@ def test_validator_rejects_invalid_layer_and_transition():
 def test_validator_rejects_platform_duration_violation():
     bundle = inputs()
     data = EditDirector().run("edit", state(), bundle).data
-    data["total_duration"] = 120.0
+    # Platform lock allows 10-180s (profiles/youtube_short.json); 300s is outside it.
+    data["total_duration"] = 300.0
     report = EditValidator().validate(data, bundle["scene_plan"].data, bundle["asset_manifest"].data, bundle["proposal_packet"].data)
     assert "PLATFORM_DURATION_INVALID" in {f["code"] for f in report["findings"]}
     assert report["flags"]["duration_covered"] is False

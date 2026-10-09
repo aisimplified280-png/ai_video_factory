@@ -112,6 +112,46 @@ def compute_layer_occupancy(image_input: Path | Image.Image) -> float:
 import re
 
 
+def _clip_to_width(
+    draw_ctx: ImageDraw.ImageDraw,
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    max_px: float,
+) -> str:
+    """Word-boundary clip with an ellipsis — text is never cut mid-word (§21)."""
+    text = text.strip()
+    if draw_ctx.textlength(text, font=font) <= max_px:
+        return text
+    out = ""
+    for word in text.split():
+        trial = f"{out} {word}".strip()
+        if draw_ctx.textlength(f"{trial}…", font=font) > max_px:
+            break
+        out = trial
+    return f"{out}…" if out else "…"
+
+
+def _wrap_to_width(
+    draw_ctx: ImageDraw.ImageDraw,
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    max_px: float,
+) -> list[str]:
+    """Greedy word wrap at the measured pixel width of the actual card."""
+    lines: list[str] = []
+    current = ""
+    for word in text.split():
+        trial = f"{current} {word}".strip()
+        if current and draw_ctx.textlength(trial, font=font) > max_px:
+            lines.append(current)
+            current = word
+        else:
+            current = trial
+    if current:
+        lines.append(current)
+    return lines or [text]
+
+
 def _draw_fitted_text(
     draw_ctx: ImageDraw.ImageDraw,
     text: str,
@@ -124,31 +164,69 @@ def _draw_fitted_text(
     min_size: int = 20,
     bold: bool = True,
     center: bool = False,
+    wrap: bool = False,
 ) -> int:
-    """Scales font size dynamically so text strictly fits inside max_width and max_height."""
-    size = base_size
-    font = _get_font(size, bold=bold)
+    """Scales font size dynamically so text strictly fits inside max_width and max_height.
+
+    `wrap=True` lets a long subject use the card's vertical room (two clean lines)
+    before shrinking. Whatever is left over-long is clipped on a word boundary with
+    an ellipsis — labels read as complete phrases, never as "PIPELINE ENT".
+    """
     clean_text = text.strip()
     if not clean_text:
-        return size
+        return base_size
 
-    while size > min_size:
-        font = _get_font(size, bold=bold)
-        bbox = draw_ctx.textbbox((0, 0), clean_text, font=font)
-        tw = bbox[2] - bbox[0]
-        th = bbox[3] - bbox[1]
-        if tw <= max_width and th <= max_height:
-            break
+    def _font(s: int) -> ImageFont.FreeTypeFont:
+        return _get_font(s, bold=bold)
+
+    def _fits_one_line(s: int) -> bool:
+        f = _font(s)
+        b = draw_ctx.textbbox((0, 0), clean_text, font=f)
+        return (b[2] - b[0]) <= max_width and (b[3] - b[1]) <= max_height
+
+    size = base_size
+    while size > min_size and not _fits_one_line(size):
         size -= 2
 
-    font = _get_font(size, bold=bold)
-    bbox = draw_ctx.textbbox((0, 0), clean_text, font=font)
+    # Long subject in a tall card: keep the type readable and wrap to 2 lines.
+    if wrap and not _fits_one_line(size):
+        size = base_size
+        lines = [clean_text]
+        while size > min_size:
+            f = _font(size)
+            lines = _wrap_to_width(draw_ctx, clean_text, f, max_width)
+            line_h = int(size * 1.35)
+            widest = max(draw_ctx.textlength(ln, font=f) for ln in lines)
+            if len(lines) * line_h <= max_height and widest <= max_width:
+                break
+            size -= 2
+        f = _font(size)
+        line_h = int(size * 1.35)
+        max_lines = max(1, max_height // line_h)
+        if len(lines) > max_lines:
+            lines = lines[:max_lines]
+            lines[-1] = _clip_to_width(draw_ctx, f"{lines[-1]}…", f, max_width)
+        block_h = len(lines) * line_h
+        y = box_y + max(0, (max_height - block_h) // 2)
+        for line in lines:
+            w = draw_ctx.textlength(line, font=f)
+            x = box_x + max(0, (max_width - int(w)) // 2) if center else box_x
+            draw_ctx.text((x, y), line, fill=fill, font=f)
+            y += line_h
+        return size
+
+    font = _font(size)
+    shown = clean_text
+    bbox = draw_ctx.textbbox((0, 0), shown, font=font)
+    if (bbox[2] - bbox[0]) > max_width:
+        shown = _clip_to_width(draw_ctx, clean_text, font, max_width)
+        bbox = draw_ctx.textbbox((0, 0), shown, font=font)
     tw = bbox[2] - bbox[0]
     th = bbox[3] - bbox[1]
 
     dx = box_x + max(0, (max_width - tw) // 2) if center else box_x
     dy = box_y + max(0, (max_height - th) // 2)
-    draw_ctx.text((dx, dy), clean_text, fill=fill, font=font)
+    draw_ctx.text((dx, dy), shown, fill=fill, font=font)
     return size
 
 
@@ -188,7 +266,8 @@ def _extract_semantic_entities(
         headline = " ".join(acc) if acc else clean_vp
     else:
         words = [w.strip(".,;:!?\"'") for w in narration.split() if len(w) > 3]
-        headline = " ".join(words[:3]).upper() if words else "SYSTEM ARCHITECTURE"
+        # Headline is only ever narration content — never a generic technical phrase.
+        headline = " ".join(words[:3]).upper() if words else ""
 
     corpus = f"{subject} {visual_purpose} {visual_metaphor} {narration}"
     clean_words = re.findall(r"[A-Za-z0-9\-_]{4,}", corpus)
@@ -209,23 +288,14 @@ def _extract_semantic_entities(
 
     if len(key_terms) >= 3:
         cards = key_terms[:3]
-    elif len(key_terms) == 2:
-        cards = [key_terms[0], key_terms[1], "RUNTIME"]
-    elif len(key_terms) == 1:
-        cards = [key_terms[0], "PIPELINE", "ENGINE"]
     else:
-        if domain == TopicDomain.ROBOTICS_HARDWARE:
-            cards = ["KINEMATICS", "ACTUATION", "CONTROL"]
-        else:
-            cards = ["INGESTION", "ROUTING", "RETRIEVAL"]
+        # Never pad with generic technical words ("RUNTIME", "PIPELINE", "ENGINE").
+        # If the narration names fewer concepts, the visual shows fewer concepts.
+        cards = key_terms[:3]
 
-    # Extract strictly real metrics from research claims and narration; never fabricate numbers
+    # Extract strictly real metrics from narration; when there is no number there is no metric.
     metric_match = re.search(r"(\+?\d+%|\d+x|\d+ms|\d+s|\d+\.\d+%)", narration)
-    if metric_match:
-        metric = metric_match.group(1)
-    else:
-        # Use verified qualitative status directly derived from the script instead of fake numbers
-        metric = "VERIFIED STATE"
+    metric = metric_match.group(1) if metric_match else ""
 
     return headline, cards, metric
 
@@ -242,10 +312,19 @@ def _draw_foreground_depth_elements(
     muted_rgb: tuple[int, int, int],
     font_badge: ImageFont.FreeTypeFont | ImageFont.ImageFont,
 ):
-    """Draws subtle near-plane optical framing without intrusive boilerplate cards."""
-    # Subtle lateral depth framing cues on extreme edges
-    fg_draw.rounded_rectangle([(24, 300), (52, 1200)], radius=8, fill=(*surface_rgb, 40), outline=(*border_rgb, 60), width=1)
-    fg_draw.rounded_rectangle([(width - 52, 300), (width - 24, 1200)], radius=8, fill=(*surface_rgb, 40), outline=(*border_rgb, 60), width=1)
+    """Near-plane focus falloff: a soft vignette at the extreme edges.
+
+    Purpose-built for comprehension — it darkens the outer margins so the eye stays on the
+    explained subject. It draws no frames, no rails, no labels and no telemetry: a decorative
+    element without an explanatory purpose has no place in the foreground.
+    """
+    depth_w = 64
+    for i in range(depth_w):
+        alpha = int(255 * ((depth_w - i) / depth_w) ** 2)
+        if alpha <= 8:
+            continue
+        fg_draw.rectangle([(i, 0), (i, height)], fill=(15, 23, 42, alpha))
+        fg_draw.rectangle([(width - 1 - i, 0), (width - 1 - i, height)], fill=(15, 23, 42, alpha))
 
 
 from production.phase18.scene_graph import (
@@ -291,8 +370,10 @@ def _draw_midground_subject(
             mid_draw.rounded_rectangle([(cx - 45, cy_logo + 18), (cx + 45, cy_logo + 65)], radius=14, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=2)
             mid_draw.rectangle([(cx - 18, cy_logo + 32), (cx + 18, cy_logo + 48)], fill=(37, 99, 235, 255))
 
-            mid_draw.rounded_rectangle([(cx - 300, 870), (cx + 300, 930)], radius=14, fill=(241, 245, 249, 250), outline=(37, 99, 235, 255), width=2)
-            _draw_fitted_text(mid_draw, node.details[0] if node.details else "AI SIMPLIFIED BRIEFINGS", cx - 280, 880, 560, 40, fill=(30, 41, 59, 255), base_size=24, bold=True, center=True)
+            # Brand line only when the CTA narration actually states copy for it.
+            if node.details:
+                mid_draw.rounded_rectangle([(cx - 300, 870), (cx + 300, 930)], radius=14, fill=(241, 245, 249, 250), outline=(37, 99, 235, 255), width=2)
+                _draw_fitted_text(mid_draw, node.details[0], cx - 280, 880, 560, 40, fill=(30, 41, 59, 255), base_size=24, bold=True, center=True)
         return
 
     # 2. TOPOLOGY: LAYERED ARCHITECTURE (Vertical Hierarchical Stack)
@@ -319,10 +400,14 @@ def _draw_midground_subject(
                     cx_pos = gx1 + int((ci + 0.5) * (grid_w / 6))
                     mid_draw.ellipse([(cx_pos - 4, grid_y + 12), (cx_pos + 4, grid_y + 20)], fill=(*accent_rgb, 220))
                 if node.details:
-                    mid_draw.text((gx1 + 10, grid_y + 35), f"• {node.details[0][:40]}", fill=(203, 213, 225, 255), font=_get_font(20, bold=False))
+                    f_bullet = _get_font(20, bold=False)
+                    line = _clip_to_width(mid_draw, f"• {node.details[0]}", f_bullet, grid_w - 20)
+                    mid_draw.text((gx1 + 10, grid_y + 35), line, fill=(203, 213, 225, 255), font=f_bullet)
             else:
                 if node.details:
-                    mid_draw.text((x1 + 30, y1 + 58), f"• {node.details[0][:45]}", fill=(100, 116, 139, 255), font=_get_font(19, bold=False))
+                    f_bullet = _get_font(19, bold=False)
+                    line = _clip_to_width(mid_draw, f"• {node.details[0]}", f_bullet, (x2 - x1) - 60)
+                    mid_draw.text((x1 + 30, y1 + 58), line, fill=(100, 116, 139, 255), font=f_bullet)
 
         # Vertical flowing connectors
         for edge in scene_graph.edges:
@@ -355,7 +440,9 @@ def _draw_midground_subject(
                 mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=18, fill=(*surface_rgb, 245), outline=(*border_rgb, 220), width=2)
                 _draw_fitted_text(mid_draw, node.label, x1 + 12, y1 + 22, (x2 - x1) - 24, 40, fill=(*text_rgb, 255), base_size=22, bold=True, center=True)
                 if node.details:
-                    mid_draw.text((x1 + 18, y1 + 80), f"• {node.details[0][:24]}", fill=(100, 116, 139, 255), font=_get_font(18, bold=False))
+                    f_bullet = _get_font(18, bold=False)
+                    line = _clip_to_width(mid_draw, f"• {node.details[0]}", f_bullet, (x2 - x1) - 36)
+                    mid_draw.text((x1 + 18, y1 + 80), line, fill=(100, 116, 139, 255), font=f_bullet)
 
         # Horizontal connectors
         for edge in scene_graph.edges:
@@ -379,11 +466,13 @@ def _draw_midground_subject(
             n_text = (255, 255, 255, 255) if is_active else (*text_rgb, 255)
 
             mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=20, fill=n_fill, outline=n_border, width=2)
-            _draw_fitted_text(mid_draw, node.label, x1 + 16, y1 + 25, (x2 - x1) - 32, 45, fill=n_text, base_size=24, bold=True, center=True)
+            _draw_fitted_text(mid_draw, node.label, x1 + 16, y1 + 25, (x2 - x1) - 32, 45, fill=n_text, base_size=24, bold=True, center=True, wrap=True)
             for d_idx, detail in enumerate(node.details[:3]):
                 dy = y1 + 95 + d_idx * 45
                 if dy + 30 <= y2:
-                    mid_draw.text((x1 + 22, dy), f"• {detail[:26]}", fill=(203, 213, 225, 255) if is_active else (100, 116, 139, 255), font=_get_font(19, bold=False))
+                    f_bullet = _get_font(19, bold=False)
+                    line = _clip_to_width(mid_draw, f"• {detail}", f_bullet, (x2 - x1) - 44)
+                    mid_draw.text((x1 + 22, dy), line, fill=(203, 213, 225, 255) if is_active else (100, 116, 139, 255), font=f_bullet)
 
         # Central "VS" badge
         for edge in scene_graph.edges:
@@ -405,11 +494,13 @@ def _draw_midground_subject(
         n_text = (255, 255, 255, 255) if is_p else (*text_rgb, 255)
 
         mid_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=18, fill=n_fill, outline=n_border, width=2)
-        _draw_fitted_text(mid_draw, node.label, x1 + 16, y1 + 24, (x2 - x1) - 32, 42, fill=n_text, base_size=24, bold=True, center=True)
+        _draw_fitted_text(mid_draw, node.label, x1 + 16, y1 + 24, (x2 - x1) - 32, 60, fill=n_text, base_size=24, bold=True, center=True, wrap=True)
         for d_idx, detail in enumerate(node.details[:3]):
             dy = y1 + 85 + d_idx * 42
             if dy + 30 <= y2:
-                mid_draw.text((x1 + 20, dy), f"• {detail[:30]}", fill=(203, 213, 225, 255) if is_p else (100, 116, 139, 255), font=_get_font(19, bold=False))
+                f_bullet = _get_font(19, bold=False)
+                line = _clip_to_width(mid_draw, f"• {detail}", f_bullet, (x2 - x1) - 40)
+                mid_draw.text((x1 + 20, dy), line, fill=(203, 213, 225, 255) if is_p else (100, 116, 139, 255), font=f_bullet)
 
     for edge in scene_graph.edges:
         src = next((n for n in scene_graph.nodes if n.id == edge.from_node), None)
