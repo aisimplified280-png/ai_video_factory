@@ -30,7 +30,8 @@ export const MilestoneTabs: React.FC<{
     }
   }
   const fadeIn = Math.min(1, Math.max(0, t / 0.35));
-  const chipFont = Math.max(20, Math.min(30, Math.floor(width / 36)));
+  // 16-char labels must fit their chip at ~4 tabs across a 1080px canvas.
+  const chipFont = Math.max(18, Math.min(22, Math.floor(width / 49)));
 
   return (
     <div
@@ -82,7 +83,7 @@ export const MilestoneTabs: React.FC<{
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  maxWidth: Math.floor(width / 4.2),
+                  maxWidth: Math.floor(width / 3.4),
                   padding: '4px 10px',
                   borderRadius: 8,
                   color: isActive

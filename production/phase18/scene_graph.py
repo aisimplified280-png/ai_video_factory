@@ -135,16 +135,80 @@ def _trim_clause_to_limit(clause: str, hi: int = 48) -> str:
     return " ".join(kept).strip()
 
 
-def _extract_real_phrases_from_speech(speech: str, max_phrases: int = 2) -> list[str]:
-    """Extract genuine factual snippets directly from spoken text with zero hallucinated boilerplate."""
+def _dedup_facts_against_subject(facts: list[str], subject: str, speech: str) -> list[str]:
+    """Card bullets must never repeat the card title.
+
+    The first spoken clause typically becomes both the scene subject (title)
+    and the first extracted fact — showing it twice reads like a broken loop.
+    When every candidate fact collapses into the title, derive one bullet from
+    the speech remainder after the subject's last word instead, so the body
+    is never left empty.
+    """
+
+    def norm(text: str) -> str:
+        return re.sub(r"[^a-z0-9'\s]", "", str(text or "").lower()).strip()
+
+    subj_words = set(norm(subject).split())
+    kept: list[str] = []
+    for fact in facts:
+        f_words = set(norm(fact).split())
+        if not f_words:
+            continue
+        overlap = len(subj_words & f_words)
+        if subj_words and (overlap == len(f_words) or overlap >= 0.6 * len(f_words)):
+            continue  # the fact is the title restated — drop it
+        kept.append(fact)
+    if kept or not speech:
+        return kept
+
+    # The subject consumed the only clause — take its remainder as the bullet.
+    subj_list = norm(subject).split()
+    words = str(speech).split()
+    pos = None
+    if subj_list:
+        for i, w in enumerate(words):
+            if norm(w) == subj_list[-1]:
+                pos = i
+                break
+    if pos is not None and pos + 1 < len(words):
+        remainder = _trim_clause_to_limit(" ".join(words[pos + 1:]))
+        if len(remainder) >= 8:
+            return [remainder[0].upper() + remainder[1:]]
+    return kept
+
+
+def _extract_real_phrases_from_speech(
+    speech: str, max_phrases: int = 2, subject: str = ""
+) -> list[str]:
+    """Extract genuine factual snippets directly from spoken text with zero hallucinated boilerplate.
+
+    The scene subject's own words are stripped from the first clause *before*
+    any length trimming, so the bullet CONTINUES the title instead of
+    restating it — and trimming happens on the remainder, keeping the real
+    content ("signals from four orbiting satellites") instead of cutting it
+    away after a duplicated prefix. Each original clause counts against
+    `max_phrases`, whether or not it survives the strip.
+    """
     clauses = re.split(
-        r"[,;.?!:]|(?:\s+and\s+)|\b(?:while|unlike|which|that|to)\b",
+        r"[,;.?!:]|(?:\s+and\s+)|\b(?:while|unlike|which|that)\b",
         speech,
         flags=re.IGNORECASE,
     )
+    subj_words = re.findall(r"[a-z0-9']+", str(subject or "").lower())
     clean_clauses: list[str] = []
+    considered = 0
     for c in clauses:
         c_str = c.strip()
+        if not c_str:
+            continue
+        considered += 1
+        if considered > max_phrases:
+            break
+        if subj_words:
+            prefix = r"\W*".join(re.escape(w) for w in subj_words) + r"\b"
+            m = re.match(prefix, c_str, flags=re.IGNORECASE)
+            if m:
+                c_str = c_str[m.end():].strip(" \t,;:")
         # Clean leading prepositions and trailing punctuation
         c_str = re.sub(r"^(that|into|with|from|by|at|for|the|a|an)\s+", "", c_str, flags=re.IGNORECASE)
         c_str = c_str.strip("?!:;,\"'“”‘’").strip()
@@ -155,10 +219,9 @@ def _extract_real_phrases_from_speech(speech: str, max_phrases: int = 2) -> list
             # (empty cards are a worse sin than a slightly shortened phrase).
             c_str = _trim_clause_to_limit(c_str)
         if 8 <= len(c_str) <= 48:
-            # Title case short phrase
-            clean_clauses.append(c_str.capitalize())
-        if len(clean_clauses) >= max_phrases:
-            break
+            # Capitalize only the first letter — interior acronyms (GPS, RAG)
+            # must survive exactly as the narrator said them.
+            clean_clauses.append(c_str[0].upper() + c_str[1:])
     return clean_clauses
 
 
@@ -191,7 +254,8 @@ def _label_at(pool: list[str], idx: int, subject: str) -> str:
     """Label for the idx-th node, or the narration subject when the pool is exhausted."""
     if idx < len(pool):
         return pool[idx]
-    subj = re.sub(r"[^\w\s-]", "", subject or "").strip().upper()
+    subj = re.sub(r"(?<![A-Za-z0-9])'|'(?![A-Za-z0-9])", "", str(subject or ""))
+    subj = re.sub(r"[^\w\s'-]", "", subj).strip().upper()
     return _clip_words(subj, 40)
 
 
@@ -334,7 +398,9 @@ def build_semantic_scene_graph(
     subj_lower = subject.lower()
     combined_ctx = f"{subj_lower} {speech_lower} {visual_purpose.lower()} {visual_metaphor.lower()}"
     clean_terms = _clean_entity_terms(f"{subject} {speech} {research_claim}", domain)
-    real_facts = _extract_real_phrases_from_speech(speech, max_phrases=3)
+    real_facts = _extract_real_phrases_from_speech(speech, max_phrases=3, subject=subject)
+    # Card body never restates the card title (dedup against the subject).
+    real_facts = _dedup_facts_against_subject(real_facts, subject, speech)
     # Every node label must be traceable to the narration (subject -> speech -> topic).
     label_pool = _narrative_label_pool(subject, speech, topic)
 
@@ -648,7 +714,9 @@ def build_semantic_scene_graph(
 
     # 6. FOCAL EXPLANATION TOPOLOGY (One clear subject, sized to the narration — no filler nodes)
     hero_label = (subject or topic or (label_pool[0] if label_pool else "")).strip().upper()
-    hero_label = _clip_words(re.sub(r"[^\w\s/&-]", "", hero_label).strip(), 70)
+    # Keep apostrophes inside words ("SIGNAL'S") — only stray quote marks go.
+    hero_label = re.sub(r"(?<![A-Za-z0-9])'|'(?![A-Za-z0-9])", "", hero_label)
+    hero_label = _clip_words(re.sub(r"[^\w\s/&'-]", "", hero_label).strip(), 70)
 
     hero_node = SceneNode(
         id="focal_hero",

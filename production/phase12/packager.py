@@ -138,7 +138,10 @@ def generate_packaging(
 
     if llm_pkg and len(title_candidates) >= 4:
         raw_thumb = str(llm_pkg.get("thumbnail_text", "")).upper().strip() or _honest_thumbnail_text(topic)
-        if any(flag in raw_thumb.lower() for flag in _TITLE_RED_FLAGS):
+        # A thumbnail line needs at least two real words — never a stray number
+        # or single token the model happened to emit ("1").
+        _thumb_real_words = sum(1 for w in raw_thumb.split() if w.isalpha() and len(w) >= 3)
+        if any(flag in raw_thumb.lower() for flag in _TITLE_RED_FLAGS) or _thumb_real_words < 2:
             raw_thumb = _honest_thumbnail_text(topic)
         words = raw_thumb.split()
         thumbnail_text = " ".join(words[:4]) if len(words) > 4 else raw_thumb

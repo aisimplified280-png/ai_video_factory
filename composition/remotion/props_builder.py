@@ -55,7 +55,18 @@ def _milestone_label(subject: str) -> str:
         s,
         flags=re.IGNORECASE,
     )
-    words = s.split()[:4]
+    words = s.split()
+    # A chapter tab never ends on question scaffolding or a filler verb:
+    # "your phone know exactly where it is" -> "your phone".
+    label_tail = {
+        "is", "are", "am", "do", "does", "did", "can", "could", "will", "would",
+        "it", "its", "this", "that", "which", "where", "when", "why", "how",
+        "know", "just", "really", "exactly", "very", "more", "most", "to",
+        "of", "in", "on", "at", "for", "with", "from", "by", "the", "a", "an",
+    }
+    while len(words) > 2 and words[-1].strip("'\"“”‘’").lower() in label_tail:
+        words.pop()
+    words = words[:4]
     label = " ".join(words).strip() or (subject or "").strip()
     if len(label) > 16:
         cut = label[:16].rsplit(" ", 1)[0].rstrip(",;:")

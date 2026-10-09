@@ -240,7 +240,9 @@ def _extract_semantic_entities(
     """Dynamically extracts headline, 2-3 card labels, and metric badge from scene semantics.
     Eliminates all static boilerplate templates and cleans visual noise words.
     """
-    clean_sub = re.sub(r"[^\w\s-]", "", subject).strip()
+    # Keep apostrophes inside words ("signal's") — only stray quote marks go.
+    clean_sub = re.sub(r"(?<![A-Za-z0-9])'|'(?![A-Za-z0-9])", "", str(subject or ""))
+    clean_sub = re.sub(r"[^\w\s'-]", "", clean_sub).strip()
     if clean_sub and len(clean_sub) >= 4:
         words = clean_sub.upper().split()
         acc = []

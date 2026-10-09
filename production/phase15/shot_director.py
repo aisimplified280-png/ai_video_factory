@@ -42,6 +42,21 @@ def _narration_subject(spoken_text: str, key_entities: Optional[list[str]] = Non
         working = working.split(",", 1)[1].lstrip()
     head = re.split(r"[,.;:;!?\n]", working, maxsplit=1)[0]
     words = head.split()
+    # A spoken question is already a complete, self-contained line: its trailing
+    # words carry the meaning ("...where it is"). Trimming them would leave a
+    # mangled fragment on the title card, so the question is kept verbatim.
+    _first_punct = re.search(r"[,.;:!?;\n]", working)
+    if _first_punct and working[_first_punct.start()] == "?" and words:
+        subject = " ".join(words)
+        while len(subject) > 75 and len(words) > 4:
+            words.pop()
+            subject = " ".join(words).strip()
+        if subject.count('"') % 2:
+            subject = subject.replace('"', "")
+        # An apostrophe inside a word ("signal's") is punctuation, not a quote.
+        if len(re.findall(r"(?<![A-Za-z0-9])'|'(?![A-Za-z0-9])", subject)) % 2:
+            subject = re.sub(r"(?<![A-Za-z0-9])'|'(?![A-Za-z0-9])", "", subject)
+        return subject.strip("?!:;, ")
     if len(words) > 7:
         # Entity-aware cut: never truncate a narrated entity out of the subject.
         stems = set()
@@ -62,27 +77,42 @@ def _narration_subject(spoken_text: str, key_entities: Optional[list[str]] = Non
         "at", "by", "into", "over", "through", "around", "without", "across",
         "during", "within", "toward", "towards", "than", "then", "so", "many",
         "each", "every", "more", "most", "some", "any", "all", "very", "just",
-        "also", "really",
+        "also", "really", "from", "onto", "off", "under", "onto",
+        # Stranded determiners / wh-words are not subject endings.
+        "your", "my", "its", "our", "their", "his", "her", "this", "these",
+        "those", "them", "us", "where", "when", "how",
+        # A cut can strand a linking verb ("...difference lets your") — the
+        # subject must end on the noun it names, not on the verb that connects.
+        "lets", "enables", "means", "makes", "allows", "helps", "shows",
+        "gives", "keeps", "drives", "causes",
     }
     while len(words) > 2 and words[-1].lower().strip("'\"“”‘’") in trailing:
         words.pop()
-    # A 7-word cut can strand an article before its noun ("...a harmless").
-    while (
-        len(words) > 2
-        and words[-2].lower().strip("'\"“”‘’") in {"a", "an", "the"}
-    ):
+    # A stranded pair: article/preposition left before a cut-off noun
+    # ("...listen for signals from four" -> "...listen for signals").
+    tail_pair_glue = {
+        "a", "an", "the", "from", "into", "of", "in", "on", "at", "for", "with",
+        "by", "to", "through", "across", "around", "without", "within", "during",
+        "over", "under", "between", "onto", "than", "like", "off",
+    }
+    while len(words) > 3 and words[-2].lower().strip("'\"“”‘’") in tail_pair_glue:
+        words.pop()
         words.pop()
         while len(words) > 2 and words[-1].lower().strip("'\"“”‘’") in trailing:
             words.pop()
+    while len(words) > 2 and words[-1].lower().strip("'\"“”‘’") in trailing:
+        words.pop()
     subject = " ".join(words).strip()
     # Hard safety: an on-screen title never runs past ~75 characters.
     while len(subject) > 75 and len(words) > 4:
         words.pop()
         subject = " ".join(words).strip()
     # Dropping words can orphan a quote/parenthesis — keep it balanced.
-    for ch in ("'", '"'):
-        if subject.count(ch) % 2:
-            subject = subject.replace(ch, "")
+    if subject.count('"') % 2:
+        subject = subject.replace('"', "")
+    # An apostrophe inside a word ("signal's") is punctuation, not a quote.
+    if len(re.findall(r"(?<![A-Za-z0-9])'|'(?![A-Za-z0-9])", subject)) % 2:
+        subject = re.sub(r"(?<![A-Za-z0-9])'|'(?![A-Za-z0-9])", "", subject)
     return subject.strip("?!:;, ")
 
 
