@@ -14,6 +14,7 @@ MODULE_FOR_INTENT = {
     "light_flash": "lightFlash",
     "motion_blur": "motionBlur",
     "match_cut": "matchCut",
+    "slide_transition": "slide",
 }
 
 
@@ -25,7 +26,7 @@ def test_all_canonical_transitions_resolve():
 
 
 def test_transition_modules_expose_overlap_contract():
-    transformative_modules = {"fade", "wipe", "zoom", "lightFlash", "motionBlur", "objectTransition", "shapeMorph", "matchCut"}
+    transformative_modules = {"fade", "wipe", "zoom", "lightFlash", "motionBlur", "objectTransition", "shapeMorph", "matchCut", "slide"}
     instant = {"hardCut"}
     for module in transformative_modules:
         text = (COMPOSER / "transitions" / f"{module}.ts").read_text(encoding="utf-8")

@@ -278,6 +278,31 @@ def test_transformative_transitions():
     assert len(errs_bad) == 1
 
 
+def test_slide_push_only_where_the_workspace_continues():
+    """Slide-push inside one continuous workspace; dissolve when the place changes."""
+    from production.phase17.transition_director import (
+        ALLOWED_TRANSITIONS,
+        continuity_boundary_intent,
+    )
+
+    # Same environment on both sides -> sliding-physics push (reference style).
+    assert continuity_boundary_intent("automated warehouse", "automated warehouse") == "slide_transition"
+    assert continuity_boundary_intent(
+        "topic explanatory context", "topic  explanatory context"
+    ) == "slide_transition"  # whitespace-insensitive
+
+    # Place changes (or is unknown) -> gentle cross-dissolve, never a false
+    # implication of spatial continuity (e.g. body -> branded CTA studio).
+    assert continuity_boundary_intent("warehouse", "minimalist dark obsidian studio") == "cross_dissolve"
+    assert continuity_boundary_intent(None, None) == "cross_dissolve"
+    assert continuity_boundary_intent("", "warehouse") == "cross_dissolve"
+
+    # The renderer can resolve it and validation accepts it.
+    assert "slide_transition" in ALLOWED_TRANSITIONS
+    valid, errs = validate_transition_integrity(["hard_cut", "slide_transition", "cross_dissolve"])
+    assert valid is True and errs == []
+
+
 
 def test_visual_language_qa_fails_when_no_frames(tmp_path: Path):
     """Verify that evaluate_visual_language fails closed when no frames are rendered."""

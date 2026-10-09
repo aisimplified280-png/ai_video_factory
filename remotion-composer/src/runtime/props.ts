@@ -61,6 +61,14 @@ export interface CaptionProps {
   emphasisWords: string[];
 }
 
+/** One chapter tab of the persistent top milestone bar (reference-video layout). */
+export interface MilestoneProps {
+  scene_id: string;
+  label: string;
+  start: number;
+  end: number;
+}
+
 export interface AudioRefProps {
   event_id: string;
   track: 'narration' | 'music' | 'sfx';
@@ -138,6 +146,8 @@ export type ProductionCompositionProps = {
   events: EditEventProps[];
   captions: CaptionProps[];
   audio: AudioRefProps[];
+  /** Persistent top milestone tabs; omitted or <2 entries hides the bar. */
+  milestones?: MilestoneProps[];
   cta: {scene_id: string; start: number; end: number; branding: string};
   previewMode?: boolean;
   debugMode?: boolean;

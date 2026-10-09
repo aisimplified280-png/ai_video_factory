@@ -1,6 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Sequence} from 'remotion';
 import {CaptionTrack} from '../captions/CaptionTrack';
+import {MilestoneTabs} from '../primitives/MilestoneTabs';
 import {overlapFrames as blurOverlap} from '../transitions/motionBlur';
 import {overlapFrames as fadeOverlap} from '../transitions/fade';
 import {overlapFrames as flashOverlap} from '../transitions/lightFlash';
@@ -9,6 +10,7 @@ import {overlapFrames as zoomOverlap} from '../transitions/zoom';
 import {overlapFrames as objectOverlap} from '../transitions/objectTransition';
 import {overlapFrames as morphOverlap} from '../transitions/shapeMorph';
 import {overlapFrames as matchOverlap} from '../transitions/matchCut';
+import {overlapFrames as slideOverlap} from '../transitions/slide';
 import {eventFrames} from '../runtime/timeline';
 import {assertValidProps} from '../runtime/validators';
 import type {EditEventProps, ProductionCompositionProps} from '../runtime/props';
@@ -33,6 +35,8 @@ export function transitionOverlapFrames(intent: string | null, fps: number): num
       return morphOverlap(fps);
     case 'matchCut':
       return matchOverlap(fps);
+    case 'slide':
+      return slideOverlap(fps);
     case 'hardCut':
     default:
       return 0;
@@ -150,6 +154,14 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
           </Sequence>
         );
       })}
+      {props.milestones && props.milestones.length >= 2 ? (
+        <MilestoneTabs
+          milestones={props.milestones}
+          theme={props.theme}
+          fps={fps}
+          width={props.platform.resolution.width}
+        />
+      ) : null}
       <CaptionTrack
         theme={props.theme}
         captions={props.captions}

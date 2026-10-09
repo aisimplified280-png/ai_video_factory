@@ -73,8 +73,12 @@ def direct_scene_character(
 
     is_cta = (scene_idx == total_scenes - 1) or role_lower in ("cta", "outro") or "subscribe" in combined_ctx
 
-    # 1. Determine safe scene-aware position & real subject anchor
-    pos_x, pos_y = 540.0, 1050.0
+    # 1. Determine safe scene-aware position & real subject anchor.
+    # Reference layout: the mascot is a LEFT-anchored standing guide (the left
+    # 25-30% presenter column), beside — never on top of — the active visual.
+    # Only when the subject itself owns the left side does the guide step across
+    # to the right margin. Never dead-center.
+    pos_x, pos_y = 230.0, 1150.0
     anchor_x, anchor_y = 540.0, 720.0
 
     if scene_graph is not None and hasattr(scene_graph, "nodes") and scene_graph.nodes:
@@ -86,22 +90,18 @@ def direct_scene_character(
             node_cy = (b[1] + b[3]) / 2.0
             anchor_x, anchor_y = float(node_cx), float(node_cy)
 
-            # Calculate safe mascot placement away from node
+            # Subject on the left -> guide crosses to the right margin; otherwise
+            # the guide holds the left column.
             if node_cx < 460:
-                pos_x, pos_y = 820.0, 1020.0  # Subject on left -> mascot on right
-            elif node_cx > 620:
-                pos_x, pos_y = 260.0, 1020.0  # Subject on right -> mascot on left
+                pos_x, pos_y = 850.0, 1150.0
             else:
-                # Subject in center -> mascot placed at lower right corner
-                pos_x, pos_y = 780.0, 1040.0
+                pos_x, pos_y = 230.0, 1150.0
     elif hasattr(scene_graph, "primary_anchor") and scene_graph.primary_anchor:
         anchor_x, anchor_y = float(scene_graph.primary_anchor[0]), float(scene_graph.primary_anchor[1])
         if anchor_x < 460:
-            pos_x, pos_y = 820.0, 1020.0
-        elif anchor_x > 620:
-            pos_x, pos_y = 260.0, 1020.0
+            pos_x, pos_y = 850.0, 1150.0
         else:
-            pos_x, pos_y = 780.0, 1040.0
+            pos_x, pos_y = 230.0, 1150.0
 
     # 2. Derive Character Role, Pose, and Tool strictly from Scene Meaning
     # CTA -> the mascot performs exactly one deliberate action: notice the subscribe
@@ -128,7 +128,7 @@ def direct_scene_character(
             pose="presenting_forward",
             action=f"exploring {clean_subj}",
             target=clean_subj,
-            scale=1.0,
+            scale=1.2,
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
@@ -144,7 +144,7 @@ def direct_scene_character(
             pose="directing_flow",
             action=f"directing {clean_subj} flow",
             target=clean_subj,
-            scale=0.95,
+            scale=1.15,
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
@@ -160,7 +160,7 @@ def direct_scene_character(
             pose="inspecting_detail",
             action=f"verifying {clean_subj} execution",
             target=clean_subj,
-            scale=0.92,
+            scale=1.1,
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
@@ -176,7 +176,7 @@ def direct_scene_character(
             pose="mapping_structure",
             action=f"orchestrating {clean_subj} architecture",
             target=clean_subj,
-            scale=0.95,
+            scale=1.15,
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
@@ -192,7 +192,7 @@ def direct_scene_character(
             pose="observing_system",
             action=f"examining {clean_subj} process",
             target=clean_subj,
-            scale=0.95,
+            scale=1.15,
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
@@ -207,7 +207,7 @@ def direct_scene_character(
         pose="presenting_forward",
         action=f"guiding focus toward {clean_subj}",
         target=clean_subj,
-        scale=1.0,
+        scale=1.2,
         depth_plane="midground",
         position={"x": pos_x, "y": pos_y},
         target_anchor={"x": anchor_x, "y": anchor_y},

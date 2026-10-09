@@ -27,6 +27,7 @@ import {incomingStyle as zoomIn, outgoingStyle as zoomOut} from '../transitions/
 import {incomingStyle as objectIn, outgoingStyle as objectOut} from '../transitions/objectTransition';
 import {incomingStyle as morphIn, outgoingStyle as morphOut} from '../transitions/shapeMorph';
 import {incomingStyle as matchIn, outgoingStyle as matchOut} from '../transitions/matchCut';
+import {incomingStyle as slideIn, outgoingStyle as slideOut} from '../transitions/slide';
 import {ActionLayer} from '../primitives/ActionLayer';
 import {BackgroundLayer} from '../primitives/BackgroundLayer';
 import {CharacterLayer} from '../primitives/CharacterLayer';
@@ -108,6 +109,8 @@ export function transitionModuleFor(intent: string | null): string {
       return 'motionBlur';
     case 'match_cut':
       return 'matchCut';
+    case 'slide_transition':
+      return 'slide';
     default:
       return 'hardCut';
   }
@@ -379,6 +382,8 @@ function headStyleFor(intent: string | null, overlap: number, local: number): Re
       return blurIn(progress);
     case 'matchCut':
       return matchIn(progress);
+    case 'slide':
+      return slideIn(progress);
     default:
       return {};
   }
@@ -403,6 +408,8 @@ function tailStyleFor(intent: string | null, tail: number, intoTail: number): Re
       return blurOut(progress);
     case 'matchCut':
       return matchOut(progress);
+    case 'slide':
+      return slideOut(progress);
     default:
       return {};
   }

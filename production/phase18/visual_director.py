@@ -21,7 +21,7 @@ from production.phase15.models import VisualMode
 from production.phase15.claim_grounder import extract_claim_visual_plan
 from production.phase15.semantic_analyzer import analyze_scene_intent
 from production.phase15.shot_director import ShotDirector
-from production.phase17.transition_director import assign_transformative_transitions
+from production.phase17.transition_director import continuity_boundary_intent
 from .character_director import CharacterSpec, direct_scene_character
 from .scene_graph import SemanticSceneGraph, build_semantic_scene_graph
 
@@ -76,7 +76,6 @@ def direct_production_scenes(
 ) -> UnifiedVisualPlan:
     """Direct all scenes into canonical 4-layer specifications with character integration."""
     total_scenes = len(sections)
-    transitions = assign_transformative_transitions(total_scenes)
 
     # 1. Semantic intent & shot direction
     intents = [
@@ -131,9 +130,17 @@ def direct_production_scenes(
                 "y": float(scene_graph.primary_anchor[1]),
             }
 
-        # 6. Transformative Transitions (No hard cuts on scene exits)
-        trans_in = "hard_cut" if idx == 0 else (transitions[idx - 1] if (idx - 1 < len(transitions)) else "zoom_transition")
-        trans_out = "fade" if idx == total_scenes - 1 else (transitions[idx] if idx < len(transitions) else "zoom_transition")
+        # 6. Boundary transitions (continuity-first, §16): a slide-push while the
+        # workspace is continuous, a gentle cross-dissolve when the place changes
+        # (including the drop into the branded CTA studio).
+        if idx == 0:
+            trans_in = "hard_cut"
+        else:
+            trans_in = continuity_boundary_intent(directed_shots[idx - 1].environment, shot.environment)
+        if idx == total_scenes - 1:
+            trans_out = "fade"
+        else:
+            trans_out = continuity_boundary_intent(shot.environment, directed_shots[idx + 1].environment)
 
         # 7. Define Canonical 4-Layer Hierarchy
         layers = [

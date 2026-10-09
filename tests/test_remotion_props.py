@@ -197,3 +197,51 @@ def test_props_audio_clips_resolve_with_media_server_port(tmp_path, monkeypatch)
     assert len(props["audio"]) == 1
     assert props["audio"][0]["publicPath"] == "http://127.0.0.1:54321/narr_01.wav"
 
+
+def _scene(scene_id: str, start: float, end: float, role: str, subject: str) -> dict:
+    return {
+        "id": scene_id, "scene_id": scene_id, "type": "animation",
+        "start_seconds": start, "end_seconds": end,
+        "shot_intent": subject, "narrative_role": role, "subject": subject,
+        "visual_purpose": subject, "visual_metaphor": "",
+        "environment": "a cavern", "depth_strategy": None,
+        "signature_device_usage": "none", "required_assets": [],
+    }
+
+
+def test_milestone_tabs_derive_from_content_scenes(tmp_path):
+    """Top milestone bar: chapter tabs from content scenes, CTA excluded, short labels."""
+    _write_asset(tmp_path)
+    edit, scenes, manifest, art, script = _artifacts()
+    scenes["scenes"] = [
+        _scene("scene_01", 0.0, 4.0, "hook", "How do RAGs retrieve answers?"),
+        _scene("scene_02", 4.0, 8.0, "body", "Then the model chunks the documents"),
+        _scene("scene_03", 8.0, 12.0, "body", "Vector search finds the match"),
+        _scene("scene_04", 12.0, 16.0, "cta", "AI Simplified Lab"),
+    ]
+    edit["cta"] = {**edit["cta"], "scene_id": "scene_04", "start": 12.0, "end": 16.0}
+    props, _ = build_production_props(
+        edit_data=edit, scene_plan_data=scenes, manifest_data=manifest,
+        art_direction_data=art, script_data=script, platform_profile=PROFILE,
+        projects_root=tmp_path / "projects", public_dir=tmp_path / "public")
+
+    milestones = props["milestones"]
+    assert [m["scene_id"] for m in milestones] == ["scene_01", "scene_02", "scene_03"]
+    labels = [m["label"] for m in milestones]
+    # Question scaffolding is stripped; every label is tab-sized.
+    assert labels[0] == "RAGs retrieve…"
+    assert all(isinstance(label, str) and label and len(label) <= 16 for label in labels)
+    # scene_01's span is event-derived (the fixture's events end at 6.0).
+    assert [(m["start"], m["end"]) for m in milestones] == [(0.0, 6.0), (4.0, 8.0), (8.0, 12.0)]
+
+
+def test_no_milestone_tabs_without_two_content_scenes(tmp_path):
+    """A lone scene (the single-scene fixture is its own CTA) never shows a one-tab bar."""
+    _write_asset(tmp_path)
+    edit, scenes, manifest, art, script = _artifacts()
+    props, _ = build_production_props(
+        edit_data=edit, scene_plan_data=scenes, manifest_data=manifest,
+        art_direction_data=art, script_data=script, platform_profile=PROFILE,
+        projects_root=tmp_path / "projects", public_dir=tmp_path / "public")
+    assert props["milestones"] == []
+

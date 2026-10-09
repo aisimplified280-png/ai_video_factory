@@ -14,7 +14,6 @@ from schemas.models.artifact import ProducerInfo
 from schemas.models.common import ProducerKind
 from production.artifact_store import ArtifactStore
 from .style_systems import StyleSystem, get_style_system
-from .transition_director import assign_transformative_transitions
 
 
 def sync_phase17_production_artifacts(
@@ -27,8 +26,6 @@ def sync_phase17_production_artifacts(
 ) -> None:
     """Synchronize multi-layer 3D depth scene_plan, asset_manifest, and edit_decisions."""
     scenes_concepts = plan_data.get("scene_concepts", [])
-    num_scenes = len(scenes_concepts)
-    transitions = assign_transformative_transitions(num_scenes)
 
     scene_bounds: dict[str, list[float]] = {}
     if timeline:

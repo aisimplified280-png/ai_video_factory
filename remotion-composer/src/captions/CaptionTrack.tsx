@@ -14,7 +14,7 @@ export interface CaptionTrackProps {
 
 /** Words per caption set: a set appears, holds, disappears, then the next set
  * takes its place — small transient groups instead of one persistent box. */
-const WORDS_PER_SET = 6;
+const WORDS_PER_SET = 4;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -95,7 +95,7 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
     <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 190, pointerEvents: 'none'}}>
       <div
         style={{
-          background: 'rgba(15, 23, 42, 0.92)',
+          background: 'rgba(24, 24, 27, 0.94)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           border: '1.5px solid rgba(148, 163, 184, 0.35)',

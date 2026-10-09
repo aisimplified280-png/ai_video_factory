@@ -22,7 +22,9 @@ from typing import Any
 DEFAULT_TRANSITION = "cross_dissolve"
 
 # Simple continuity-based transitions. These are correct, not "lazy".
-CONTINUITY_TRANSITIONS = ["hard_cut", "cross_dissolve", "fade", "match_cut"]
+# slide_transition: sliding-physics push used when both sides of the boundary
+# are the same workspace (the reference video's state-machine feel).
+CONTINUITY_TRANSITIONS = ["hard_cut", "cross_dissolve", "fade", "match_cut", "slide_transition"]
 
 # Everything the renderer can resolve. Opt-in only.
 OPTIONAL_TRANSITIONS = [
@@ -66,6 +68,25 @@ def _intent_for_scene(scene: dict[str, Any] | None) -> str:
     explicit = scene.get("transition_intent") or scene.get("transition_in")
     if isinstance(explicit, str) and explicit and explicit.lower() in {t.lower() for t in ALLOWED_TRANSITIONS}:
         return explicit.lower()
+    return DEFAULT_TRANSITION
+
+
+def continuity_boundary_intent(outgoing_environment: Any, incoming_environment: Any) -> str:
+    """Boundary intent from place continuity: slide-push vs gentle dissolve.
+
+    Same environment on both sides = one continuous workspace, so content
+    slides into place (state-machine feel). A changed place — including the
+    drop into the branded CTA studio — gets the gentle cross-dissolve so the
+    move never implies spatial continuity that isn't there.
+    """
+
+    def key(value: Any) -> str:
+        return " ".join(str(value or "").lower().split())
+
+    out_key = key(outgoing_environment)
+    in_key = key(incoming_environment)
+    if out_key and in_key and out_key == in_key:
+        return "slide_transition"
     return DEFAULT_TRANSITION
 
 

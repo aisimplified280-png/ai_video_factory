@@ -8,6 +8,7 @@ or contradictory raises PropsError; nothing is invented or substituted.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import Any
@@ -37,6 +38,29 @@ def _asset_kind(manifest_type: str, suffix: str = "") -> str:
     if manifest_type in _DIAGRAM_KINDS:
         return manifest_type if manifest_type in {"diagram", "chart"} else "diagram"
     return "image"
+
+
+def _milestone_label(subject: str) -> str:
+    """Short top-bar milestone tab label (<=4 words, <=16 chars) from a scene subject.
+
+    Question scaffolding ("How do ...", "Why is ...") and leading conjunctions are
+    stripped so the tab reads like a chapter marker, never a sentence.
+    """
+    s = (subject or "").strip()
+    s = re.split(r"[?!.]", s, maxsplit=1)[0].strip()
+    s = re.sub(
+        r"^(?:how (?:do|does|did|can|are)|why (?:do|does|is|are|can)|what (?:is|are|does)"
+        r"|which|when (?:do|does|is)|who (?:is|are)|instead of|and|but|so|then|the)\s+",
+        "",
+        s,
+        flags=re.IGNORECASE,
+    )
+    words = s.split()[:4]
+    label = " ".join(words).strip() or (subject or "").strip()
+    if len(label) > 16:
+        cut = label[:16].rsplit(" ", 1)[0].rstrip(",;:")
+        label = (cut or label[:15].rstrip(",;:")) + "…"
+    return label
 
 
 def _theme_from_art_direction(art: dict[str, Any]) -> dict[str, Any]:
@@ -221,6 +245,33 @@ def build_production_props(
 
     cta = edit_data.get("cta", {})
     lock_source = edit_data.get("runtime_lock_source", {}) or {}
+
+    # Persistent top milestone tabs (reference-video layout): content scenes become
+    # 4-7 chapter tabs; the CTA outro is never a milestone. Fewer than 2 content
+    # scenes -> no tab bar (a one-tab bar is noise).
+    content_scenes = [
+        s for s in props_scenes
+        if s.get("scene_id") != cta.get("scene_id")
+        and str(s.get("narrative_role", "")).lower() not in ("cta", "outro")
+    ]
+    milestones = sorted(
+        (
+            {
+                "scene_id": s.get("scene_id"),
+                "label": _milestone_label(s.get("subject", "")),
+                "start": s.get("start"),
+                "end": s.get("end"),
+            }
+            for s in content_scenes
+        ),
+        key=lambda m: (m.get("start") is None, m.get("start") or 0.0),
+    )
+    if len(milestones) < 2:
+        milestones = []
+    else:
+        # The bar shows at most 7 chapter tabs; beyond that it becomes unreadable.
+        milestones = milestones[:7]
+
     props = {
         "productionId": edit_data.get("production_id"),
         "editArtifactVersion": None,  # filled by the caller from the envelope
@@ -246,6 +297,7 @@ def build_production_props(
         "events": props_events,
         "captions": props_captions,
         "audio": props_audio,
+        "milestones": milestones,
         "cta": {
             "scene_id": cta.get("scene_id"),
             "start": cta.get("start"),
