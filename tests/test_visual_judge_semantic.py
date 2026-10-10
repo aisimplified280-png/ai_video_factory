@@ -23,7 +23,11 @@ from production.phase18.scene_graph import (
     VisualEvidenceContract,
     build_semantic_scene_graph,
 )
-from production.phase18.visual_judge import judge_scene_frames, verify_semantic_evidence
+from production.phase18.visual_judge import (
+    analyze_frame_geometry,
+    judge_scene_frames,
+    verify_semantic_evidence,
+)
 from production.phase18.visual_director import direct_production_scenes
 
 GPS_NARRATION = (
@@ -171,3 +175,87 @@ def test_verify_is_pure_and_handles_degenerate_inputs():
     assert verify_semantic_evidence(
         VisualEvidenceContract(scene_id="e", subject="", subject_type=""), empty_graph
     )[0] == "unverified"
+
+
+def _synthetic_frame(tmp_path: Path, name: str, box=None) -> Path:
+    """Deterministic 1080x1920 probe frames: box=None → uniform canvas,
+    otherwise a solid (x1, y1, x2, y2) subject box on a light canvas."""
+    from PIL import Image, ImageDraw
+
+    img = Image.new("RGB", (1080, 1920), (232, 238, 244))
+    if box is not None:
+        ImageDraw.Draw(img).rectangle(box, fill=(30, 41, 59))
+    path = tmp_path / f"{name}.png"
+    img.save(path)
+    return path
+
+
+def test_primary_centroid_flags_whole_frame_blob_as_unmeasured(tmp_path: Path):
+    """A component spanning ~the whole crop is the merged background blob
+    (proven: 12/12 audited mids had bbox == full crop) — not a subject."""
+    giant = _synthetic_frame(tmp_path, "giant", box=(10, 410, 1070, 1390))
+    with Image.open(giant) as img:
+        g = analyze_frame_geometry(img)
+    assert g["primary_measured"] is False
+    assert g["primary_centroid"] == (540, 900)
+
+
+def test_primary_centroid_falls_back_on_empty_frame(tmp_path: Path):
+    uniform = _synthetic_frame(tmp_path, "uniform")
+    with Image.open(uniform) as img:
+        g = analyze_frame_geometry(img)
+    assert g["primary_measured"] is False
+    assert g["primary_centroid"] == (540, 900)
+    assert g["observed_topology"] == "empty"
+
+
+def test_primary_centroid_measures_a_compact_subject(tmp_path: Path):
+    compact = _synthetic_frame(tmp_path, "compact", box=(200, 700, 400, 860))
+    with Image.open(compact) as img:
+        g = analyze_frame_geometry(img)
+    assert g["primary_measured"] is True
+    cx, cy = g["primary_centroid"]
+    assert abs(cx - 300) <= 10 and abs(cy - 780) <= 10, g["primary_centroid"]
+
+
+def _verified_spec_with_target(scene_id: str, target: dict):
+    graph = build_semantic_scene_graph(
+        scene_id=scene_id,
+        narrative_role="mechanism",
+        subject="GPS positioning",
+        visual_purpose="Explain satellite positioning",
+        spoken_text=GPS_NARRATION,
+        topic="How GPS works",
+    )
+    spec = _scene_spec_with_graph(graph, scene_id)
+    object.__setattr__(spec.character_spec, "target_anchor", dict(target))
+    return spec
+
+
+def test_judge_skips_offset_advisory_when_centroid_unmeasured(tmp_path: Path):
+    """CTA-like target (540,1640) against a whole-frame blob must not allege a
+    740px offset — the point it measures from is crop-centre, not a subject."""
+    spec = _verified_spec_with_target("sec_unmeas", {"x": 540.0, "y": 1640.0})
+    frame = _synthetic_frame(tmp_path, "blob", box=(10, 410, 1070, 1390))
+    judgement = judge_scene_frames(
+        scene_spec=spec,
+        scene_frames={"mid": frame, "start": frame, "end": frame},
+        topic="How GPS works",
+    )
+    assert judgement.semantic_evidence == "verified", judgement.visible_description
+    assert not any("Mascot target vector offset" in r for r in judgement.reasons), judgement.reasons
+    assert "unmeasured" in judgement.visible_description, judgement.visible_description
+
+
+def test_judge_keeps_offset_advisory_when_centroid_measured_and_far(tmp_path: Path):
+    """The check stays alive for real measurements: compact subject at ~(300,780)
+    with the mascot sent to (900,1300) must still be flagged."""
+    spec = _verified_spec_with_target("sec_meas", {"x": 900.0, "y": 1300.0})
+    frame = _synthetic_frame(tmp_path, "subject", box=(200, 700, 400, 860))
+    judgement = judge_scene_frames(
+        scene_spec=spec,
+        scene_frames={"mid": frame, "start": frame, "end": frame},
+        topic="How GPS works",
+    )
+    assert any("Mascot target vector offset" in r for r in judgement.reasons), judgement.reasons
+    assert "primary subject at (300, 780)" in judgement.visible_description, judgement.visible_description

@@ -197,9 +197,18 @@ def analyze_frame_geometry(img: Image.Image) -> dict[str, Any]:
         primary = max(subject_clusters, key=lambda c: c["area"])
         primary_cx, primary_cy = primary["center"]
         primary_bbox = primary["bbox"]
+        # A "primary" spanning ~the whole crop is the merged background blob,
+        # not a measured subject: dilation fuses card + mascot + grid into one
+        # component centred on the crop. Proven on real renders (12/12 audit
+        # mids had bbox == full crop): alleging offsets from that point is
+        # false precision, so it must not move scores or advisories.
+        crop_area = float(w * (crop_y2 - crop_y1))
+        primary_area = float((primary_bbox[2] - primary_bbox[0]) * (primary_bbox[3] - primary_bbox[1]))
+        primary_measured = primary_area < 0.90 * crop_area
     else:
         primary_cx, primary_cy = w // 2, (crop_y1 + crop_y2) // 2
         primary_bbox = (w // 4, crop_y1, 3 * w // 4, crop_y2)
+        primary_measured = False
 
     # Classify observed visual topology
     n_subj = len(subject_clusters)
@@ -228,6 +237,7 @@ def analyze_frame_geometry(img: Image.Image) -> dict[str, Any]:
         "clusters": clusters,
         "primary_centroid": (primary_cx, primary_cy),
         "primary_bbox": primary_bbox,
+        "primary_measured": primary_measured,
         "observed_topology": observed_topology,
     }
 
@@ -466,8 +476,12 @@ def judge_scene_frames(
     if is_software_topic and depicts_physical_robotics:
         fatal_reasons.append(f"Domain mismatch: software/AI topic depicts physical robotics ({scene_spec.subject})")
 
-    # 5. Semantic Mascot Target Anchoring Verification
-    if dist_to_anchor > 280:
+    # 5. Semantic Mascot Target Anchoring Verification — only against a MEASURED
+    #    centroid. A whole-frame blob centre is not a subject position, so no
+    #    offset is alleged from it (previously every CTA scene collected a
+    #    740px advisory against crop-centre).
+    centroid_measured = bool(geom.get("primary_measured", True))
+    if centroid_measured and dist_to_anchor > 280:
         advisories.append(f"Mascot target vector offset ({dist_to_anchor:.1f}px) from primary visual subject centroid ({centroid_x}, {centroid_y})")
 
     # 6. Expected vs Observed Visual Topology Verification & Evidence Contract
@@ -501,7 +515,16 @@ def judge_scene_frames(
     #    subject it never depicts is "contradicted" regardless of pixel quality.
     semantic_verdict, verdict_notes = verify_semantic_evidence(contract, scene_spec.scene_graph)
     base_grounding = 7.0
-    align_mod = 1.5 if dist_to_anchor <= 140 else (0.7 if dist_to_anchor <= 220 else -0.5)
+    # No alignment evidence either way from an unmeasured centroid: the modifier
+    # stays neutral instead of rewarding/penalising distance to a blob centre.
+    if not centroid_measured:
+        align_mod = 0.0
+    elif dist_to_anchor <= 140:
+        align_mod = 1.5
+    elif dist_to_anchor <= 220:
+        align_mod = 0.7
+    else:
+        align_mod = -0.5
     topo_mod = 1.5 if (
         not expected_topology
         or geom["observed_topology"] == expected_topology
@@ -529,10 +552,11 @@ def judge_scene_frames(
     clarity = 5.5
     if geom["num_subject_clusters"] >= 1:
         clarity += 1.5
-    if dist_to_anchor <= 140:
-        clarity += 1.5
-    elif dist_to_anchor <= 240:
-        clarity += 0.5
+    if centroid_measured:
+        if dist_to_anchor <= 140:
+            clarity += 1.5
+        elif dist_to_anchor <= 240:
+            clarity += 0.5
     if (
         not expected_topology
         or geom["observed_topology"] == expected_topology
@@ -568,11 +592,23 @@ def judge_scene_frames(
 
     all_reasons = fatal_reasons + advisories
 
-    # True multimodal perception description derived from actual decoded pixels & clusters
+    # True multimodal perception description derived from actual decoded pixels & clusters.
+    # "Aligned" is only claimed against a measured centroid; otherwise the mascot
+    # target is reported without alleging an offset.
+    if centroid_measured:
+        subject_note = (
+            f"primary subject at ({centroid_x}, {centroid_y}) vs mascot target "
+            f"({tgt_x:.0f}, {tgt_y:.0f}) [Δ={dist_to_anchor:.1f}px]"
+        )
+    else:
+        subject_note = (
+            f"primary centroid unmeasured (whole-frame blob); mascot target "
+            f"({tgt_x:.0f}, {tgt_y:.0f}) — no offset alleged"
+        )
     visible_desc = (
         f"Decoded pixels (lum: {metrics['mean_luminance']:.1f}, edge: {metrics['edge_density']:.2f}, motion: {motion_delta:.2f}); "
         f"{geom['num_clusters']} detected clusters in [{geom['observed_topology']}] topology; "
-        f"primary subject at ({centroid_x}, {centroid_y}) aligned with mascot target ({tgt_x:.0f}, {tgt_y:.0f}) [Δ={dist_to_anchor:.1f}px]; "
+        f"{subject_note}; "
         f"clarity {clarity_score:.1f}/10 (border {border_edge:.1f} vs centre {centre_edge:.1f} edge activity); "
         f"semantic evidence {semantic_verdict}: {'; '.join(verdict_notes)}"
     )
