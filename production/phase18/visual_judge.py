@@ -236,6 +236,11 @@ _SEM_STOPWORDS = {
     "the", "a", "an", "of", "and", "or", "to", "in", "on", "for", "with", "is",
     "are", "how", "does", "did", "your", "its", "it", "this", "that", "from",
     "into", "when", "why", "what", "really", "actually", "every", "each", "all",
+    # Function/light verbs and demonstratives that name nothing drawable —
+    # narration phrases like "those raw chunks get pasted" are depicted by
+    # their content words, never by "those" or "get".
+    "those", "these", "get", "gets", "got", "use", "uses", "like", "than",
+    "even", "just", "also",
 }
 # Abstract topic words that cannot be drawn as objects — never required to appear.
 _SEM_ABSTRACT = {
@@ -305,7 +310,17 @@ def verify_semantic_evidence(contract: Any, scene_graph: Any) -> tuple[str, list
     ]
     if subject_words:
         def _covered(w: str) -> bool:
-            return w in labels or w.rstrip("s") in labels or _node_icon(w) in icons
+            if w in labels or w.rstrip("s") in labels or _node_icon(w) in icons:
+                return True
+            # Light verb morphology: labels are narration-derived base phrases
+            # ("chunks get pasted" renders as PASTE/PASTED), so match the stem
+            # of -ed/-ing forms against the label string.
+            stems = []
+            if w.endswith("ed") and len(w) > 4:
+                stems.append(w[:-2])  # pasted -> past (substring of "paste")
+            if w.endswith("ing") and len(w) > 4:
+                stems.append(w[:-3])  # pasting -> past
+            return any(s in labels for s in stems)
 
         missing = [w for w in subject_words if not _covered(w)]
         covered_count = len(subject_words) - len(missing)

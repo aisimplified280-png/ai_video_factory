@@ -479,22 +479,27 @@ export const DiagramLayer: React.FC<DiagramLayerProps> = ({theme, width, height,
     if (style === 'matrix_grid') {
       const rows = 2;
       const cols = 4;
+      const cellW = 26;
+      const cellH = 10;
+      const cellGap = 6;
       return (
         <g>
           <rect x={x} y={y} width={w} height={h} rx={theme.cornerRadius} fill={fill} stroke={stroke} strokeWidth={sw} />
+          {/* Grid cells sit on the RIGHT of the plate so they never collide
+              with the centred label / detail text of a stacked layer. */}
           {Array.from({length: rows * cols}).map((_, gi) => {
             const gr = Math.floor(gi / cols);
             const gc = gi % cols;
             return (
               <rect
                 key={gi}
-                x={x + 20 + gc * ((w - 40) / cols)}
-                y={y + h - 52 + gr * 18}
-                width={(w - 40) / cols - 10}
-                height={10}
+                x={x + w - 24 - cols * (cellW + cellGap) + gc * (cellW + cellGap)}
+                y={y + h / 2 - (rows * (cellH + cellGap)) / 2 + gr * (cellH + cellGap)}
+                width={cellW}
+                height={cellH}
                 rx={3}
                 fill={theme.accent}
-                opacity={0.35}
+                opacity={0.5}
               />
             );
           })}
@@ -607,30 +612,67 @@ export const DiagramLayer: React.FC<DiagramLayerProps> = ({theme, width, height,
         const w = Math.max(240, node.w || 420);
         const contentH = node.h || 0;
         const hasIcon = Boolean(node.icon);
-        const labelChars = Math.max(8, Math.floor((w - (hasIcon ? 150 : 44)) / 19));
+        // Wide plates (stack layers) place the glyph BESIDE the label; narrow
+        // flow/transform boxes place it on top so the label keeps full width.
+        const glyphBeside = hasIcon && w >= 560;
+        const glyphTop = hasIcon && !glyphBeside;
+        // Vertically stacked plates have 20px gaps: the box must respect the
+        // semantic layout's bounds and shrink its text to fit — never grow into
+        // a neighbour. Side-by-side layouts (flow, transform, comparison) grow
+        // harmlessly and keep every narration phrase readable.
+        const tight = Boolean(node.h) && (node.shape_style === 'stack_layer' || node.shape_style === 'matrix_grid');
+        const clampH = tight ? Math.max(96, node.h as number) : 0;
+        const labelChars = Math.max(8, Math.floor((w - (glyphBeside ? 160 : 44)) / 19));
         const labelLines = wrapLabel(node.label, labelChars);
         const details = (node.details ?? []).filter(Boolean).slice(0, 3);
-        const detailChars = Math.max(10, Math.floor((w - 76) / 13));
+        const detailChars = Math.max(10, Math.floor((w - (glyphBeside ? 190 : 76)) / 13));
         const detailRows: {line: string; indent: number}[] = [];
         for (const detail of details) {
           const wrapped = wrapDetailBullet(detail, detailChars);
           wrapped.forEach((line, li) => detailRows.push({line, indent: li > 0 ? 30 : 0}));
         }
-        const lineH = 40;
-        const detailH = 30;
-        const neededH = 30 + labelLines.length * lineH + (detailRows.length > 0 ? 12 + detailRows.length * detailH : 0) + 18;
-        const h = Math.max(contentH, neededH, 96);
+        const lineH = tight ? 32 : 40;
+        const detailH = tight ? 24 : 30;
+        const labelFont = tight ? 26 : 34;
+        const detailFont = tight ? 20 : 24;
+        const headPad = (glyphTop ? 94 : 0) + 30;
+        const neededH =
+          headPad + labelLines.length * lineH + (detailRows.length > 0 ? 12 + detailRows.length * detailH : 0) + 18;
+        const h = tight ? clampH : Math.max(contentH, neededH, 96);
         const x = node.x - w / 2;
         const y = node.y - h / 2;
+        // Tight boxes budget their fixed height: details first, then the label;
+        // truncate with an ellipsis rather than overlapping a neighbour plate.
+        let drawLabelLines = labelLines;
+        let drawDetailRows = detailRows;
+        if (tight && neededH > h) {
+          let maxDetailRows = detailRows.length;
+          let maxLabel = 1;
+          while (maxDetailRows >= 0) {
+            const dH = maxDetailRows > 0 ? 12 + maxDetailRows * detailH : 0;
+            maxLabel = Math.floor((h - headPad - 18 - dH) / lineH);
+            if (maxLabel >= 1) {
+              break;
+            }
+            maxDetailRows -= 1;
+          }
+          maxLabel = Math.max(1, maxLabel);
+          drawDetailRows = detailRows.slice(0, maxDetailRows);
+          drawLabelLines = labelLines.slice(0, maxLabel);
+          if (labelLines.length > maxLabel && drawLabelLines.length > 0) {
+            const last = drawLabelLines.length - 1;
+            drawLabelLines = drawLabelLines.map((l, i) => (i === last ? `${l}…` : l));
+          }
+        }
         const primary = Boolean(node.primary);
         const fill = primary ? '#0F172A' : theme.surface;
         const stroke = primary ? theme.accent : '#CBD5E1';
         const labelFill = primary ? '#FFFFFF' : theme.text;
         const detailFill = primary ? '#94A3B8' : theme.mutedText;
-        const firstLineY = y + 34;
-        const detailsStartY = firstLineY + labelLines.length * lineH + 6;
-        const labelX = hasIcon ? x + 128 : node.x;
-        const labelAnchor = hasIcon ? 'start' : 'middle';
+        const firstLineY = glyphTop ? y + 118 : y + 34;
+        const detailsStartY = firstLineY + drawLabelLines.length * lineH + 6;
+        const labelX = glyphBeside ? x + 128 : node.x;
+        const labelAnchor = glyphBeside ? 'start' : 'middle';
         return (
           <g
             key={node.id}
@@ -643,15 +685,31 @@ export const DiagramLayer: React.FC<DiagramLayerProps> = ({theme, width, height,
               <rect x={x + 14} y={y + 14} width={6} height={Math.max(12, h - 28)} rx={3} fill={theme.accentSecondary} />
             ) : null}
             {hasIcon ? (
-              <DiagramGlyph icon={node.icon as string} x={x + 34} y={y + h / 2 - 34} size={68} accent={primary ? '#FFFFFF' : theme.accent} />
+              glyphBeside ? (
+                <DiagramGlyph
+                  icon={node.icon as string}
+                  x={x + 34}
+                  y={y + h / 2 - 30}
+                  size={60}
+                  accent={primary ? '#FFFFFF' : theme.accent}
+                />
+              ) : (
+                <DiagramGlyph
+                  icon={node.icon as string}
+                  x={node.x - 34}
+                  y={y + 16}
+                  size={68}
+                  accent={primary ? '#FFFFFF' : theme.accent}
+                />
+              )
             ) : null}
-            {labelLines.map((line, li) => (
+            {drawLabelLines.map((line, li) => (
               <text
                 key={`l${li}`}
                 x={labelX}
                 y={firstLineY + li * lineH}
                 textAnchor={labelAnchor}
-                fontSize={34}
+                fontSize={labelFont}
                 fontWeight={800}
                 fill={labelFill}
                 fontFamily={theme.fontFamily}
@@ -659,12 +717,12 @@ export const DiagramLayer: React.FC<DiagramLayerProps> = ({theme, width, height,
                 {line}
               </text>
             ))}
-            {detailRows.map((row, ri) => (
+            {drawDetailRows.map((row, ri) => (
               <text
                 key={`d${ri}`}
-                x={x + 26 + row.indent + (hasIcon ? 92 : 0)}
+                x={x + 26 + row.indent + (glyphBeside ? 92 : 0)}
                 y={detailsStartY + ri * detailH}
-                fontSize={24}
+                fontSize={detailFont}
                 fontWeight={600}
                 fill={detailFill}
                 fontFamily={theme.fontFamily}

@@ -1,6 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, useCurrentFrame} from 'remotion';
 import {eventFrames} from '../runtime/timeline';
+import {captionSetAt} from './captionSets';
 import type {CaptionProps, ThemeProps} from '../runtime/props';
 
 export interface CaptionTrackProps {
@@ -11,10 +12,6 @@ export interface CaptionTrackProps {
   /** Absolute start time (seconds) of the CTA scene. Captions clear before the CTA takes focus. */
   ctaStart?: number;
 }
-
-/** Words per caption set: a set appears, holds, disappears, then the next set
- * takes its place — small transient groups instead of one persistent box. */
-const WORDS_PER_SET = 4;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -66,22 +63,14 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
   const currentProgress = clamp01((framesIntoScene - speechOnsetFrames) / totalSpeechFrames);
 
   // --- Set math: which group of words is on screen right now ---
-  const allWords = active.textReference.split(/\s+/).filter(Boolean);
-  if (allWords.length === 0) {
+  // Word-anchored windows (see captionSets): the active word's set always owns
+  // the current progress, so the caption only dips to zero at the designed
+  // breath at each set boundary — never for a sustained gap.
+  const set = captionSetAt(active.textReference, currentProgress);
+  if (!set || set.setWords.length === 0) {
     return null;
   }
-  const setCount = Math.ceil(allWords.length / WORDS_PER_SET);
-  const activeWordIdx = Math.min(allWords.length - 1, Math.floor(currentProgress * allWords.length));
-  const setIndex = Math.min(setCount - 1, Math.floor(activeWordIdx / WORDS_PER_SET));
-  const setStart = setIndex * WORDS_PER_SET;
-  const setWords = allWords.slice(setStart, setStart + WORDS_PER_SET);
-
-  // Set-local window: fade in at the start, fade out at the end — the set
-  // disappears completely before the next one appears.
-  const p0 = setIndex / setCount;
-  const p1 = (setIndex + 1) / setCount;
-  const local = clamp01((currentProgress - p0) / (p1 - p0));
-  const setOpacity = Math.max(0, Math.min(1, local / 0.12, (1 - local) / 0.12));
+  const {setWords, activeInSet, opacity: setOpacity} = set;
   if (setOpacity <= 0.03) {
     return null;
   }
@@ -89,7 +78,6 @@ export const CaptionTrack: React.FC<CaptionTrackProps> = ({theme, captions, fps,
   const emphasis = new Set(
     active.emphasisWords.map((w) => w.toLowerCase().replace(/[.,!?;:]+$/, '')),
   );
-  const activeInSet = activeWordIdx - setStart;
 
   return (
     <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 190, pointerEvents: 'none'}}>
