@@ -1,10 +1,10 @@
 import React from 'react';
-import {AbsoluteFill, interpolate, interpolateColors} from 'remotion';
+import {AbsoluteFill} from 'remotion';
 import type {ThemeProps} from '../runtime/props';
 
 export interface BackgroundLayerProps {
   theme: ThemeProps;
-  environment: string | null;
+  environment?: string | null;
   sceneId?: string;
   subject?: string;
   visualPurpose?: string;
@@ -13,198 +13,97 @@ export interface BackgroundLayerProps {
 }
 
 /**
- * Dynamic Theme & Procedural Background Engine.
- * Dynamically switches base palettes, radial tints, and procedural micro-textures
- * based on the active scene context (Deep Tech, High Density Tokens, Self-Attention, Vector Space, Alert, Outro).
+ * The constant "light engineered canvas" — ONE background for the entire video.
+ *
+ * Soft blue-gray radial paper, a crisp two-scale blueprint grid with crosshair
+ * registration marks, a brand ambient glow, and a depth vignette. It never
+ * changes, never wipes, and never animates with the scenes: only the CONTENT
+ * elements enter and leave over it, which is what keeps the video reading as a
+ * living canvas instead of a slideshow of frames.
  */
-export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({
-  theme,
-  environment,
-  sceneId = '',
-  subject = '',
-  visualPurpose = '',
-  progress = 0,
-  isAITopic = false,
-}) => {
-  const p = Math.max(0, Math.min(1, progress));
-  const sc = sceneId.toLowerCase();
-  const sub = subject.toLowerCase();
-  const vis = visualPurpose.toLowerCase();
-
-  // Dynamic Theme Selection: Clean off-white paper canvas (#F8FAFC / #F1F5F9)
-  let primaryBg = '#F8FAFC';    // Clean off-white paper canvas
-  let secondaryTint = '#F1F5F9'; // Soft Slate Glow
-  let microTexture: 'tech_grid' | 'cyber_matrix' | 'neural_mesh' | 'starfield' | 'hazard_ember' | 'brand_vignette' = 'tech_grid';
-  let accentGlow = '#1E40AF';   // Brand Royal Blue ambient glow
-
-  const isCTA = sub.includes('cta') || sub.includes('outro') || sub.includes('subscribe') || vis.includes('cta') || vis.includes('outro');
-
-  if (isCTA) {
-    // 1. Outro / Brand Summary: Off-white canvas with royal blue ambient glow
-    primaryBg = '#F8FAFC';
-    secondaryTint = '#F1F5F9';
-    accentGlow = '#1E40AF';
-    microTexture = 'brand_vignette';
-  } else if (
-    sub.includes('vector') ||
-    sub.includes('embedding') ||
-    vis.includes('embedding') ||
-    vis.includes('vector') ||
-    vis.includes('cloud') ||
-    sub.includes('retrieval')
-  ) {
-    // 2. Vector Space & Retrieval: Crisp Off-White with Royal Blue Tint
-    primaryBg = '#F8FAFC';
-    secondaryTint = '#EDF2F7';
-    accentGlow = '#1E40AF';
-    microTexture = 'starfield';
-  } else if (
-    sub.includes('attention') ||
-    vis.includes('attention') ||
-    sub.includes('weight') ||
-    sub.includes('neural') ||
-    sub.includes('agent')
-  ) {
-    // 3. Self-Attention / Neural Graph: Clean Off-White + Amber & Royal Blue Hue
-    primaryBg = '#F8FAFC';
-    secondaryTint = '#F1F5F9';
-    accentGlow = '#D97706';
-    microTexture = 'neural_mesh';
-  } else if (
-    sub.includes('token') ||
-    vis.includes('token') ||
-    sub.includes('fragment') ||
-    sub.includes('matrix') ||
-    sub.includes('code')
-  ) {
-    // 4. Numerical Tokenization: Clean Paper with Royal Blue Accent
-    primaryBg = '#F8FAFC';
-    secondaryTint = '#EFF6FF';
-    accentGlow = '#1E40AF';
-    microTexture = 'cyber_matrix';
-  } else if (
-    sub.includes('obstacle') ||
-    sub.includes('reroute') ||
-    sub.includes('hazard') ||
-    vis.includes('obstacle') ||
-    vis.includes('reroute')
-  ) {
-    // 5. Alert / Action: Off-White with Amber Accent
-    primaryBg = '#FAF6F0';
-    secondaryTint = '#F5ECE0';
-    accentGlow = '#D97706';
-    microTexture = 'hazard_ember';
-  } else {
-    // 6. Hook / Natural Language Input: Clean Blueprint Paper
-    primaryBg = '#F8FAFC';
-    secondaryTint = '#F1F5F9';
-    accentGlow = '#1E40AF';
-    microTexture = 'tech_grid';
-  }
-
-  // Subtle breathing vignette pulse
-  const vignettePulse = 0.85 + Math.sin(p * Math.PI * 2) * 0.08;
-  const radialSpread = 90 + p * 15;
+export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({theme, environment}) => {
+  const accent = theme?.accent && /^#[0-9A-Fa-f]{6}$/.test(theme.accent) ? theme.accent : '#1E40AF';
+  const fine: number[] = [];
+  for (let x = 90; x < 1080; x += 90) fine.push(x);
+  const fineY: number[] = [];
+  for (let y = 90; y < 1920; y += 90) fineY.push(y);
+  const majorX = [360, 720];
+  const majorY = [360, 720, 1080, 1440];
 
   return (
     <AbsoluteFill
       style={{
-        background: `radial-gradient(130% ${radialSpread}% at 50% 25%, ${secondaryTint} 0%, ${primaryBg} 75%)`,
+        background: `radial-gradient(120% 85% at 50% 18%, #FFFFFF 0%, #F3F7FC 46%, #E6EDF8 100%)`,
         overflow: 'hidden',
       }}
       data-environment={environment ?? undefined}
-      data-texture={microTexture}
+      data-canvas="engineered"
     >
-      {/* Procedural Micro-Textures */}
       <svg
         width="100%"
         height="100%"
         viewBox="0 0 1080 1920"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          pointerEvents: 'none',
-          opacity: 0.95,
-        }}
+        preserveAspectRatio="xMidYMid slice"
+        style={{position: 'absolute', top: 0, left: 0, pointerEvents: 'none'}}
       >
         <defs>
-          <radialGradient id="ambientOrb" cx="50%" cy="30%" r="50%">
-            <stop offset="0%" stopColor={accentGlow} stopOpacity="0.04" />
-            <stop offset="100%" stopColor={accentGlow} stopOpacity="0.0" />
+          <radialGradient id="bgAmbientGlow" cx="50%" cy="26%" r="52%">
+            <stop offset="0%" stopColor={accent} stopOpacity="0.06" />
+            <stop offset="60%" stopColor={accent} stopOpacity="0.02" />
+            <stop offset="100%" stopColor={accent} stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="bgDepthVignette" cx="50%" cy="46%" r="72%">
+            <stop offset="0%" stopColor="#64748B" stopOpacity="0" />
+            <stop offset="78%" stopColor="#64748B" stopOpacity="0" />
+            <stop offset="100%" stopColor="#475569" stopOpacity="0.16" />
           </radialGradient>
         </defs>
 
-        {/* Ambient atmospheric warm glow orb */}
-        <circle cx={540} cy={480} r={520} fill="url(#ambientOrb)" />
+        {/* Brand ambient glow — constant, never pulses. */}
+        <rect x={0} y={0} width={1080} height={1920} fill="url(#bgAmbientGlow)" />
 
-        {/* 1. Fine Engineering Blueprint Grid Micro-Texture (#CBD5E1, 20-25% Opacity) */}
-        {microTexture === 'tech_grid' && (
-          <g opacity={0.25}>
-            {[180, 360, 540, 720, 900].map((x) => (
-              <line key={`grid-x-${x}`} x1={x} y1={0} x2={x} y2={1920} stroke="#CBD5E1" strokeWidth={1} strokeDasharray="6 6" />
-            ))}
-            {[320, 640, 960, 1280, 1600].map((y) => (
-              <line key={`grid-y-${y}`} x1={0} y1={y} x2={1080} y2={y} stroke="#CBD5E1" strokeWidth={1} strokeDasharray="6 6" />
-            ))}
-          </g>
-        )}
+        {/* Fine blueprint grid (every 90px). */}
+        <g stroke="#DCE5F2" strokeWidth={1} opacity={0.65}>
+          {fine.map((x) => (
+            <line key={`fx-${x}`} x1={x} y1={0} x2={x} y2={1920} />
+          ))}
+          {fineY.map((y) => (
+            <line key={`fy-${y}`} x1={0} y1={y} x2={1080} y2={y} />
+          ))}
+        </g>
 
-        {/* 2. Cyber Matrix Subtle Dot Grid Micro-Texture */}
-        {microTexture === 'cyber_matrix' && (
-          <g opacity={0.35}>
-            {[180, 360, 540, 720, 900].map((x) =>
-              [400, 600, 800, 1000, 1200, 1400].map((y) => (
-                <circle key={`dot-${x}-${y}`} cx={x} cy={y} r={2} fill="#CBD5E1" />
-              ))
-            )}
-          </g>
-        )}
+        {/* Major engineering axes (every 360px) — dashed, a shade deeper. */}
+        <g stroke="#C4D2E7" strokeWidth={1.4} strokeDasharray="10 8" opacity={0.9}>
+          {majorX.map((x) => (
+            <line key={`mx-${x}`} x1={x} y1={0} x2={x} y2={1920} />
+          ))}
+          {majorY.map((y) => (
+            <line key={`my-${y}`} x1={0} y1={y} x2={1080} y2={y} />
+          ))}
+        </g>
 
-        {/* 3. Neural Mesh Arcs Micro-Texture */}
-        {microTexture === 'neural_mesh' && (
-          <g opacity={0.45}>
-            <circle cx={540} cy={800} r={280} fill="none" stroke="#E2E8F0" strokeWidth={1} strokeDasharray="6 6" />
-            <circle cx={540} cy={800} r={480} fill="none" stroke="#E2E8F0" strokeWidth={1} strokeDasharray="8 8" />
-            <line x1={200} y1={400} x2={880} y2={1200} stroke="#E2E8F0" strokeWidth={0.8} strokeDasharray="4 6" />
-            <line x1={880} y1={400} x2={200} y2={1200} stroke="#E2E8F0" strokeWidth={0.8} strokeDasharray="4 6" />
-          </g>
-        )}
+        {/* Crosshair registration marks where the major axes meet. */}
+        <g stroke="#A9BCD8" strokeWidth={1.6} opacity={0.9}>
+          {majorX.map((x) =>
+            majorY.map((y) => (
+              <g key={`xh-${x}-${y}`}>
+                <line x1={x - 9} y1={y} x2={x + 9} y2={y} />
+                <line x1={x} y1={y - 9} x2={x} y2={y + 9} />
+              </g>
+            )),
+          )}
+        </g>
 
-        {/* 4. Vector Space Subtle Coordinate Ticks */}
-        {microTexture === 'starfield' && (
-          <g opacity={0.35}>
-            {[
-              [140, 320, 1.5], [890, 420, 2], [320, 680, 1], [760, 820, 1.8],
-              [210, 1100, 1.2], [940, 1240, 1.5], [480, 1420, 2], [820, 1560, 1.2],
-            ].map(([sx, sy, sr], idx) => (
-              <circle key={`star-${idx}`} cx={sx} cy={sy} r={sr} fill="#94A3B8" />
-            ))}
-          </g>
-        )}
+        {/* Corner brackets — drafting-sheet framing. */}
+        <g stroke="#B7C6DE" strokeWidth={3} fill="none" opacity={0.8}>
+          <path d="M34 96 V34 H96" />
+          <path d="M984 34 H1046 V96" />
+          <path d="M1046 1824 V1886 H984" />
+          <path d="M96 1886 H34 V1824" />
+        </g>
 
-        {/* 5. Alert Hazard Subtle Guide Lines */}
-        {microTexture === 'hazard_ember' && (
-          <g opacity={0.25}>
-            {[300, 600, 900, 1200, 1500].map((hy) => (
-              <line key={`haz-${hy}`} x1={0} y1={hy} x2={1080} y2={hy + 200} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="10 10" />
-            ))}
-          </g>
-        )}
-
-        {/* 6. Brand Vignette Vignette Border */}
-        {microTexture === 'brand_vignette' && (
-          <rect
-            x={0}
-            y={0}
-            width={1080}
-            height={1920}
-            fill="none"
-            stroke="#E5E0D8"
-            strokeWidth={140}
-            opacity={0.25 * vignettePulse}
-          />
-        )}
+        {/* Depth vignette — keeps the canvas feeling like a lit stage. */}
+        <rect x={0} y={0} width={1080} height={1920} fill="url(#bgDepthVignette)" />
       </svg>
     </AbsoluteFill>
   );

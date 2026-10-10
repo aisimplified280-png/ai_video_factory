@@ -639,7 +639,7 @@ Produces `qa_report.json` with pass/fail per check.
 | `asset_type_diversity` | > 0.4 |
 | `transition_diversity` | > 0.3 |
 | `text_density` | < 0.6 (not text-dominated) |
-| `visual_activity` | > 0.4 |
+| `visual_activity` | histogram ≥ 0.12 AND spatial ≥ 0.015 |
 
 A video that renders correctly but scores below threshold on 3+ metrics is **REJECTED** and sent back to scene_plan stage.
 

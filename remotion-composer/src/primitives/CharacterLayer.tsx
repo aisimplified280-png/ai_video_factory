@@ -67,13 +67,44 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
   const tapTx = (tapDx / tapLen) * tapExtend;
   const tapTy = (tapDy / tapLen) * tapExtend;
 
+  // Per-scene action beats — all event-based, one-shot, never oscillating.
+  // stride: the guide slides in from the left margin at scene start.
+  const strideIn = spec.motion === 'stride' ? (1 - entrance) * -210 : 0;
+  // inspect: one deliberate lean toward the highlighted content, then hold and settle.
+  const leanDeg =
+    spec.motion === 'inspect' && spec.target_anchor
+      ? Math.sign(targetSvgX - handSvgX || 1) *
+        interpolate(progress, [0.14, 0.26, 0.6, 0.72], [0, 5, 5, 0], {
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        })
+      : 0;
+  // Emphasis pulse mid-scene: one presentation bounce so the guide acts each scene.
+  const beat =
+    spec.emotion === 'celebrate'
+      ? 0
+      : interpolate(progress, [0.4, 0.47, 0.54], [0, 1, 0], {
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        });
+  const beatY = -12 * beat;
+  const beatScale = 1 + 0.04 * beat;
+  // Celebration hop after the CTA button responds (single arc, then still).
+  const hop =
+    spec.emotion === 'celebrate'
+      ? interpolate(progress, [0.5, 0.58, 0.68, 0.76], [0, -64, -8, 0], {
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        })
+      : 0;
+
   return (
     <div
       style={{
         position: 'absolute',
         left: posX,
         top: posY,
-        transform: `translate(-50%, -50%) scale(${scale})`,
+        transform: `translate(-50%, -50%) translateX(${strideIn.toFixed(1)}px) translateY(${(beatY + hop).toFixed(1)}px) rotate(${leanDeg.toFixed(2)}deg) scale(${(scale * beatScale).toFixed(4)})`,
         transformOrigin: '50% 50%',
         pointerEvents: 'none',
         zIndex: spec.z_index ?? 15,

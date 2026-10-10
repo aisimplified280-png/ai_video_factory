@@ -57,7 +57,8 @@ def test_mascot_directorial_roles():
     )
     assert intro_spec.role == MascotRole.EXPLORER
     assert intro_spec.depth_plane == "midground"
-    assert intro_spec.motion == MascotMotion.STATIC
+    # The hook opens with a one-shot stride entrance (event-based, no idle bob).
+    assert intro_spec.motion == MascotMotion.STRIDE
 
     # Mechanism / Runtime -> Engineer with tactile tool
     eng_spec = direct_scene_character(
@@ -70,7 +71,7 @@ def test_mascot_directorial_roles():
     )
     assert eng_spec.role == MascotRole.ENGINEER
     assert eng_spec.tool_held is not None
-    assert eng_spec.motion == MascotMotion.STATIC
+    assert eng_spec.motion == MascotMotion.INTERACT
 
     # Scale / Implication -> Analyst with HUD panel
     analyst_spec = direct_scene_character(
@@ -83,7 +84,7 @@ def test_mascot_directorial_roles():
     )
     assert analyst_spec.role == MascotRole.ANALYST
     assert analyst_spec.tool_held == "telemetry_hud_panel"
-    assert analyst_spec.motion == MascotMotion.STATIC
+    assert analyst_spec.motion == MascotMotion.INSPECT
 
 
 def test_mascot_asset_rendering(tmp_path: Path):
@@ -569,7 +570,7 @@ def test_phase18_3_scene_graph_and_multimodal_judge(tmp_path: Path):
 
 def test_phase18_4_semantic_composition_rebuild():
     """Verify Phase 18.4 Rebuild requirements:
-    1. Mascot motion is STATIC by default, zero idle oscillation.
+    1. Mascot motion is event-based by default (one-shot per scene), zero idle oscillation.
     2. Visual composition derived from semantics, not index modulo.
     3. Distinct topics/claims yield materially different visual topologies.
     4. Zero invented facts appear in scene graph nodes.
@@ -648,7 +649,14 @@ def test_phase18_4_semantic_composition_rebuild():
         scene_graph=sg_stack,
     )
     assert char_directed.position["x"] != 540.0, "Mascot must avoid center collision with hero node"
-    assert char_directed.motion == MascotMotion.STATIC
+    # Motion stays event-based (one-shot gesture per scene), never idle oscillation.
+    assert char_directed.motion in (
+        MascotMotion.STATIC,
+        MascotMotion.STRIDE,
+        MascotMotion.INTERACT,
+        MascotMotion.INSPECT,
+    )
+    assert char_directed.motion != MascotMotion.FLOAT
     assert char_directed.target_anchor["x"] == sg_stack.primary_anchor[0]
     assert char_directed.target_anchor["y"] == sg_stack.primary_anchor[1]
 

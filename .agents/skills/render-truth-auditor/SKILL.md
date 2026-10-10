@@ -30,7 +30,7 @@ Establishes the encoded MP4 file as the sole authority of render success. Prohib
 - Video stream resolution or fps disagrees with the platform profile.
 - Audio stream is missing, muted, or has zero duration.
 - Consecutive frames at different timestamps are bitwise/statistically identical (frozen render).
-- Mean inter-frame histogram activity is below threshold (< 0.20).
+- Mean inter-frame activity is below the dual floors: histogram delta < 0.12 or spatial pixel delta < 0.015.
 
 ## Evidence Requirements
 - Raw JSON output of `ffprobe` containing video and audio stream parameters.

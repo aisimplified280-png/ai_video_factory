@@ -20,7 +20,7 @@ import {staticCamera} from '../camera/static';
 import {tracking} from '../camera/tracking';
 import {zoom} from '../camera/zoom';
 import {incomingStyle as blurIn, outgoingStyle as blurOut} from '../transitions/motionBlur';
-import {incomingStyle as fadeIn, outgoingStyle as fadeOut} from '../transitions/fade';
+import {incomingStyle as fadeIn} from '../transitions/fade';
 import {flashStyle} from '../transitions/lightFlash';
 import {incomingStyle as wipeIn} from '../transitions/wipe';
 import {incomingStyle as zoomIn, outgoingStyle as zoomOut} from '../transitions/zoom';
@@ -29,7 +29,6 @@ import {incomingStyle as morphIn, outgoingStyle as morphOut} from '../transition
 import {incomingStyle as matchIn, outgoingStyle as matchOut} from '../transitions/matchCut';
 import {incomingStyle as slideIn, outgoingStyle as slideOut} from '../transitions/slide';
 import {ActionLayer} from '../primitives/ActionLayer';
-import {BackgroundLayer} from '../primitives/BackgroundLayer';
 import {CharacterLayer} from '../primitives/CharacterLayer';
 import {ChartLayer} from '../primitives/ChartLayer';
 import {DiagramLayer} from '../primitives/DiagramLayer';
@@ -68,6 +67,8 @@ export function ctaMascotSpec(spec: CharacterSpec, width: number, height: number
     target: 'subscribe control',
     target_anchor: ctaSubscribeAnchor(width, height),
     tool_held: null,
+    motion: 'interact',
+    emotion: 'celebrate',
     z_index: 120,
   };
 }
@@ -350,9 +351,8 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
     case 'overlay':
       return null;
     case 'background':
-      if (asset) {
-        return <ImageLayer src={requireAssetUrl(asset)} framing={event.framing} />;
-      }
+      // The canvas is constant for the whole video (rendered globally) —
+      // background events never paint per scene.
       return null;
     case 'caption':
       return null;
@@ -361,55 +361,125 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
   }
 }
 
-/** Entrance style for the first `overlap` frames of an event. */
-function headStyleFor(intent: string | null, overlap: number, local: number): React.CSSProperties {
-  if (overlap <= 0 || local >= overlap) {
-    return {};
-  }
-  const progress = local / Math.max(1, overlap);
-  switch (transitionModuleFor(intent)) {
-    case 'fade':
-      return fadeIn(progress);
-    case 'wipe':
-      return wipeIn(progress);
-    case 'zoom':
-      return zoomIn(progress);
-    case 'objectTransition':
-      return objectIn(progress);
-    case 'shapeMorph':
-      return morphIn(progress);
-    case 'motionBlur':
-      return blurIn(progress);
-    case 'matchCut':
-      return matchIn(progress);
-    case 'slide':
-      return slideIn(progress);
+/** Elements arrive as a choreographed group: content leads, then mascot, then details. */
+function enterDelayFor(role: string): number {
+  switch (role) {
+    case 'midground':
+    case 'primary_visual':
+      return 0;
+    case 'character':
+      return 3;
+    case 'foreground':
+      return 5;
     default:
-      return {};
+      return 2;
   }
 }
 
-/** Exit style while an event lends its tail to the next entrance. */
-function tailStyleFor(intent: string | null, tail: number, intoTail: number): React.CSSProperties {
+/** On exit the order reverses: details leave first, content holds longest. */
+function exitLeadFor(role: string): number {
+  switch (role) {
+    case 'foreground':
+      return 0;
+    case 'diagram':
+    case 'overlay':
+      return 2;
+    case 'character':
+      return 3;
+    case 'midground':
+    case 'primary_visual':
+      return 5;
+    default:
+      return 3;
+  }
+}
+
+/**
+ * Entrance style for the first `overlap` frames of an event.
+ * Each element waits its stagger turn, then enters with a role-specific move
+ * (content rises, details scale in) — never the whole frame sliding as one unit.
+ */
+function headStyleFor(intent: string | null, overlap: number, local: number, role = ''): React.CSSProperties {
+  if (overlap <= 0 || local >= overlap) {
+    return {};
+  }
+  const delay = Math.min(enterDelayFor(role), Math.max(0, overlap - 3));
+  if (local < delay) {
+    return {opacity: 0};
+  }
+  const p = Math.min(1, Math.max(0, (local - delay) / Math.max(1, overlap - delay)));
+  const base = (() => {
+    switch (transitionModuleFor(intent)) {
+      case 'fade':
+        return fadeIn(p);
+      case 'wipe':
+        return wipeIn(p);
+      case 'zoom':
+        return zoomIn(p);
+      case 'objectTransition':
+        return objectIn(p);
+      case 'shapeMorph':
+        return morphIn(p);
+      case 'motionBlur':
+        return blurIn(p);
+      case 'matchCut':
+        return matchIn(p);
+      case 'slide':
+        return slideIn(p);
+      default:
+        return {};
+    }
+  })();
+  const opacity = base.opacity ?? p;
+  if (base.transform) {
+    return {...base, opacity};
+  }
+  if (role === 'character') {
+    // The mascot's spring entrance owns its motion — fade only.
+    return {opacity};
+  }
+  if (role === 'foreground' || role === 'diagram' || role === 'overlay') {
+    return {opacity, transform: `scale(${(0.93 + 0.07 * p).toFixed(4)})`};
+  }
+  return {opacity, transform: `translateY(${((1 - p) * 46).toFixed(1)}px)`};
+}
+
+/**
+ * Exit style while an event lends its tail to the next entrance.
+ * Elements leave one by one (reverse stagger): details first, content last,
+ * each with its own move — content continues upward, details shrink away.
+ */
+function tailStyleFor(intent: string | null, tail: number, intoTail: number, role = ''): React.CSSProperties {
   if (tail <= 0) {
     return {};
   }
-  const progress = Math.min(1, Math.max(0, intoTail / Math.max(1, tail)));
+  const delay = Math.min(exitLeadFor(role), Math.max(0, tail - 3));
+  if (intoTail < delay) {
+    return {};
+  }
+  const q = Math.min(1, Math.max(0, (intoTail - delay) / Math.max(1, tail - delay)));
+  if (transitionModuleFor(intent) === 'fade') {
+    if (role === 'foreground' || role === 'diagram' || role === 'overlay') {
+      return {opacity: 1 - q, transform: `scale(${(1 - 0.07 * q).toFixed(4)})`};
+    }
+    if (role === 'character') {
+      return {opacity: 1 - q};
+    }
+    return {opacity: 1 - q, transform: `translateY(${(-30 * q).toFixed(1)}px)`};
+  }
   switch (transitionModuleFor(intent)) {
-    case 'fade':
-      return fadeOut(progress);
     case 'zoom':
-      return zoomOut(progress);
+      return zoomOut(q);
     case 'objectTransition':
-      return objectOut(progress);
+      return objectOut(q);
     case 'shapeMorph':
-      return morphOut(progress);
+      return morphOut(q);
     case 'motionBlur':
-      return blurOut(progress);
+      return blurOut(q);
     case 'matchCut':
-      return matchOut(progress);
+      return matchOut(q);
     case 'slide':
-      return slideOut(progress);
+      return slideOut(q);
     default:
       return {};
   }
@@ -434,7 +504,6 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
   const layered = scene.depth_strategy && /background|midground|foreground/i.test(scene.depth_strategy);
   const sceneDurationFrames = Math.max(1, Math.round((scene.end - scene.start) * fps));
   const sceneProgress = Math.min(1, Math.max(0, frame / sceneDurationFrames));
-  const hasBackgroundAsset = ordered.some((p) => p.event.role === 'background' && Boolean(p.event.asset_id));
 
   // §17 CTA choreography — one short deliberate sequence, then a stable branded ending:
   // 0.00–0.125 composition appears | 0.12–0.32 mascot taps the control | 0.30–0.40 control responds | 0.40+ settles.
@@ -453,20 +522,29 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
   const ctaMascotSpecResolved =
     scene.character_spec && ctaScene ? ctaMascotSpec(scene.character_spec, width, height) : scene.character_spec;
 
+  // §26 upgraded ending choreography — one energetic but deterministic sequence,
+  // everything settled by ~0.76 so the final hold is a clean branded still.
+  const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+  const ctaSettle = 1 + 0.05 * Math.sin(Math.PI * clamp01(sceneProgress / 0.14));
+  const cursorT = clamp01((sceneProgress - 0.16) / 0.12);
+  const cursorVisible = ctaScene && sceneProgress >= 0.16 && sceneProgress < 0.46;
+  const cursorPress = sceneProgress >= 0.3 && sceneProgress < 0.4 ? 1 - Math.abs(sceneProgress - 0.35) / 0.05 : 0;
+  const cursorFade = sceneProgress >= 0.4 ? clamp01((sceneProgress - 0.4) / 0.06) : 0;
+  const ripple = ctaScene && sceneProgress >= 0.34 && sceneProgress <= 0.66 ? (sceneProgress - 0.34) / 0.32 : -1;
+  const confettiT = ctaScene && sceneProgress >= 0.4 && sceneProgress <= 0.9 ? (sceneProgress - 0.4) / 0.5 : -1;
+  const bellSwing =
+    ctaScene && sceneProgress >= 0.42 && sceneProgress <= 0.68
+      ? 18 * Math.sin((sceneProgress - 0.42) * 52) * Math.max(0, 1 - (sceneProgress - 0.42) * 5.5)
+      : 0;
+  const bellPop = ctaScene && sceneProgress >= 0.42 && sceneProgress < 0.54 ? Math.sin(((sceneProgress - 0.42) / 0.12) * Math.PI) : 0;
+  const underlineT = clamp01((sceneProgress - 0.55) / 0.18);
+  const buttonGlow = ctaSubscribed && sceneProgress < 0.62 ? clamp01((sceneProgress - 0.4) / 0.05) * (1 - clamp01((sceneProgress - 0.5) / 0.12)) : 0;
+  const ctaAnchor = ctaSubscribeAnchor(width, height);
+  const cursorTipX = ctaAnchor.x + 10 + (1 - cursorT) * 170;
+  const cursorTipY = ctaAnchor.y + 4 + (1 - cursorT) * 210;
+
   return (
     <AbsoluteFill>
-      {!hasBackgroundAsset && (
-        <BackgroundLayer
-          theme={theme}
-          environment={scene.environment}
-          sceneId={scene.scene_id}
-          subject={scene.subject}
-          visualPurpose={scene.visual_purpose}
-          progress={sceneProgress}
-          isAITopic={isAITopic}
-        />
-      )}
-
       {ordered.map(({event, from, duration, head, tail, flashFrames}, index) => {
         const total = duration + tail;
         const local = Math.min(Math.max(0, frame - from), Math.max(0, total - 1));
@@ -477,8 +555,8 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
         const style = mergeStyles(
           cameraStyle(event.camera_intent, progress),
           motionStyle(event.motion_intent, progress),
-          headStyleFor(event.transition_in, head, local),
-          inTail ? tailStyleFor(boundaryTransition?.intent ?? next?.event.transition_in ?? null, tail, local - duration) : undefined,
+          headStyleFor(event.transition_in, head, local, event.role),
+          inTail ? tailStyleFor(boundaryTransition?.intent ?? next?.event.transition_in ?? null, tail, local - duration, event.role) : undefined,
           depth ? parallax(progress, depth) : undefined,
         );
         return (
@@ -568,17 +646,50 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
             <path d="M14.6 26.5 H26.9" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
             <circle cx="35.5" cy="14.5" r="4" fill="#F59E0B" />
           </svg>
-          <span
-            style={{
-              fontFamily: theme.fontFamily,
-              fontSize: 60,
-              fontWeight: 800,
-              letterSpacing: '0.13em',
-              color: '#0F172A',
-            }}
-          >
-            {ctaBranding.toUpperCase()}
-          </span>
+          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+            {/* Wordmark builds letter-by-letter AFTER the subscribe moment. */}
+            <span
+              style={{
+                display: 'flex',
+                fontFamily: theme.fontFamily,
+                fontSize: 60,
+                fontWeight: 800,
+                letterSpacing: '0.13em',
+                color: '#0F172A',
+              }}
+            >
+              {ctaBranding.toUpperCase().split('').map((ch, i) => {
+                const lp = clamp01((sceneProgress - (0.42 + i * 0.015)) / 0.12);
+                return (
+                  <span
+                    key={`${i}-${ch}`}
+                    style={{
+                      display: 'inline-block',
+                      whiteSpace: 'pre',
+                      opacity: lp,
+                      transform: `translateY(${((1 - lp) * 18).toFixed(1)}px) scale(${(0.8 + 0.2 * lp).toFixed(3)})`,
+                    }}
+                  >
+                    {ch}
+                  </span>
+                );
+              })}
+            </span>
+            {/* Underline sweep in brand colors — draws once, then holds. */}
+            <div
+              style={{
+                height: 6,
+                width: 620,
+                maxWidth: '80vw',
+                borderRadius: 3,
+                marginTop: 10,
+                background: 'linear-gradient(90deg, #3B82F6, #F59E0B)',
+                transform: `scaleX(${underlineT.toFixed(3)})`,
+                transformOrigin: 'left center',
+                opacity: underlineT > 0 ? 1 : 0,
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -599,7 +710,7 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
             alignItems: 'center',
             gap: 22,
             zIndex: 100,
-            transform: `translateY(${(1 - ctaAppear) * 50}px)`,
+            transform: `translateY(${(1 - ctaAppear) * 50}px) scale(${ctaSettle.toFixed(3)})`,
             opacity: ctaAppear,
           }}
         >
@@ -653,7 +764,7 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 10,
-              boxShadow: '0 8px 24px rgba(37, 99, 235, 0.45)',
+              boxShadow: `0 8px 24px rgba(37, 99, 235, 0.45), 0 0 ${Math.round(34 * buttonGlow)}px rgba(74, 221, 128, ${(0.85 * buttonGlow).toFixed(2)})`,
               transform: `scale(${ctaButtonScale})`,
               transformOrigin: 'center center',
             }}
@@ -662,6 +773,104 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
             <span style={{fontSize: 18}}>{ctaSubscribed ? '✓' : '▶'}</span>
           </div>
         </div>
+      )}
+
+      {/* Cursor click — arrives, presses with the button, then leaves. */}
+      {ctaScene && cursorVisible && (
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          style={{
+            position: 'absolute',
+            left: cursorTipX - 4,
+            top: cursorTipY - 2,
+            zIndex: 130,
+            opacity: 1 - cursorFade,
+            transform: `scale(${(1 - 0.18 * cursorPress).toFixed(3)})`,
+            transformOrigin: '2px 2px',
+            pointerEvents: 'none',
+            filter: 'drop-shadow(0 4px 8px rgba(15, 23, 42, 0.45))',
+          }}
+        >
+          <path d="M4 2 L20 12 L12.5 13.5 L9 21 Z" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      )}
+
+      {/* Click ripple — two green rings from the control at the press moment. */}
+      {ctaScene && ripple >= 0 && (
+        <div style={{position: 'absolute', left: ctaAnchor.x, top: ctaAnchor.y, zIndex: 125, pointerEvents: 'none'}}>
+          {[0, 0.16].map((off, k) => {
+            const rt = Math.min(1, Math.max(0, (ripple - off) / 0.84));
+            if (rt <= 0 || rt >= 1) {
+              return null;
+            }
+            const size = 70 + rt * 420;
+            return (
+              <div
+                key={k}
+                style={{
+                  position: 'absolute',
+                  width: size,
+                  height: size,
+                  marginLeft: -size / 2,
+                  marginTop: -size / 2,
+                  borderRadius: '50%',
+                  border: `4px solid rgba(22, 163, 74, ${(0.55 * (1 - rt)).toFixed(2)})`,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Confetti burst — deterministic one-shot spray when the button flips green. */}
+      {ctaScene && confettiT >= 0 && (
+        <div style={{position: 'absolute', left: ctaAnchor.x, top: ctaAnchor.y, zIndex: 125, pointerEvents: 'none'}}>
+          {Array.from({length: 16}).map((_, i) => {
+            const angle = i * 2.3999632;
+            const dist = 150 + (i % 5) * 48;
+            const x = Math.cos(angle) * dist * confettiT;
+            const y = Math.sin(angle) * dist * confettiT * 0.7 + 170 * confettiT * confettiT;
+            const colors = ['#3B82F6', '#F59E0B', '#16A34A', '#1D4ED8', '#F8FAFC'];
+            const op = confettiT < 0.6 ? 1 : Math.max(0, (1 - confettiT) / 0.4);
+            return (
+              <div
+                key={i}
+                style={{
+                  position: 'absolute',
+                  width: 10 + (i % 3) * 4,
+                  height: 14 + (i % 4) * 4,
+                  backgroundColor: colors[i % 5],
+                  borderRadius: 3,
+                  opacity: op * 0.95,
+                  transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${i * 47 + confettiT * 430}deg)`,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Notification bell — pops in at subscribe, rings once, then holds. */}
+      {ctaScene && sceneProgress >= 0.42 && (
+        <svg
+          width="46"
+          height="46"
+          viewBox="0 0 24 24"
+          style={{
+            position: 'absolute',
+            left: ctaAnchor.x + 148,
+            top: ctaAnchor.y - 22,
+            zIndex: 126,
+            transform: `rotate(${bellSwing.toFixed(2)}deg) scale(${(1 + 0.25 * bellPop).toFixed(3)})`,
+            pointerEvents: 'none',
+            filter: 'drop-shadow(0 3px 6px rgba(15, 23, 42, 0.3))',
+          }}
+        >
+          <path d="M12 3a6 6 0 0 0-6 6v3.6L4.4 16.4h15.2L18 12.6V9a6 6 0 0 0-6-6z" fill="#F59E0B" stroke="#B45309" strokeWidth="1.5" strokeLinejoin="round" />
+          <path d="M10 18.6a2 2 0 0 0 4 0" stroke="#B45309" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        </svg>
       )}
       {audio
         .filter((item) => item.clip.publicPath !== null)

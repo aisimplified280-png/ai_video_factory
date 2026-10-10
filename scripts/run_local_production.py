@@ -44,6 +44,35 @@ def _frame_stats(path: Path) -> dict:
             "extrema": stat.extrema[0], "size": img.size}
 
 
+def _visual_activity(frames: list[Path]) -> tuple[float, float]:
+    """Dual activity metric over adjacent sampled frames -> (histogram, spatial).
+
+    histogram: total-variation distance between luminance histograms (churn of
+    the frame-wide tonal distribution). spatial: mean |a-b|/255 per pixel
+    (actual visible motion anywhere in frame).
+
+    Both terms are required. Histogram-TV is provably blind to motion that
+    preserves luminance values (translation), and it collapses on a video whose
+    background is deliberately CONSTANT while only elements animate — measured
+    on such a production: histogram 0.175 / spatial 0.054, versus <0.005
+    spatial for stuck output. freeze_check separately rejects identical frames.
+    """
+    from PIL import Image, ImageChops, ImageStat
+    hist_d: list[float] = []
+    spat_d: list[float] = []
+    prev = None
+    for path in frames:
+        img = Image.open(path).convert("L")
+        if prev is not None:
+            ha, hb = prev.histogram(), img.histogram()
+            hist_d.append(sum(abs(x - y) for x, y in zip(ha, hb)) / (img.size[0] * img.size[1]))
+            spat_d.append(ImageStat.Stat(ImageChops.difference(prev, img)).mean[0] / 255.0)
+        prev = img
+    hist_mean = sum(hist_d) / max(1, len(hist_d))
+    spat_mean = sum(spat_d) / max(1, len(spat_d))
+    return hist_mean, spat_mean
+
+
 def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: float = 0.5) -> dict:
     """Evidence-based QA over the ENCODED mp4. Returns the qa_report payload."""
     from PIL import Image
@@ -81,13 +110,16 @@ def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: 
     frozen = sum(1 for a, b in zip(frames, frames[1:])
                  if _frame_stats(a)["mean"] == _frame_stats(b)["mean"] and _frame_stats(a)["stddev"] == _frame_stats(b)["stddev"])
     record("freeze_check", frozen == 0, f"{frozen} adjacent identical pairs of {len(frames) - 1}")
-    diffs = []
-    for a, b in zip(frames, frames[1:]):
-        ia, ib = Image.open(a).convert("L"), Image.open(b).convert("L")
-        ha, hb = ia.histogram(), ib.histogram()
-        diffs.append(sum(abs(x - y) for x, y in zip(ha, hb)) / (ia.size[0] * ia.size[1]))
-    record("visual_activity", sum(diffs) / max(1, len(diffs)) >= 0.20,
-           f"mean inter-frame histogram delta={sum(diffs) / max(1, len(diffs)):.2f}")
+    hist_mean, spat_mean = _visual_activity(frames)
+    # Dual floors: the old single 0.20 histogram bar was calibrated when every
+    # scene repainted its own background. With the now-mandated constant canvas,
+    # frame-wide tonal churn is gone BY DESIGN while elements keep animating —
+    # so the gate now requires BOTH: histogram >= 0.12 still rejects dead or
+    # static output, and spatial >= 0.015 demands real pixel-level motion
+    # (evidence: constant-canvas production scored spatial 0.054; stuck output
+    # scores <0.005). freeze_check above still rejects identical frames.
+    record("visual_activity", hist_mean >= 0.12 and spat_mean >= 0.015,
+           f"histogram delta={hist_mean:.3f} (floor 0.12), spatial delta={spat_mean:.3f} (floor 0.015)")
 
     # Caption zone: the pill sits above a 220px bottom padding, so measure the
     # bottom 330px. It must carry text while captions are active.

@@ -116,7 +116,7 @@ def direct_scene_character(
             depth_plane="midground",
             position={"x": 540.0, "y": 1050.0},
             target_anchor={"x": 540.0, "y": 1640.0},  # subscribe control centre (see SceneComposition CTA card)
-            motion=MascotMotion.STATIC,
+            motion=MascotMotion.INTERACT,
             emotion="confident_inviting",
             tool_held=None,
         )
@@ -132,7 +132,7 @@ def direct_scene_character(
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
-            motion=MascotMotion.STATIC,
+            motion=MascotMotion.STRIDE,
             emotion="intense_curious",
             tool_held="optical_scanner",
         )
@@ -148,7 +148,7 @@ def direct_scene_character(
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
-            motion=MascotMotion.STATIC,
+            motion=MascotMotion.INTERACT,
             emotion="analytical_focused",
             tool_held="vector_token",
         )
@@ -164,7 +164,7 @@ def direct_scene_character(
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
-            motion=MascotMotion.STATIC,
+            motion=MascotMotion.INSPECT,
             emotion="analytical_focused",
             tool_held="telemetry_hud_panel",
         )
@@ -180,7 +180,7 @@ def direct_scene_character(
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
-            motion=MascotMotion.STATIC,
+            motion=MascotMotion.INTERACT,
             emotion="focused_curious",
             tool_held="quantum_stylus",
         )
@@ -196,7 +196,7 @@ def direct_scene_character(
             depth_plane="midground",
             position={"x": pos_x, "y": pos_y},
             target_anchor={"x": anchor_x, "y": anchor_y},
-            motion=MascotMotion.STATIC,
+            motion=MascotMotion.INSPECT,
             emotion="intense_curious",
             tool_held="optical_scanner",
         )
@@ -211,7 +211,7 @@ def direct_scene_character(
         depth_plane="midground",
         position={"x": pos_x, "y": pos_y},
         target_anchor={"x": anchor_x, "y": anchor_y},
-        motion=MascotMotion.STATIC,
+        motion=MascotMotion.STRIDE,
         emotion="neutral_intelligent",
         tool_held="optical_scanner",
     )

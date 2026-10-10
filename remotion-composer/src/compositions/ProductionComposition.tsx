@@ -1,6 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Sequence} from 'remotion';
 import {CaptionTrack} from '../captions/CaptionTrack';
+import {BackgroundLayer} from '../primitives/BackgroundLayer';
 import {MilestoneTabs} from '../primitives/MilestoneTabs';
 import {overlapFrames as blurOverlap} from '../transitions/motionBlur';
 import {overlapFrames as fadeOverlap} from '../transitions/fade';
@@ -82,10 +83,11 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
     boundaryMap.set(currScene.scene_id, boundary);
     sceneTails.set(currScene.scene_id, overlap);
 
-    // Apply tail frames to currScene visual events (the mascot crossfades too)
+    // Apply tail frames to currScene visual events (the mascot crossfades too).
+    // The background never participates: the canvas is constant for the whole video.
     const currEvents = byScene.get(currScene.scene_id) ?? [];
     for (const evt of currEvents) {
-      if (evt.role === 'midground' || evt.role === 'primary_visual' || evt.role === 'background' || evt.role === 'foreground' || evt.role === 'character') {
+      if (evt.role === 'midground' || evt.role === 'primary_visual' || evt.role === 'foreground' || evt.role === 'character') {
         eventTails.set(evt.event_id, overlap);
       }
     }
@@ -111,6 +113,8 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
 
   return (
     <AbsoluteFill style={{backgroundColor: isAITopic ? '#F8FAFC' : (props.theme.background || '#F8FAFC')}}>
+      {/* One constant engineered canvas for the entire video — scenes never wipe it. */}
+      <BackgroundLayer theme={props.theme} />
       {sceneOrder.map((scene) => {
         const sceneRange = eventFrames(scene.start, scene.end, fps);
         const sceneTail = sceneTails.get(scene.scene_id) ?? 0;
