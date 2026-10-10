@@ -503,6 +503,10 @@ def cmd_produce(args: argparse.Namespace, progress_cb: Any = None) -> int:
     vl_scenes = []
     for _sc in visual_plan.scenes:
         _layers = layers_by_scene.get(_sc.scene_id, set())
+        # The constant engineered canvas renders behind EVERY scene (the live
+        # timeline no longer carries per-scene background assets, §10): the
+        # background layer is genuinely on screen, so depth evidence says so.
+        _layers.add("background")
         vl_scenes.append({
             "scene_id": _sc.scene_id,
             "environment": getattr(_sc, "environment", "") or "default",

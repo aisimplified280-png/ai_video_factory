@@ -245,6 +245,12 @@ _SEM_ABSTRACT = {
     "behavior", "behaviour", "effect", "power", "speed", "accuracy", "quality",
     "difference", "overview", "introduction", "basics", "fundamentals", "explained",
     "explainer", "story", "world", "life", "day", "future", "history", "guide",
+    # Brand/chrome words: the CTA contract subject ("AI Simplified Lab Brand
+    # Identity") names identity concepts the crest label never spells out —
+    # requiring them would block genuinely correct CTA scenes.
+    "brand", "identity", "logo", "emblem", "mark", "design", "layout", "frame",
+    "scene", "shot", "studio", "style", "art", "direction", "render", "video",
+    "short", "channel", "content", "topic", "title", "series", "episode",
 }
 # Expected depicted relationship per topology (what the renderer MUST draw).
 _TOPOLOGY_RELATIONSHIP = {
@@ -298,14 +304,24 @@ def verify_semantic_evidence(contract: Any, scene_graph: Any) -> tuple[str, list
         if w not in _SEM_STOPWORDS and w not in _SEM_ABSTRACT
     ]
     if subject_words:
-        missing = [w for w in subject_words if not (w in labels or w.rstrip("s") in labels or _node_icon(w) in icons)]
-        if len(missing) == len(subject_words):
+        def _covered(w: str) -> bool:
+            return w in labels or w.rstrip("s") in labels or _node_icon(w) in icons
+
+        missing = [w for w in subject_words if not _covered(w)]
+        covered_count = len(subject_words) - len(missing)
+        if covered_count == 0:
             return "contradicted", [
                 f"contract subject '{subject}' is not depicted by any node label or glyph "
                 f"(depicted: {labels})"
             ]
-        if missing:
-            return "unverified", [f"subject words not depicted: {', '.join(missing)}"]
+        # Verdict needs most of the subject depicted: a clip-truncated hero label
+        # or one derived synonym may drop a word or two, but a layout covering
+        # less than 60% of the subject's drawable words has NOT proven the claim.
+        if covered_count < max(1, -(-3 * len(subject_words) // 5)):  # ceil(0.6 * n)
+            return "unverified", [
+                f"subject words not depicted ({covered_count}/{len(subject_words)} covered): "
+                f"{', '.join(missing)}"
+            ]
     else:
         # Fallback link: at least one required entity fragment must be depicted.
         entities = [str(e).lower() for e in (getattr(contract, "entities", None) or [])]

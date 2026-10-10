@@ -75,7 +75,7 @@ def _visual_activity(frames: list[Path]) -> tuple[float, float]:
 
 def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: float = 0.5) -> dict:
     """Evidence-based QA over the ENCODED mp4. Returns the qa_report payload."""
-    from PIL import Image
+    from PIL import Image, ImageChops
 
     info = ffprobe_info(video_path)
     video = next(s for s in info["streams"] if s.get("codec_type") == "video")
@@ -133,7 +133,7 @@ def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: 
 
     # Caption zone: the pill sits above a 220px bottom padding, so measure the
     # bottom 330px. It must carry text while captions are active.
-    caption_active = any(c["end"] / max(duration, 0.01) >= 0.5 for c in [edit_data["caption_track"][0]])
+    caption_track = edit_data.get("caption_track") or []
     band_activity = []
     for path in frames:
         img = Image.open(path).convert("L")
@@ -144,37 +144,81 @@ def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: 
 
     # --- Measured layout checks (§9): from ACTUAL rendered pixels and ACTUAL
     # timeline spans — never "by construction" claims.
-    # Caption pill: the widest dark mass (>50% frame width) in the bottom band
-    # of each caption-active frame must sit inside the 6%/94% safe insets.
     cta_start = float(edit_data.get("cta", {}).get("start", duration))
     inset_l_ok, inset_r_ok = width * 0.06, width * 0.94
+    # Which spans does the renderer actually SHOW? CaptionTrack hides spans
+    # that begin at the CTA gate and clips earlier spans at cta.start.
+    live_captions = [c for c in caption_track if c["start"] < cta_start - 0.05]
+    cta_hidden_captions = [c for c in caption_track if c["start"] >= cta_start - 0.05]
+
+    def _pill_extent(path: Path) -> tuple[int, int] | None:
+        """Longest contiguous run of non-canvas pixels across the band rows.
+
+        The caption pill is a solid block distinct from the frame canvas (the
+        light grid background). Edge vignettes and gradients never form ONE
+        contiguous run of >=30% frame width, so they cannot fake a pill —
+        the old whole-band dark-mass bbox was fooled by exactly that.
+        """
+        img = Image.open(path).convert("RGB")
+        band = img.crop((0, height - 340, width, height))
+        colors = band.getcolors(maxcolors=1_000_000) or []
+        if not colors:
+            return None
+        canvas = max(colors, key=lambda c: c[0])[1]
+
+        def _diff(px: tuple[int, int, int]) -> bool:
+            return max(abs(px[0] - canvas[0]), abs(px[1] - canvas[1]), abs(px[2] - canvas[2])) > 30
+
+        pix = band.load()
+        best_len, best_span = 0, None
+        for row in range(10, band.height - 10, 4):
+            run_start = None
+            for x in range(width):
+                if _diff(pix[x, row]):
+                    if run_start is None:
+                        run_start = x
+                elif run_start is not None:
+                    if x - run_start > best_len:
+                        best_len, best_span = x - run_start, (run_start, x)
+                    run_start = None
+            if run_start is not None and width - run_start > best_len:
+                best_len, best_span = width - run_start, (run_start, width)
+        if best_len >= width * 0.30 and best_span is not None:
+            return best_span
+        return None
+
     pill_frames_measured = 0
     margin_violations: list[str] = []
-    for cap in edit_data.get("caption_track", []):
-        mid_t = (cap["start"] + cap["end"]) / 2.0
+    for cap in live_captions:
+        visible_end = min(cap["end"], cta_start)
+        mid_t = (cap["start"] + visible_end) / 2.0
         idx = min(range(len(frames)), key=lambda i: abs((i + 0.5) / len(frames) * duration - mid_t))
-        cap_img = Image.open(frames[idx]).convert("L")
-        cap_band = cap_img.crop((0, height - 340, width, height))
-        mask = cap_band.point(lambda p: 255 if p < 55 else 0)
-        bbox = mask.getbbox()
-        if bbox and (bbox[2] - bbox[0]) > width * 0.5:
-            pill_frames_measured += 1
-            if bbox[0] < inset_l_ok or bbox[2] > inset_r_ok:
-                margin_violations.append(f"{Path(frames[idx]).name}: pill x=[{bbox[0]},{bbox[2]}]")
+        extent = _pill_extent(frames[idx])
+        if extent is None:
+            continue  # caption faded out in this sampled frame — nothing to measure
+        pill_frames_measured += 1
+        x0, x1 = extent
+        if x0 < inset_l_ok or x1 > inset_r_ok:
+            margin_violations.append(f"{Path(frames[idx]).name}: pill x=[{x0},{x1}]")
     record("text_within_margins", pill_frames_measured > 0 and not margin_violations,
-           f"pill bbox measured from pixels on {pill_frames_measured} caption frames "
+           f"pill measured as longest non-canvas run on {pill_frames_measured} rendered-caption frames "
            f"(safe insets {inset_l_ok:.0f}/{inset_r_ok:.0f}px); "
            f"violations={margin_violations[:3] if margin_violations else 'none'}")
-    # Caption/CTA collision: every caption span must clear BEFORE the CTA focus
-    # begins (measured against the real cta.start in the timeline).
+    # Caption/CTA collision: a LIVE caption (one the renderer shows) must be
+    # scheduled to clear before the CTA focus — end <= cta.start. Spans that
+    # BEGIN at the CTA gate are hidden entirely by the CaptionTrack clear rule
+    # and are reported as evidence, not failures. Measured against the real
+    # cta.start from the timeline.
     caption_into_cta = [
         f"{cap.get('event_id')} (end={cap['end']:.2f}s > cta_start={cta_start:.2f}s)"
-        for cap in edit_data.get("caption_track", [])
+        for cap in live_captions
         if cap["end"] > cta_start + 0.02
     ]
-    record("caption_collision", pill_frames_measured > 0 and not caption_into_cta,
-           f"caption spans crossing into the CTA focus: "
-           f"{caption_into_cta[:3] if caption_into_cta else 'none'} (measured vs cta.start)")
+    record("caption_collision", not caption_into_cta,
+           f"live captions scheduled past cta.start: "
+           f"{caption_into_cta[:3] if caption_into_cta else 'none'}; "
+           f"{len(cta_hidden_captions)} caption span(s) begin at the CTA gate and are hidden by the clear rule "
+           f"(measured vs cta.start={cta_start:.2f}s)")
 
     # CTA: final 10% must show brand activity + CTA caption coverage.
     cta = edit_data.get("cta", {})

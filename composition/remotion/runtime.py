@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +45,74 @@ class RenderResult(dict):
                  manifest: dict | None = None, code: str | None = None,
                  message: str = "") -> None:
         super().__init__(status=status, output_path=output_path, manifest=manifest, code=code, message=message)
+
+
+class ComposerRenderLock:
+    """Cross-process exclusive lock for one composer render.
+
+    Renders stage media into the composer's shared ``public/`` root under flat,
+    identically-named files (``ast_scene_03_mid.png``) and build inside the
+    same bundle workspace. Two concurrent renders therefore overwrite each
+    other's staged assets — proven to produce topic-crossed frames (a GPS video
+    showed the RAG production's diagram). One render at a time per composer;
+    a crashed holder's lock breaks after ``stale_s``.
+    """
+
+    def __init__(self, path: Path | str, timeout_s: float = 4 * 3600.0,
+                 stale_s: float = 2 * 3600.0) -> None:
+        self._path = Path(path)
+        self._timeout_s = timeout_s
+        self._stale_s = stale_s
+        self._held = False
+
+    def acquire(self) -> None:
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        deadline = time.monotonic() + self._timeout_s
+        while True:
+            try:
+                fd = os.open(self._path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            except FileExistsError:
+                if self._break_if_stale():
+                    continue
+                if time.monotonic() > deadline:
+                    raise BlockingIOError(
+                        f"render busy: {self._path} is held by another render "
+                        f"(waited {self._timeout_s:.0f}s)"
+                    )
+                time.sleep(2.0)
+                continue
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(f"pid={os.getpid()} started={time.time():.3f}")
+            self._held = True
+            return
+
+    def _break_if_stale(self) -> bool:
+        try:
+            age = time.time() - os.path.getmtime(self._path)
+        except OSError:
+            return True  # vanished between attempts
+        if age > self._stale_s:
+            try:
+                os.unlink(self._path)
+                return True
+            except OSError:
+                return False
+        return False
+
+    def release(self) -> None:
+        if self._held:
+            try:
+                os.unlink(self._path)
+            except OSError:
+                pass
+            self._held = False
+
+    def __enter__(self) -> "ComposerRenderLock":
+        self.acquire()
+        return self
+
+    def __exit__(self, *_exc: Any) -> None:
+        self.release()
 
 
 class RemotionRuntime:
@@ -88,7 +158,28 @@ class RemotionRuntime:
 
         Concurrency defaults to the RENDER_CONCURRENCY environment variable,
         falling back to 2. Kept conservative to protect interactive machines.
+
+        Serialized per composer by ComposerRenderLock: staging, bundling and
+        encoding all share the composer's public/ root and bundle workspace.
+        Queues behind an in-flight render (up to RENDER_LOCK_TIMEOUT_S, 90 min)
+        instead of interleaving.
         """
+        lock = ComposerRenderLock(
+            self.composer_dir / ".render.lock",
+            timeout_s=float(os.getenv("RENDER_LOCK_TIMEOUT_S", str(90 * 60))),
+        )
+        try:
+            lock.acquire()
+        except BlockingIOError as exc:
+            return RenderResult(status="blocked", code="RENDER_BUSY", message=str(exc))
+        try:
+            return self._render_locked(props_path, output_path, manifest_path, concurrency)
+        finally:
+            lock.release()
+
+    def _render_locked(self, props_path: Path | str, output_path: Path | str,
+                       manifest_path: Path | str | None = None,
+                       concurrency: int | None = None) -> RenderResult:
         if not self.is_available():
             return RenderResult(
                 status="blocked",
