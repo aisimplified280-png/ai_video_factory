@@ -54,6 +54,14 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
     targetSvgY = handSvgY + dy;
   }
 
+  // Tap-vector length: the pointing arm extends along its (rotated) axis.
+  // The ARM itself rotates to face the real target — direction is computed
+  // from the actual scene anchor, not a fixed horizontal pose (§6).
+  const shoulderX = 180;
+  const shoulderY = 132;
+  const armAngle = spec.target_anchor
+    ? Math.max(-170, Math.min(170, (Math.atan2(targetSvgY - shoulderY, targetSvgX - shoulderX) * 180) / Math.PI))
+    : 0;
   // One deliberate tap gesture toward the semantic target (CTA). Single shot, then perfectly still.
   const tapExtend = spec.pose?.includes('tap')
     ? interpolate(progress, [0.12, 0.22, 0.32], [0, 18, 0], {
@@ -61,11 +69,13 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
         extrapolateRight: 'clamp',
       })
     : 0;
-  const tapDx = targetSvgX - handSvgX;
-  const tapDy = targetSvgY - handSvgY;
-  const tapLen = Math.hypot(tapDx, tapDy) || 1;
-  const tapTx = (tapDx / tapLen) * tapExtend;
-  const tapTy = (tapDy / tapLen) * tapExtend;
+  // interact: one deliberate point-and-hold toward the highlighted element —
+  // distinct from inspect (lean) and stride (slide-in). Single shot, then still.
+  const pointExtend =
+    spec.motion === 'interact' && !spec.pose?.includes('tap')
+      ? 16 * interpolate(progress, [0.1, 0.24], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})
+      : 0;
+  const extendAlong = tapExtend + pointExtend;
 
   // Per-scene action beats — all event-based, one-shot, never oscillating.
   // stride: the guide slides in from the left margin at scene start.
@@ -79,16 +89,8 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
           extrapolateRight: 'clamp',
         })
       : 0;
-  // Emphasis pulse mid-scene: one presentation bounce so the guide acts each scene.
-  const beat =
-    spec.emotion === 'celebrate'
-      ? 0
-      : interpolate(progress, [0.4, 0.47, 0.54], [0, 1, 0], {
-          extrapolateLeft: 'clamp',
-          extrapolateRight: 'clamp',
-        });
-  const beatY = -12 * beat;
-  const beatScale = 1 + 0.04 * beat;
+  // (No universal mid-scene bounce: the mascot is stable by default and acts
+  // only through its scene-directed motion — stride, inspect, point, tap, hop.)
   // Celebration hop after the CTA button responds (single arc, then still).
   const hop =
     spec.emotion === 'celebrate'
@@ -104,7 +106,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
         position: 'absolute',
         left: posX,
         top: posY,
-        transform: `translate(-50%, -50%) translateX(${strideIn.toFixed(1)}px) translateY(${(beatY + hop).toFixed(1)}px) rotate(${leanDeg.toFixed(2)}deg) scale(${(scale * beatScale).toFixed(4)})`,
+        transform: `translate(-50%, -50%) translateX(${strideIn.toFixed(1)}px) translateY(${hop.toFixed(1)}px) rotate(${leanDeg.toFixed(2)}deg) scale(${scale.toFixed(4)})`,
         transformOrigin: '50% 50%',
         pointerEvents: 'none',
         zIndex: spec.z_index ?? 15,
@@ -251,8 +253,8 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
             No targeting line or crosshair: the mascot is PLACED by scene focus instead (§26).
             When no target anchor exists the arm rests in a stable pose holding its tool. */}
         {spec.target_anchor || spec.pose?.includes('point') || spec.action?.includes('point') ? (
-          <g>
-            <g transform={`translate(${tapTx}, ${tapTy})`}>
+          <g transform={`rotate(${armAngle.toFixed(2)} ${shoulderX} ${shoulderY})`}>
+            <g transform={`translate(${extendAlong.toFixed(1)}, 0)`}>
               <rect
                 x="172"
                 y="110"

@@ -40,6 +40,7 @@ class SceneNode(BaseModel):
     bounds: tuple[int, int, int, int] = (0, 0, 0, 0) # (x1, y1, x2, y2) in 1080x1920 canvas
     is_primary: bool = False
     shape_style: str = "card"   # "card", "matrix_grid", "cylindrical_storage", "transform_kernel", "stack_layer"
+    icon: str = ""              # Concrete subject primitive ("satellite", "phone", "document", "cache"...) — rendered as a real glyph, not just a label
 
 
 class SceneEdge(BaseModel):
@@ -299,10 +300,20 @@ def _transformation_labels(speech: str) -> Optional[tuple[str, str, str]]:
 
 
 _ACTION_STEMS: tuple[str, ...] = (
+    # Data & pipeline verbs
     "parse", "chunk", "split", "convert", "embed", "token", "store", "index",
     "retriev", "fetch", "rank", "route", "connect", "generat", "train", "infer",
     "decode", "encode", "extract", "load", "stream", "deploy", "monitor",
     "verif", "valid", "launch", "scale", "optimi", "search", "learn", "predict",
+    # Generic narration verbs — real explainers say "satellites SEND signals",
+    # "the phone COMPARES times", "an arm GRIPS the part". The flow detector
+    # must recognise narrated actions, not a narrow engineering whitelist.
+    "send", "receiv", "measur", "calcul", "determ", "compar", "check", "process",
+    "comput", "grip", "place", "lift", "handl", "travel", "arriv", "pick", "drop",
+    "scan", "listen", "authenticat", "authoriz", "issu", "exchang", "updat",
+    "sync", "merge", "filter", "aggregat", "sort", "enters", "return", "provide",
+    "suppli", "contain", "match", "score", "combin", "distribut", "propagat",
+    "appl", "combin", "wait", "begin", "finish", "ask", "captur", "fix", "hold",
 )
 
 
@@ -325,20 +336,21 @@ def _action_clause_count(speech: str) -> int:
 
 
 def _action_clause_labels(speech: str, limit: int = 3) -> list[str]:
-    """One node label per narrated step — literally the action the narrator names.
+    """One node label per narrated step — the step's core PHRASE, so multiword
+    entities survive ("GPS satellites send timing signals", not the single
+    word "SEND").
 
-    "Documents are chunked, embedded, and stored in an index."
-      -> ["CHUNKED", "EMBEDDED", "STORED"]
+    "Documents are chunked into passages. Embeddings capture meaning."
+      -> ["DOCUMENTS CHUNKED PASSAGES", "EMBEDDINGS CAPTURE MEANING"]
     """
     labels: list[str] = []
     for clause in _action_clauses(speech):
-        stem = next((k for k in _ACTION_STEMS if k in clause), None)
         words = _content_words(clause)
         if not words:
             continue
-        match = next((w for w in words if stem and stem in w.lower()), words[0])
-        if match not in labels:
-            labels.append(match)
+        phrase = " ".join(words[:7])
+        if phrase not in labels:
+            labels.append(phrase)
         if len(labels) >= limit:
             break
     return labels
@@ -370,6 +382,66 @@ def _contrast_labels(subject: str, speech: str) -> Optional[tuple[str, str]]:
         if left_words and right_words:
             return " ".join(left_words), " ".join(right_words)
     return None
+
+
+# ---------------------------------------------------------------------------
+# Concrete subject primitives — a deterministic noun → icon lexicon (§3).
+# Lets the renderer DRAW the object the narration names (satellite, phone,
+# document, cache, robot arm...) instead of only labelling a generic card.
+# Order matters: earlier entries win when a label mentions several nouns.
+# Multi-word terms match as substrings; single words match on word boundaries.
+# ---------------------------------------------------------------------------
+_ICON_LEXICON: tuple[tuple[str, str], ...] = (
+    ("gps satellite", "satellite"), ("orbiting satellite", "satellite"), ("satellite", "satellite"),
+    ("smartphone", "phone"), ("mobile device", "phone"), ("phone", "phone"),
+    ("robotic arm", "arm"), ("robot arm", "arm"), ("robotic manipulator", "arm"), ("gripper", "arm"),
+    ("workpiece", "workpiece"),
+    ("authorization server", "server"), ("auth server", "server"), ("server", "server"),
+    ("vector index", "database"), ("vector store", "database"), ("database", "database"),
+    ("cpu", "cpu"), ("processor", "cpu"),
+    ("cache", "cache"),
+    ("memory", "memory"), ("ram", "memory"),
+    ("embedding", "embedding"), ("vector", "embedding"),
+    ("document", "document"), ("chunk", "document"), ("passage", "document"), ("page", "document"),
+    ("token", "token"),
+    ("queries", "query"), ("query", "query"),
+    ("client", "client"), ("browser", "client"),
+    ("endpoint", "api"), ("api", "api"),
+    ("parser", "gear"), ("encoder", "gear"), ("decoder", "gear"),
+    ("sensor", "sensor"),
+    ("neural network", "network"),
+    ("layer", "layers"),
+)
+
+
+def _node_icon(label: str) -> str:
+    """Icon id for a node label, or '' when the label names nothing concrete.
+
+    First-mentioned noun wins (earliest position in the label), so a clause
+    like "The client sends a request to the authorization server" depicts the
+    client while the server clause depicts the server — deterministic either way.
+    """
+    low = (label or "").lower()
+    best_icon = ""
+    best_pos = len(low) + 1
+    for term, icon in _ICON_LEXICON:
+        if " " in term:
+            pos = low.find(term)
+        else:
+            match = re.search(rf"\b{re.escape(term)}s?\b", low)
+            pos = match.start() if match else -1
+        if 0 <= pos < best_pos:
+            best_pos = pos
+            best_icon = icon
+    return best_icon
+
+
+def _apply_primitives(nodes: list[SceneNode]) -> list[SceneNode]:
+    """Stamps every node with the concrete-object icon its label names (§3)."""
+    for n in nodes:
+        if not n.icon:
+            n.icon = _node_icon(n.label)
+    return nodes
 
 
 def build_semantic_scene_graph(
@@ -448,9 +520,15 @@ def build_semantic_scene_graph(
             evidence_contract=contract,
         )
 
-    # 2. LAYERED ARCHITECTURE TOPOLOGY (Evaluated before transformation to avoid 'transformer' matching 'transform')
-    # e.g. "Transformer using multi-head self-attention across sequences simultaneously" or "technology stack"
-    is_stack = any(k in combined_ctx for k in ["transformer", "self-attention", "attention matrix", "stack", "hierarch", "depth layer", "multi-head"])
+    # 2. LAYERED ARCHITECTURE TOPOLOGY
+    # Layered architecture requires STRUCTURAL language in the narration. Words like
+    # "transformer" or "self-attention" name a MECHANISM, not a hierarchy — they must
+    # not force a stack layout just by appearing (§4 classification audit). When the
+    # narration actually narrates a multi-step process (>= 2 action clauses), the
+    # flow layout depicts what is SAID, even if the subject's noun says "hierarchy".
+    is_stack = any(k in combined_ctx for k in ["attention matrix", "stack", "hierarch", "depth layer", "multi-head", "multi-layer", "layered"])
+    if is_stack:
+        is_stack = _action_clause_count(speech) < 2
     if is_stack and len(label_pool) >= 3:
         top_label = label_pool[0]
         mid_label = label_pool[1]
@@ -506,7 +584,7 @@ def build_semantic_scene_graph(
             central_subject=f"{mid_label} Hierarchical Stack",
             narrative_role=narrative_role,
             topology="layered_architecture",
-            nodes=[node_top, node_mid, node_bot],
+            nodes=_apply_primitives([node_top, node_mid, node_bot]),
             edges=[e1, e2],
             primary_anchor=(540.0, 700.0), # Exact center of mid attention matrix
             required_visual_evidence=[top_label, mid_label, bot_label],
@@ -517,12 +595,22 @@ def build_semantic_scene_graph(
     # e.g. "Documents are parsed and converted into vectors" or "diffusion noise reversed into image"
     # A transformation must be stated by the narration: either a strong transform verb, or a
     # weak one ("split", "chunk") paired with an explicit "<source> <action> into <result>" phrase.
+    # A transformation must be NARRATED as one. Keywords ("convert", "parse"...) only
+    # ARM the detector; transform_labels must find the actual "<source> → <result>"
+    # conversion phrase in the speech. A bare mention ("the parser reads tokens") must
+    # not fabricate a transformation the narration never described (§4 audit).
     strong_transform = any(k in combined_ctx for k in ["convert", "vector embedding", "tokenized", "parse", "diffusion", "denois", "reverse gaussian", "synthesize entirely novel"]) or ("transform" in combined_ctx and "transformer" not in combined_ctx)
     weak_transform = any(k in combined_ctx for k in ["split", "chunk", "divid", "shard"])
     transform_labels = _transformation_labels(speech) if (strong_transform or weak_transform) else None
-    is_transform = (strong_transform or (weak_transform and transform_labels is not None)) and (
-        transform_labels is not None or len(label_pool) >= 3
+    # A conversion that is one STEP inside a narrated pipeline (the narration then
+    # stores / indexes / retrieves the result) is depicted as the PIPELINE: the
+    # flow layout shows every step the narrator names — a lone kernel would hide
+    # the rest of the story ("chunk → embed → store in a vector index").
+    _pipeline_after_conversion = any(
+        any(k in c for k in ("store", "index", "retriev", "fetch", "search", "return", "receiv"))
+        for c in _action_clauses(speech)
     )
+    is_transform = (strong_transform or weak_transform) and transform_labels is not None and not _pipeline_after_conversion
     if is_transform:
         if transform_labels:
             src_label, trn_label, dst_label = transform_labels
@@ -579,7 +667,7 @@ def build_semantic_scene_graph(
             central_subject=f"{src_label} -> {trn_label} -> {dst_label}",
             narrative_role=narrative_role,
             topology="object_transformation",
-            nodes=[node_src, node_trn, node_dst],
+            nodes=_apply_primitives([node_src, node_trn, node_dst]),
             edges=[edge_1, edge_2],
             primary_anchor=(540.0, 710.0), # Exact center of transform kernel
             required_visual_evidence=[src_label, trn_label, dst_label],
@@ -587,8 +675,12 @@ def build_semantic_scene_graph(
         )
 
     # 4. BIPARTITE COMPARISON TOPOLOGY
-    # e.g. "Unlike classical AI that only classifies existing data, generative models learn probability distributions"
-    is_contrast = any(k in speech_lower for k in ["unlike", "instead of", "versus", "vs", "classif", "balance"]) or bool(re.search(r"\bvs\.?\b|\bversus\b", subject or "", flags=re.IGNORECASE))
+    # A comparison must be NARRATED as one: an explicit "vs"/"versus" or a real
+    # contrast marker in the speech. Keyword mentions like "classifier" (a mechanism
+    # word) or "balance" (a property) do not make the scene a comparison (§4 audit).
+    is_contrast = bool(re.search(r"\bvs\.?\b", speech_lower)) or any(
+        k in speech_lower for k in ["unlike", "instead of", "versus", "whereas", "rather than", "compared to", "contrast between", "on the other hand"]
+    ) or bool(re.search(r"\bvs\.?\b|\bversus\b", subject or "", flags=re.IGNORECASE))
     contrast_labels = _contrast_labels(subject, speech) if is_contrast else None
     if is_contrast and (contrast_labels or len(label_pool) >= 2):
         if contrast_labels:
@@ -636,7 +728,7 @@ def build_semantic_scene_graph(
             central_subject=f"{left_label} vs {right_label}",
             narrative_role=narrative_role,
             topology="bipartite",
-            nodes=[node_left, node_right],
+            nodes=_apply_primitives([node_left, node_right]),
             edges=[edge],
             primary_anchor=(755.0, 710.0), # Center of primary target node
             required_visual_evidence=[left_label, right_label, "CONTRAST"],
@@ -705,7 +797,7 @@ def build_semantic_scene_graph(
             central_subject=f"Sequential Process: {' -> '.join(n.label for n in flow_nodes)}",
             narrative_role=narrative_role,
             topology="process_flow",
-            nodes=flow_nodes,
+            nodes=_apply_primitives(flow_nodes),
             edges=flow_edges,
             primary_anchor=(p_cx, p_cy),
             required_visual_evidence=[n.label for n in flow_nodes],
@@ -747,7 +839,7 @@ def build_semantic_scene_graph(
         central_subject=hero_label,
         narrative_role=narrative_role,
         topology="focal",
-        nodes=[hero_node],
+        nodes=_apply_primitives([hero_node]),
         edges=[],
         primary_anchor=(540.0, 705.0),
         required_visual_evidence=[hero_label],

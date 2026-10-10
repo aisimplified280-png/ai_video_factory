@@ -124,7 +124,10 @@ def direct_production_scenes(
             topic=topic,
             scene_graph=scene_graph,
         )
-        if scene_graph and scene_graph.primary_anchor:
+        # The CTA mascot targets the REAL subscribe control (set by the character
+        # director) — never the scene graph's generic primary anchor, so the saved
+        # plan, visual QA and the render all agree on the target (§6).
+        if scene_graph and scene_graph.primary_anchor and narrative_role.lower() not in ("cta", "outro"):
             char_spec.target_anchor = {
                 "x": float(scene_graph.primary_anchor[0]),
                 "y": float(scene_graph.primary_anchor[1]),
@@ -189,7 +192,10 @@ def direct_production_scenes(
         scene_spec = CanonicalSceneSpec(
             scene_id=sc_id,
             section_id=sec.get("id") or sec.get("section_id") or f"sec_{idx+1:02d}",
-            narrative_role=sec.get("narrative_role", "context"),
+            # Normalized role: the final scene's CTA role is STORED, not just
+            # computed — graph generation, rendering and QA detect the CTA from
+            # the same canonical value even when the input section omits one.
+            narrative_role=narrative_role,
             start_seconds=start,
             end_seconds=end,
             duration_seconds=dur,

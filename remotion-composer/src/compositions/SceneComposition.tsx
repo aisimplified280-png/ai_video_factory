@@ -13,7 +13,6 @@ import {trace} from '../motion/trace';
 import {transform} from '../motion/transform';
 import {focusShift} from '../camera/focusShift';
 import {pan} from '../camera/pan';
-import {parallax} from '../camera/parallax';
 import {pullOut} from '../camera/pullOut';
 import {pushIn} from '../camera/pushIn';
 import {staticCamera} from '../camera/static';
@@ -41,6 +40,8 @@ import {TextLayer} from '../primitives/TextLayer';
 import {VideoLayer} from '../primitives/VideoLayer';
 import {assetById, requireAssetUrl} from '../runtime/loader';
 import type {AssetProps, AudioRefProps, CharacterSpec, EditEventProps, SceneProps, ThemeProps} from '../runtime/props';
+import {enterState, exitState, frameState, type PlacedTiming} from '../runtime/eventTiming';
+import {ownsOwnMotion} from '../runtime/motionOwnership';
 
 /** True when this scene is the closing call-to-action scene. */
 export function isCtaScene(scene: SceneProps): boolean {
@@ -261,8 +262,8 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
         throw new Error(`Event ${event.event_id} requires an asset but references none.`);
       }
       const spec = (asset.nativeSpec ?? {}) as {
-        nodes?: {id: string; label: string; x: number; y: number; details?: string[]; primary?: boolean; w?: number; h?: number}[];
-        connectors?: {from: string; to: string; label?: string}[];
+        nodes?: {id: string; label: string; x: number; y: number; details?: string[]; primary?: boolean; w?: number; h?: number; node_type?: string; shape_style?: string; icon?: string}[];
+        connectors?: {from: string; to: string; label?: string; relationship?: string}[];
         bars?: {label: string; value: number}[];
         shapes?: {shape: 'circle' | 'rect' | 'line'; x: number; y: number; size: number; length?: number; color: string}[];
         path?: string;
@@ -361,53 +362,22 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
   }
 }
 
-/** Elements arrive as a choreographed group: content leads, then mascot, then details. */
-function enterDelayFor(role: string): number {
-  switch (role) {
-    case 'midground':
-    case 'primary_visual':
-      return 0;
-    case 'character':
-      return 3;
-    case 'foreground':
-      return 5;
-    default:
-      return 2;
-  }
-}
-
-/** On exit the order reverses: details leave first, content holds longest. */
-function exitLeadFor(role: string): number {
-  switch (role) {
-    case 'foreground':
-      return 0;
-    case 'diagram':
-    case 'overlay':
-      return 2;
-    case 'character':
-      return 3;
-    case 'midground':
-    case 'primary_visual':
-      return 5;
-    default:
-      return 3;
-  }
-}
-
 /**
  * Entrance style for the first `overlap` frames of an event.
- * Each element waits its stagger turn, then enters with a role-specific move
- * (content rises, details scale in) — never the whole frame sliding as one unit.
+ * Each element waits its stagger turn (enterState), then enters with a
+ * role-specific move (content rises, details scale in) — never the whole
+ * frame sliding as one unit. The progress reaches 1 on the last visible
+ * entrance frame, so the incoming element is stable while still on screen.
  */
 function headStyleFor(intent: string | null, overlap: number, local: number, role = ''): React.CSSProperties {
   if (overlap <= 0 || local >= overlap) {
     return {};
   }
-  const delay = Math.min(enterDelayFor(role), Math.max(0, overlap - 3));
-  if (local < delay) {
+  const state = enterState(local, overlap, role);
+  if (state.hidden) {
     return {opacity: 0};
   }
-  const p = Math.min(1, Math.max(0, (local - delay) / Math.max(1, overlap - delay)));
+  const p = state.p;
   const base = (() => {
     switch (transitionModuleFor(intent)) {
       case 'fade':
@@ -446,18 +416,19 @@ function headStyleFor(intent: string | null, overlap: number, local: number, rol
 
 /**
  * Exit style while an event lends its tail to the next entrance.
- * Elements leave one by one (reverse stagger): details first, content last,
- * each with its own move — content continues upward, details shrink away.
+ * exitState guarantees progress reaches 1 on the event's LAST visible frame,
+ * so the outgoing element finishes its exit before its parent scene unmounts
+ * (no full-opacity hold followed by an abrupt boundary cut).
  */
 function tailStyleFor(intent: string | null, tail: number, intoTail: number, role = ''): React.CSSProperties {
   if (tail <= 0) {
     return {};
   }
-  const delay = Math.min(exitLeadFor(role), Math.max(0, tail - 3));
-  if (intoTail < delay) {
+  const state = exitState(intoTail, tail, role);
+  if (!state.active) {
     return {};
   }
-  const q = Math.min(1, Math.max(0, (intoTail - delay) / Math.max(1, tail - delay)));
+  const q = state.q;
   if (transitionModuleFor(intent) === 'fade') {
     if (role === 'foreground' || role === 'diagram' || role === 'overlay') {
       return {opacity: 1 - q, transform: `scale(${(1 - 0.07 * q).toFixed(4)})`};
@@ -501,7 +472,6 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const ordered = [...placed].sort((a, b) => a.event.z_index - b.event.z_index);
-  const layered = scene.depth_strategy && /background|midground|foreground/i.test(scene.depth_strategy);
   const sceneDurationFrames = Math.max(1, Math.round((scene.end - scene.start) * fps));
   const sceneProgress = Math.min(1, Math.max(0, frame / sceneDurationFrames));
 
@@ -546,18 +516,22 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
   return (
     <AbsoluteFill>
       {ordered.map(({event, from, duration, head, tail, flashFrames}, index) => {
-        const total = duration + tail;
-        const local = Math.min(Math.max(0, frame - from), Math.max(0, total - 1));
-        const progress = total <= 1 ? 1 : local / (total - 1);
-        const inTail = local >= duration;
+        // Placement math lives in runtime/eventTiming (behavior-tested): the
+        // rendered length is duration + ONE tail, and the exit window starts
+        // at the event's true end so it is fully visible before unmount.
+        const timing: PlacedTiming = {from, duration, head, tail};
+        const {total, local, progress, inTail, intoTail} = frameState(frame, timing);
         const next = ordered[index + 1];
-        const depth = layered ? (event.z_index >= 20 ? 'foreground' : event.z_index >= 10 ? 'midground' : 'background') : null;
+        // One motion owner per element (§5): ownsOwnMotion() is the decision —
+        // the mascot owns all of its motion and a native diagram owns its own
+        // reveal, so their wrappers receive only entrance/exit styling.
+        // Everything else is static unless a canonical intent says otherwise.
+        const selfOwned = ownsOwnMotion(event.role, assetById(assets, event.asset_id));
         const style = mergeStyles(
-          cameraStyle(event.camera_intent, progress),
-          motionStyle(event.motion_intent, progress),
+          selfOwned ? undefined : cameraStyle(event.camera_intent, progress),
+          selfOwned ? undefined : motionStyle(event.motion_intent, progress),
           headStyleFor(event.transition_in, head, local, event.role),
-          inTail ? tailStyleFor(boundaryTransition?.intent ?? next?.event.transition_in ?? null, tail, local - duration, event.role) : undefined,
-          depth ? parallax(progress, depth) : undefined,
+          inTail ? tailStyleFor(boundaryTransition?.intent ?? next?.event.transition_in ?? null, tail, intoTail, event.role) : undefined,
         );
         return (
           <Sequence key={event.event_id} from={from} durationInFrames={total} name={event.event_id}>

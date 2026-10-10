@@ -107,9 +107,19 @@ def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: 
            f"min mean luminance={min(s['mean'] for s in stats)}")
     record("blank_frame", not any(s["stddev"] < 3 and 20 < s["mean"] < 235 for s in stats),
            f"min stddev={min(s['stddev'] for s in stats)}")
-    frozen = sum(1 for a, b in zip(frames, frames[1:])
-                 if _frame_stats(a)["mean"] == _frame_stats(b)["mean"] and _frame_stats(a)["stddev"] == _frame_stats(b)["stddev"])
-    record("freeze_check", frozen == 0, f"{frozen} adjacent identical pairs of {len(frames) - 1}")
+    # §9 freeze detection compares ACTUAL image pixels (ImageChops per-pixel
+    # difference, tolerance ±1 for encoder noise) — matching summary statistics
+    # (mean/stddev) do not prove frames are identical.
+    def _frames_identical(a_path, b_path) -> bool:
+        a_img = Image.open(a_path).convert("RGB")
+        b_img = Image.open(b_path).convert("RGB")
+        if a_img.size != b_img.size:
+            return False
+        diff = ImageChops.difference(a_img, b_img)
+        return all(ch_max <= 1 for (_lo, ch_max) in diff.getextrema())
+
+    frozen = sum(1 for a, b in zip(frames, frames[1:]) if _frames_identical(a, b))
+    record("freeze_check", frozen == 0, f"{frozen} adjacent pixel-identical pairs of {len(frames) - 1} (per-pixel diff, ±1 tolerance)")
     hist_mean, spat_mean = _visual_activity(frames)
     # Dual floors: the old single 0.20 histogram bar was calibrated when every
     # scene repainted its own background. With the now-mandated constant canvas,
@@ -131,8 +141,40 @@ def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: 
         from PIL import ImageStat as _Stat
         band_activity.append(_Stat.Stat(band).stddev[0])
     record("caption_zone_active", max(band_activity) > 12, f"max caption-band stddev={max(band_activity):.1f}")
-    record("text_within_margins", True, "caption pill inset 7% from frame edges by construction (padding 7%/86% width)")
-    record("caption_collision", True, "caption band (bottom 330px) disjoint from overlay zone (frame center) by construction")
+
+    # --- Measured layout checks (§9): from ACTUAL rendered pixels and ACTUAL
+    # timeline spans — never "by construction" claims.
+    # Caption pill: the widest dark mass (>50% frame width) in the bottom band
+    # of each caption-active frame must sit inside the 6%/94% safe insets.
+    cta_start = float(edit_data.get("cta", {}).get("start", duration))
+    inset_l_ok, inset_r_ok = width * 0.06, width * 0.94
+    pill_frames_measured = 0
+    margin_violations: list[str] = []
+    for cap in edit_data.get("caption_track", []):
+        mid_t = (cap["start"] + cap["end"]) / 2.0
+        idx = min(range(len(frames)), key=lambda i: abs((i + 0.5) / len(frames) * duration - mid_t))
+        cap_img = Image.open(frames[idx]).convert("L")
+        cap_band = cap_img.crop((0, height - 340, width, height))
+        mask = cap_band.point(lambda p: 255 if p < 55 else 0)
+        bbox = mask.getbbox()
+        if bbox and (bbox[2] - bbox[0]) > width * 0.5:
+            pill_frames_measured += 1
+            if bbox[0] < inset_l_ok or bbox[2] > inset_r_ok:
+                margin_violations.append(f"{Path(frames[idx]).name}: pill x=[{bbox[0]},{bbox[2]}]")
+    record("text_within_margins", pill_frames_measured > 0 and not margin_violations,
+           f"pill bbox measured from pixels on {pill_frames_measured} caption frames "
+           f"(safe insets {inset_l_ok:.0f}/{inset_r_ok:.0f}px); "
+           f"violations={margin_violations[:3] if margin_violations else 'none'}")
+    # Caption/CTA collision: every caption span must clear BEFORE the CTA focus
+    # begins (measured against the real cta.start in the timeline).
+    caption_into_cta = [
+        f"{cap.get('event_id')} (end={cap['end']:.2f}s > cta_start={cta_start:.2f}s)"
+        for cap in edit_data.get("caption_track", [])
+        if cap["end"] > cta_start + 0.02
+    ]
+    record("caption_collision", pill_frames_measured > 0 and not caption_into_cta,
+           f"caption spans crossing into the CTA focus: "
+           f"{caption_into_cta[:3] if caption_into_cta else 'none'} (measured vs cta.start)")
 
     # CTA: final 10% must show brand activity + CTA caption coverage.
     cta = edit_data.get("cta", {})

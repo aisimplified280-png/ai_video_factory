@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Sequence} from 'remotion';
+import {AbsoluteFill, Sequence, useCurrentFrame} from 'remotion';
 import {CaptionTrack} from '../captions/CaptionTrack';
 import {BackgroundLayer} from '../primitives/BackgroundLayer';
 import {MilestoneTabs} from '../primitives/MilestoneTabs';
@@ -13,6 +13,7 @@ import {overlapFrames as morphOverlap} from '../transitions/shapeMorph';
 import {overlapFrames as matchOverlap} from '../transitions/matchCut';
 import {overlapFrames as slideOverlap} from '../transitions/slide';
 import {eventFrames} from '../runtime/timeline';
+import {placeEvent} from '../runtime/eventTiming';
 import {assertValidProps} from '../runtime/validators';
 import type {EditEventProps, ProductionCompositionProps} from '../runtime/props';
 import {SceneComposition, transitionModuleFor, type PlacedAudio, type PlacedEvent, type SceneBoundaryTransition} from './SceneComposition';
@@ -53,6 +54,11 @@ export function transitionOverlapFrames(intent: string | null, fps: number): num
 export const ProductionComposition: React.FC<ProductionCompositionProps> = (props) => {
   assertValidProps(props);
   const fps = props.platform.fps;
+  const frame = useCurrentFrame();
+  // The milestone bar is a chapter guide — it fades OUT as the CTA begins so
+  // the ending has one clear focal point (no active chapter bar over the CTA).
+  const ctaStartFrame = Math.round((props.cta.start ?? Number.MAX_SAFE_INTEGER) * fps);
+  const tabsOpacity = frame >= ctaStartFrame ? Math.max(0, 1 - (frame - ctaStartFrame) / 8) : 1;
   const byScene = new Map<string, EditEventProps[]>();
   for (const event of [...props.events].sort((a, b) => a.z_index - b.z_index)) {
     const list = byScene.get(event.scene_id) ?? [];
@@ -120,16 +126,17 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
         const sceneTail = sceneTails.get(scene.scene_id) ?? 0;
         const placed: PlacedEvent[] = (byScene.get(scene.scene_id) ?? []).map((event) => {
           const range = eventFrames(event.start, event.end, fps);
-          const isVisual = event.role === 'midground' || event.role === 'primary_visual' || event.role === 'background' || event.role === 'foreground' || event.role === 'character';
           const tail = eventTails.get(event.event_id) ?? 0;
-          return {
-            event,
-            from: range.startFrame - sceneRange.startFrame,
-            duration: range.frameCount + (isVisual ? tail : 0),
-            head: transitionOverlapFrames(event.transition_in, fps),
-            tail: tail,
-            flashFrames: flashes.get(event.event_id) ?? 0,
-          };
+          // TRUE event duration: the transition overlap is applied exactly once,
+          // when the rendered sequence length is computed (renderedLength) —
+          // never here. Adding it twice pushed exits past the parent's lifetime.
+          const timing = placeEvent(
+            range,
+            sceneRange.startFrame,
+            transitionOverlapFrames(event.transition_in, fps),
+            tail,
+          );
+          return {event, ...timing, flashFrames: flashes.get(event.event_id) ?? 0};
         });
         const sceneAudio: PlacedAudio[] = props.audio
           .filter((clip) =>
@@ -158,13 +165,15 @@ export const ProductionComposition: React.FC<ProductionCompositionProps> = (prop
           </Sequence>
         );
       })}
-      {props.milestones && props.milestones.length >= 2 ? (
-        <MilestoneTabs
-          milestones={props.milestones}
-          theme={props.theme}
-          fps={fps}
-          width={props.platform.resolution.width}
-        />
+      {props.milestones && props.milestones.length >= 2 && tabsOpacity > 0 ? (
+        <AbsoluteFill style={{opacity: tabsOpacity}}>
+          <MilestoneTabs
+            milestones={props.milestones}
+            theme={props.theme}
+            fps={fps}
+            width={props.platform.resolution.width}
+          />
+        </AbsoluteFill>
       ) : null}
       <CaptionTrack
         theme={props.theme}

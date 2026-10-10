@@ -358,20 +358,12 @@ def _draw_midground_subject(
     topology = getattr(scene_graph, "topology", "process_flow")
 
     # 1. TOPOLOGY: BRAND IDENTITY (CTA Only)
+    # One clear brand hierarchy (§7): the TSX CTA composition owns the identity
+    # (letter-pop wordmark + subscribe card + cursor/subscribed response). This
+    # PNG used to draw a SECOND robot-face emblem that competed with the ending's
+    # focal point — removed. Only the narration-driven brand line remains.
     if topology == "brand":
         for node in scene_graph.nodes:
-            cy_logo = 710
-            # Outer Glow Ring & Shield
-            mid_draw.ellipse([(cx - 130, cy_logo - 130), (cx + 130, cy_logo + 130)], fill=(239, 246, 255, 250), outline=(37, 99, 235, 255), width=4)
-            mid_draw.ellipse([(cx - 105, cy_logo - 105), (cx + 105, cy_logo + 105)], fill=(15, 23, 42, 255), outline=(217, 119, 6, 255), width=2)
-            # Robot Silhouette Emblem
-            mid_draw.rounded_rectangle([(cx - 55, cy_logo - 60), (cx + 55, cy_logo + 10)], radius=20, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=2)
-            mid_draw.rounded_rectangle([(cx - 40, cy_logo - 45), (cx + 40, cy_logo - 10)], radius=12, fill=(37, 99, 235, 255))
-            mid_draw.ellipse([(cx - 24, cy_logo - 34), (cx - 12, cy_logo - 22)], fill=(255, 255, 255, 255))
-            mid_draw.ellipse([(cx + 12, cy_logo - 34), (cx + 24, cy_logo - 22)], fill=(255, 255, 255, 255))
-            mid_draw.rounded_rectangle([(cx - 45, cy_logo + 18), (cx + 45, cy_logo + 65)], radius=14, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=2)
-            mid_draw.rectangle([(cx - 18, cy_logo + 32), (cx + 18, cy_logo + 48)], fill=(37, 99, 235, 255))
-
             # Brand line only when the CTA narration actually states copy for it.
             if node.details:
                 mid_draw.rounded_rectangle([(cx - 300, 870), (cx + 300, 930)], radius=14, fill=(241, 245, 249, 250), outline=(37, 99, 235, 255), width=2)

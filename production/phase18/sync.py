@@ -21,6 +21,39 @@ from production.phase17.style_systems import StyleSystem, get_style_system
 from .visual_director import UnifiedVisualPlan
 
 
+_DIAGRAM_TOPOLOGIES = (
+    "process_flow", "object_transformation", "layered_architecture", "bipartite",
+)
+
+
+def _native_diagram_graph(graph: Any) -> bool:
+    """Flow-like topologies render as a NATIVE vector diagram in Remotion: nodes
+    and edges from the semantic scene graph animate in sequence (element motion)
+    instead of the page moving. Single source of truth for both the manifest and
+    the timeline decision."""
+    return (
+        graph is not None
+        and bool(getattr(graph, "nodes", None))
+        and getattr(graph, "topology", None) in _DIAGRAM_TOPOLOGIES
+    )
+
+
+def _verify_renderer_lock(repo_root: Path) -> bool:
+    """Renderer lock, MEASURED from files: the composer entry exists and the
+    Remotion runtime versions are pinned exactly (no ^/~ drift)."""
+    pkg = repo_root / "remotion-composer" / "package.json"
+    entry = repo_root / "remotion-composer" / "src" / "Root.tsx"
+    if not pkg.exists() or not entry.exists():
+        return False
+    try:
+        data = json.loads(pkg.read_text(encoding="utf-8"))
+        deps = data.get("dependencies", {})
+        pins = [deps.get("remotion", ""), deps.get("@remotion/cli", "")]
+        return all(p and p[0] not in "^~" for p in pins)
+    except Exception:
+        return False
+
+
 def sync_authoritative_artifacts(
     store: ArtifactStore,
     state: Any,
@@ -60,10 +93,22 @@ def sync_authoritative_artifacts(
             "required_assets": [l.asset_id for l in sc.layers],
         })
 
+    # Measured variety of the GENERATED plan — distinct visual topologies and
+    # distinct node labels — never a fixed score (§9 QA honesty).
+    _topos = [getattr(getattr(sc, "scene_graph", None), "topology", None) or "focal" for sc in visual_plan.scenes]
+    _node_labels = [n.label for sc in visual_plan.scenes if getattr(sc, "scene_graph", None) for n in sc.scene_graph.nodes]
+    _topo_ratio = (len(set(_topos)) / len(_topos)) if _topos else 0.0
+    _label_ratio = (len(set(_node_labels)) / len(_node_labels)) if _node_labels else 0.0
     scene_plan_payload = {
         "scenes": scenes_payload,
         "total_duration_seconds": visual_plan.total_duration_seconds,
-        "variety_score": 9.9,
+        "variety_score": round(100.0 * (0.5 * _topo_ratio + 0.5 * _label_ratio), 1),
+        "variety_measure": {
+            "distinct_topologies": len(set(_topos)),
+            "scene_count": len(_topos),
+            "distinct_node_labels": len(set(_node_labels)),
+            "node_label_count": len(_node_labels),
+        },
     }
 
     scene_env = store.create(
@@ -88,16 +133,23 @@ def sync_authoritative_artifacts(
         # animate in sequence (element motion) instead of the page moving.
         graph = getattr(sc, "scene_graph", None)
         diagram_spec = None
-        if graph is not None and graph.nodes and graph.topology in (
-            "process_flow", "object_transformation", "layered_architecture", "bipartite",
-        ):
+        if _native_diagram_graph(graph):
+            # Semantic information must survive to the renderer: node_type, shape_style
+            # and icon decide HOW each node is drawn (cylinder vs kernel vs card vs a
+            # real object glyph); the edge relationship decides HOW each connector is
+            # drawn (one-way arrow vs two-sided contrast vs transformation).
             diagram_spec = {
+                "topology": graph.topology,
+                "composition_intent": getattr(graph, "composition_intent", ""),
                 "nodes": [
                     {
                         "id": n.id,
                         "label": n.label,
                         "details": list(n.details[:3]),
                         "primary": bool(n.is_primary),
+                        "node_type": getattr(n.node_type, "value", str(n.node_type)),
+                        "shape_style": n.shape_style,
+                        "icon": getattr(n, "icon", ""),
                         "x": (n.bounds[0] + n.bounds[2]) / 2.0,
                         "y": (n.bounds[1] + n.bounds[3]) / 2.0,
                         "w": float(n.bounds[2] - n.bounds[0]),
@@ -106,7 +158,12 @@ def sync_authoritative_artifacts(
                     for n in graph.nodes
                 ],
                 "connectors": [
-                    {"from": e.from_node, "to": e.to_node, "label": e.label or ""}
+                    {
+                        "from": e.from_node,
+                        "to": e.to_node,
+                        "label": e.label or "",
+                        "relationship": e.relationship,
+                    }
                     for e in graph.edges
                 ],
             }
@@ -132,6 +189,10 @@ def sync_authoritative_artifacts(
                 # The PNG stays registered (QA/fallback); nativeSpec makes the
                 # renderer prefer the animated vector diagram when eligible.
                 "diagram_spec": diagram_spec if lyr.role == "midground" else None,
+                # The constant global canvas renders INSTEAD of per-scene
+                # backgrounds: background PNGs are diagnostics only, clearly
+                # labelled and never part of the live timeline (§10).
+                "rendered_in_timeline": lyr.role != "background",
             })
 
     manifest_payload = {
@@ -202,7 +263,15 @@ def sync_authoritative_artifacts(
     caption_track = []
 
     for sc in visual_plan.scenes:
+        # Diagram eligibility for THIS scene — never a stale value carried over
+        # from another loop (the manifest loop's last scene is the CTA).
+        sc_has_diagram = _native_diagram_graph(getattr(sc, "scene_graph", None))
         for lyr in sc.layers:
+            # §10: per-scene backgrounds are NOT part of the live timeline — the
+            # constant global canvas renders instead. Their PNGs remain in the
+            # manifest as clearly-labelled diagnostics.
+            if lyr.role == "background":
+                continue
             ev = {
                 "event_id": f"event_{lyr.asset_id}",
                 "scene_id": sc.scene_id,
@@ -218,7 +287,11 @@ def sync_authoritative_artifacts(
                 "purpose": lyr.purpose,
                 "framing": sc.shot_type,
                 "camera_intent": sc.camera_motion,
-                "motion_intent": "pan_subtle" if lyr.role == "background" else "assemble",
+                # Static is the default (§5): elements hold still unless the
+                # motion explains something. Diagram events assemble in sequence
+                # (element choreography that mirrors the narrated flow); baked
+                # cards, mascot and framing never receive forced motion.
+                "motion_intent": "assemble" if (lyr.role == "midground" and sc_has_diagram) else None,
                 "transition_in": sc.transition_in,
                 "transition_out": sc.transition_out,
                 "character_spec": sc.character_spec.to_dict() if lyr.role == "character" else None,
@@ -229,9 +302,7 @@ def sync_authoritative_artifacts(
             else:
                 # Strictly 4 distinct depth layers in live Remotion multi_layer_timeline
                 timeline_events.append(ev)
-                if lyr.role == "background":
-                    bg_track.append(ev)
-                elif lyr.role == "midground":
+                if lyr.role == "midground":
                     mid_track.append(ev)
                 elif lyr.role == "character":
                     char_track.append(ev)
@@ -266,6 +337,22 @@ def sync_authoritative_artifacts(
     total_dur = visual_plan.total_duration_seconds
     cta_sc = visual_plan.scenes[-1]
     cta_audio_file = f"projects/{production_id}/audio/narration_{cta_sc.scene_id}.mp3"
+
+    # §9 QA honesty: every validation flag below is MEASURED here from the actual
+    # plan and files — never a hardcoded success claim.
+    _scenes_sorted = sorted(visual_plan.scenes, key=lambda s: s.start_seconds)
+    _no_gaps = all(abs(s.start_seconds - p.end_seconds) <= 0.011 for p, s in zip(_scenes_sorted, _scenes_sorted[1:]))
+    _no_overlaps = all(s.start_seconds >= p.end_seconds - 0.011 for p, s in zip(_scenes_sorted, _scenes_sorted[1:]))
+    _duration_covered = bool(_scenes_sorted) and abs(_scenes_sorted[-1].end_seconds - total_dur) <= 0.011
+    _audio_valid = all(
+        (projects_root.parent / f"projects/{production_id}/audio/narration_{s.scene_id}.mp3").exists()
+        for s in visual_plan.scenes
+    )
+    _captions_valid = len(caption_track) == len(visual_plan.scenes) and all(
+        c["end"] > c["start"] and bool(c.get("caption_text_reference")) for c in caption_track
+    )
+    _cta_present = cta_sc.narrative_role.lower() in ("cta", "outro") or "cta" in cta_sc.scene_id.lower()
+    _renderer_lock = _verify_renderer_lock(projects_root.parent)
 
     edit_payload = {
         "production_id": production_id,
@@ -326,14 +413,14 @@ def sync_authoritative_artifacts(
             },
         },
         "validation": {
-            "no_gaps": True,
-            "no_overlaps": True,
-            "all_assets_resolved": True,
-            "duration_covered": True,
-            "audio_valid": True,
-            "captions_valid": True,
-            "cta_present": True,
-            "renderer_locked": True,
+            "no_gaps": _no_gaps,
+            "no_overlaps": _no_overlaps,
+            "all_assets_resolved": all_ready,
+            "duration_covered": _duration_covered,
+            "audio_valid": _audio_valid,
+            "captions_valid": _captions_valid,
+            "cta_present": _cta_present,
+            "renderer_locked": _renderer_lock,
         },
     }
 

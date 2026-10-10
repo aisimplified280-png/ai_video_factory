@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, Sequence
@@ -49,6 +50,7 @@ class SceneVisualJudgement(BaseModel):
     motion_activity_score: float        # 0.0 to 10.0 — low importance by design
     depth_separation_score: float       # 0.0 to 10.0
     composite_score: float              # 0.0 to 10.0
+    semantic_evidence: str = "unverified"  # "verified" | "unverified" | "contradicted" (§8)
     passed: bool
     overdesigned: bool = False          # too much decoration for the semantic content present
     reasons: list[str] = Field(default_factory=list)
@@ -230,6 +232,115 @@ def analyze_frame_geometry(img: Image.Image) -> dict[str, Any]:
     }
 
 
+_SEM_STOPWORDS = {
+    "the", "a", "an", "of", "and", "or", "to", "in", "on", "for", "with", "is",
+    "are", "how", "does", "did", "your", "its", "it", "this", "that", "from",
+    "into", "when", "why", "what", "really", "actually", "every", "each", "all",
+}
+# Abstract topic words that cannot be drawn as objects — never required to appear.
+_SEM_ABSTRACT = {
+    "positioning", "architecture", "hierarchy", "process", "system", "mechanism",
+    "workflow", "pipeline", "operation", "technique", "method", "science", "theory",
+    "concept", "step", "stage", "way", "works", "working", "function", "role",
+    "behavior", "behaviour", "effect", "power", "speed", "accuracy", "quality",
+    "difference", "overview", "introduction", "basics", "fundamentals", "explained",
+    "explainer", "story", "world", "life", "day", "future", "history", "guide",
+}
+# Expected depicted relationship per topology (what the renderer MUST draw).
+_TOPOLOGY_RELATIONSHIP = {
+    "bipartite": "contrasts_with",
+    "process_flow": "flows_to",
+    "pipeline": "flows_to",
+    "object_transformation": "transforms_to",
+    "layered_architecture": "routes_down",
+}
+# Free-text contract relationship → depicted relationship family.
+_RELATIONSHIP_KEYS = (
+    ("contrast", "contrasts_with"), ("comparison", "contrasts_with"),
+    ("transform", "transforms_to"),
+    ("pipeline", "flows_to"), ("process", "flows_to"), ("flow", "flows_to"),
+    ("stack", "routes_down"), ("hierarch", "routes_down"),
+    ("index", "indexes"), ("storage", "indexes"),
+)
+
+
+def verify_semantic_evidence(contract: Any, scene_graph: Any) -> tuple[str, list[str]]:
+    """Expected-vs-observed semantic verification (§8).
+
+    Checks the evidence contract's REQUIRED SUBJECT and RELATIONSHIP against the
+    element inventory the renderer actually draws: node labels (narration-derived),
+    concrete object glyphs, node types and edge relationships. Returns
+    ("verified" | "unverified" | "contradicted", notes).
+
+    A generic card layout full of clusters and contrast but naming none of the
+    subject's objects ("STAGE ONE / STAGE TWO") is CONTRADICTED — pixel geometry
+    alone can never verify meaning. Labels/metadata are only grounding evidence
+    when they genuinely derive from the narration, which boilerplate cannot fake.
+    """
+    from production.phase18.scene_graph import _node_icon
+
+    if contract is None or scene_graph is None:
+        return "unverified", ["no evidence contract on the scene graph"]
+    nodes = list(getattr(scene_graph, "nodes", []) or [])
+    edges = list(getattr(scene_graph, "edges", []) or [])
+    if not nodes:
+        return "unverified", ["scene graph depicts no nodes"]
+
+    subject = (getattr(contract, "subject", "") or "").strip().lower()
+    labels = " | ".join((n.label or "").lower() for n in nodes)
+    icons = {(n.icon or "").lower() for n in nodes if getattr(n, "icon", "")}
+    relationships = {(e.relationship or "").lower() for e in edges}
+
+    # --- Subject: every drawable word of the contract subject must be depicted
+    # (in a node label or as a concrete object glyph).
+    subject_words = [
+        w for w in re.findall(r"[a-z][a-z'-]{2,}", subject)
+        if w not in _SEM_STOPWORDS and w not in _SEM_ABSTRACT
+    ]
+    if subject_words:
+        missing = [w for w in subject_words if not (w in labels or w.rstrip("s") in labels or _node_icon(w) in icons)]
+        if len(missing) == len(subject_words):
+            return "contradicted", [
+                f"contract subject '{subject}' is not depicted by any node label or glyph "
+                f"(depicted: {labels})"
+            ]
+        if missing:
+            return "unverified", [f"subject words not depicted: {', '.join(missing)}"]
+    else:
+        # Fallback link: at least one required entity fragment must be depicted.
+        entities = [str(e).lower() for e in (getattr(contract, "entities", None) or [])]
+        required = [str(e).lower() for e in (getattr(contract, "required_visual_evidence", None) or [])]
+        fragments = [f for e in entities + required for f in e.split() if len(f) > 4 and f not in _SEM_ABSTRACT]
+        if fragments and not any(f in labels for f in fragments):
+            return "contradicted", [
+                f"no contract entity is depicted (needed one of: {sorted(set(fragments))[:6]}; "
+                f"depicted: {labels})"
+            ]
+
+    # --- Relationship: the expected relation family must be present in the
+    # depicted edge set (or node semantics for storages).
+    rel_text = (getattr(contract, "relationship", "") or "").lower()
+    topology = (getattr(scene_graph, "topology", "") or "").lower()
+    expected = set()
+    for key, dep in _RELATIONSHIP_KEYS:
+        if key in rel_text:
+            expected.add(dep)
+    if topology in _TOPOLOGY_RELATIONSHIP:
+        expected.add(_TOPOLOGY_RELATIONSHIP[topology])
+    if expected and not (expected & relationships):
+        types = {str(getattr(n, "node_type", "")).lower() for n in nodes}
+        if not ({"storage"} & types and "indexes" in expected):
+            return "unverified", [
+                f"expected relationship {sorted(expected)} not depicted "
+                f"(edge relationships present: {sorted(relationships) or 'none'})"
+            ]
+
+    return "verified", [
+        f"subject '{subject}' and relationship {sorted(expected) or 'focal'} depicted via "
+        f"{len(nodes)} nodes (glyphs: {sorted(icons) or 'none'}) and {len(edges)} semantic edges"
+    ]
+
+
 def judge_scene_frames(
     scene_spec: CanonicalSceneSpec,
     scene_frames: dict[str, Path],
@@ -352,21 +463,33 @@ def judge_scene_frames(
     multi_topos = ("bipartite", "pipeline", "process_flow", "object_transformation", "layered_architecture")
     expected_topology = scene_spec.scene_graph.topology if scene_spec.scene_graph else None
 
-    # 1) Semantic correctness: does the frame show the contract the narration implies?
+    # 1) Semantic correctness — expected-vs-observed verification (§8).
+    #    Geometry can CONFIRM a verified depiction but never substitute for it:
+    #    clusters, contrast and target alignment alone yield "unverified", which
+    #    cannot reach the release threshold. A generic card layout claiming a
+    #    subject it never depicts is "contradicted" regardless of pixel quality.
+    semantic_verdict, verdict_notes = verify_semantic_evidence(contract, scene_spec.scene_graph)
+    base_grounding = 7.0
+    align_mod = 1.5 if dist_to_anchor <= 140 else (0.7 if dist_to_anchor <= 220 else -0.5)
+    topo_mod = 1.5 if (
+        not expected_topology
+        or geom["observed_topology"] == expected_topology
+        or (expected_topology in multi_topos and geom["num_subject_clusters"] >= 2)
+    ) else 0.4
+    presence_mod = 1.0 if geom["num_subject_clusters"] >= 1 else -1.5
+    measured_semantic = min(10.0, max(0.0, round(base_grounding + align_mod + topo_mod + presence_mod, 1)))
     if fatal_reasons:
         semantic_score = 2.0
         art_score = min(art_score, 4.0)
         depth_score = min(depth_score, 4.0)
+    elif semantic_verdict == "contradicted":
+        semantic_score = 3.0
+        advisories.append(f"Semantic evidence CONTRADICTED: {'; '.join(verdict_notes)}")
+    elif semantic_verdict == "unverified":
+        semantic_score = min(6.5, measured_semantic)
+        advisories.append(f"Semantic evidence UNVERIFIED (capped at 6.5): {'; '.join(verdict_notes)}")
     else:
-        base_grounding = 7.0
-        align_mod = 1.5 if dist_to_anchor <= 140 else (0.7 if dist_to_anchor <= 220 else -0.5)
-        topo_mod = 1.5 if (
-            not expected_topology
-            or geom["observed_topology"] == expected_topology
-            or (expected_topology in multi_topos and geom["num_subject_clusters"] >= 2)
-        ) else 0.4
-        presence_mod = 1.0 if geom["num_subject_clusters"] >= 1 else -1.5
-        semantic_score = min(10.0, max(0.0, round(base_grounding + align_mod + topo_mod + presence_mod, 1)))
+        semantic_score = measured_semantic
         if advisories:
             semantic_score = max(0.0, semantic_score - 0.3 * len(advisories))
 
@@ -404,6 +527,7 @@ def judge_scene_frames(
 
     passed = (
         len(fatal_reasons) == 0
+        and semantic_verdict == "verified"
         and semantic_score >= 7.0
         and clarity_score >= 6.5
         and art_score >= 6.5
@@ -418,7 +542,8 @@ def judge_scene_frames(
         f"Decoded pixels (lum: {metrics['mean_luminance']:.1f}, edge: {metrics['edge_density']:.2f}, motion: {motion_delta:.2f}); "
         f"{geom['num_clusters']} detected clusters in [{geom['observed_topology']}] topology; "
         f"primary subject at ({centroid_x}, {centroid_y}) aligned with mascot target ({tgt_x:.0f}, {tgt_y:.0f}) [Δ={dist_to_anchor:.1f}px]; "
-        f"clarity {clarity_score:.1f}/10 (border {border_edge:.1f} vs centre {centre_edge:.1f} edge activity)"
+        f"clarity {clarity_score:.1f}/10 (border {border_edge:.1f} vs centre {centre_edge:.1f} edge activity); "
+        f"semantic evidence {semantic_verdict}: {'; '.join(verdict_notes)}"
     )
 
     return SceneVisualJudgement(
@@ -432,6 +557,7 @@ def judge_scene_frames(
         motion_activity_score=round(motion_score, 1),
         depth_separation_score=round(depth_score, 1),
         composite_score=composite,
+        semantic_evidence=semantic_verdict,
         passed=passed,
         overdesigned=overdesigned,
         reasons=all_reasons,

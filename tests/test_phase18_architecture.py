@@ -528,11 +528,14 @@ def test_phase18_3_scene_graph_and_multimodal_judge(tmp_path: Path):
         assert "BASELINE / NAIVE" not in n.label
         assert "OPTIMIZED // TARGET" not in n.label
 
-    # 3. Direct production scenes binds mascot target_anchor to actual scene graph primary anchor
+    # 3. Mascot targeting: a regular scene binds to the graph's primary anchor;
+    #    the CTA (normalized even without an explicit CTA role) targets the real
+    #    subscribe control — the graph's generic anchor must never overwrite it.
     plan = direct_production_scenes(
         production_id="test_sg_prod",
         sections=[
             {"section_id": "sec_01", "role": "mechanism", "title": "Vector Pipeline", "voiceover": "Embeddings are calculated.", "duration": 4.0},
+            {"section_id": "sec_02", "role": "context", "title": "Outro", "voiceover": "Subscribe for more.", "duration": 3.0},
         ],
         topic="Naive RAG Architecture",
     )
@@ -540,6 +543,12 @@ def test_phase18_3_scene_graph_and_multimodal_judge(tmp_path: Path):
     assert sc.scene_graph is not None
     assert sc.character_spec.target_anchor["x"] == sc.scene_graph.primary_anchor[0]
     assert sc.character_spec.target_anchor["y"] == sc.scene_graph.primary_anchor[1]
+    # The last section becomes the CTA even though its input role is "context":
+    # the canonical spec stores the normalized role, and the mascot aims at the
+    # subscribe control (the exact rect SceneComposition renders).
+    cta_sc = plan.scenes[-1]
+    assert cta_sc.narrative_role == "cta"
+    assert cta_sc.character_spec.target_anchor == {"x": 540.0, "y": 1640.0}
 
     # 4. Render layers and run empirical visual judge
     layers = generate_scene_layers(
