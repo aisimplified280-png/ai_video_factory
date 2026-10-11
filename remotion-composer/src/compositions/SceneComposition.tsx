@@ -1,32 +1,8 @@
 import React from 'react';
 import {AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame} from 'remotion';
-import {appear} from '../motion/appear';
-import {compare} from '../motion/compare';
-import {connect} from '../motion/connect';
-import {count} from '../motion/count';
-import {focus} from '../motion/focus';
-import {grow} from '../motion/grow';
-import {move} from '../motion/move';
-import {pulse} from '../motion/pulse';
-import {reveal} from '../motion/reveal';
-import {trace} from '../motion/trace';
-import {transform} from '../motion/transform';
-import {focusShift} from '../camera/focusShift';
-import {pan} from '../camera/pan';
-import {pullOut} from '../camera/pullOut';
-import {pushIn} from '../camera/pushIn';
-import {staticCamera} from '../camera/static';
-import {tracking} from '../camera/tracking';
-import {zoom} from '../camera/zoom';
-import {incomingStyle as blurIn, outgoingStyle as blurOut} from '../transitions/motionBlur';
-import {incomingStyle as fadeIn} from '../transitions/fade';
 import {flashStyle} from '../transitions/lightFlash';
-import {incomingStyle as wipeIn} from '../transitions/wipe';
-import {incomingStyle as zoomIn, outgoingStyle as zoomOut} from '../transitions/zoom';
-import {incomingStyle as objectIn, outgoingStyle as objectOut} from '../transitions/objectTransition';
-import {incomingStyle as morphIn, outgoingStyle as morphOut} from '../transitions/shapeMorph';
-import {incomingStyle as matchIn, outgoingStyle as matchOut} from '../transitions/matchCut';
-import {incomingStyle as slideIn, outgoingStyle as slideOut} from '../transitions/slide';
+import {count} from '../motion/count';
+import {trace} from '../motion/trace';
 import {ActionLayer} from '../primitives/ActionLayer';
 import {CharacterLayer} from '../primitives/CharacterLayer';
 import {ChartLayer} from '../primitives/ChartLayer';
@@ -40,8 +16,9 @@ import {TextLayer} from '../primitives/TextLayer';
 import {VideoLayer} from '../primitives/VideoLayer';
 import {assetById, requireAssetUrl} from '../runtime/loader';
 import type {AssetProps, AudioRefProps, CharacterSpec, EditEventProps, SceneProps, ThemeProps} from '../runtime/props';
-import {enterState, exitState, frameState, type PlacedTiming} from '../runtime/eventTiming';
+import {frameState, type PlacedTiming} from '../runtime/eventTiming';
 import {ownsOwnMotion} from '../runtime/motionOwnership';
+import {cameraStyle, headStyleFor, mergeStyles, motionStyle, tailStyleFor} from '../runtime/styleResolvers';
 
 /** True when this scene is the closing call-to-action scene. */
 export function isCtaScene(scene: SceneProps): boolean {
@@ -85,39 +62,6 @@ export interface PlacedEvent {
   flashFrames: number;
 }
 
-/**
- * Resolve every canonical transition intent to its executing module.
- * match_cut executes as a precise hard cut with matched framing; the match
- * itself was decided upstream and is never invented here.
- */
-export function transitionModuleFor(intent: string | null): string {
-  switch (intent) {
-    case 'hard_cut':
-      return 'hardCut';
-    case 'fade':
-    case 'cross_dissolve':
-      return 'fade';
-    case 'directional_wipe':
-      return 'wipe';
-    case 'object_transition':
-      return 'objectTransition';
-    case 'zoom_transition':
-      return 'zoom';
-    case 'shape_morph':
-      return 'shapeMorph';
-    case 'light_flash':
-      return 'lightFlash';
-    case 'motion_blur':
-      return 'motionBlur';
-    case 'match_cut':
-      return 'matchCut';
-    case 'slide_transition':
-      return 'slide';
-    default:
-      return 'hardCut';
-  }
-}
-
 export interface PlacedAudio {
   clip: AudioRefProps;
   from: number;
@@ -147,99 +91,7 @@ export interface SceneCompositionProps {
   boundaryTransition?: SceneBoundaryTransition | null;
 }
 
-/**
- * Intent resolvers. Every canonical intent maps to exactly one implementation;
- * scene semantics choose the intent, never the component.
- */
-export function motionStyle(intent: string | null, progress: number): React.CSSProperties {
-  switch (intent) {
-    case 'emerge':
-      return appear(progress);
-    case 'assemble':
-    case 'expand':
-      return grow(progress);
-    case 'collapse':
-      return {transform: `scale(${1 - 0.4 * progress})`, opacity: 1 - progress * 0.5};
-    case 'connect':
-      return connect(progress);
-    case 'flow':
-    case 'travel':
-      return move(progress);
-    case 'pulse':
-      return pulse(progress);
-    case 'transform':
-      return transform(progress);
-    case 'trace':
-      return trace(progress).style;
-    case 'count':
-      return appear(progress);
-    case 'compare':
-      return compare(progress, 'left');
-    case 'focus':
-      return focus(progress);
-    case 'reorder':
-    case 'reveal':
-    default:
-      return reveal(progress);
-  }
-}
-
-export function cameraStyle(intent: string | null, progress: number): React.CSSProperties {
-  switch (intent) {
-    case 'pull_out':
-    case 'pullOut':
-    case 'crane_pull_out':
-      return pullOut(progress, 0.03);
-    case 'reveal_space':
-    case 'approach_subject':
-    case 'pushIn':
-    case 'fast_push_in':
-    case 'push_in':
-      return pushIn(progress, 0.03);
-    case 'expand_scale':
-    case 'zoom':
-    case 'dolly_through':
-      return pushIn(progress, 0.04);
-    case 'follow_subject':
-    case 'tracking':
-    case 'overhead_track':
-      return tracking(progress);
-    case 'shift_focus':
-    case 'focusShift':
-    case 'focus_shift':
-      return focusShift(progress);
-    case 'cross_system':
-    case 'pan':
-    case 'lateral_pan':
-    case 'lateral_tracking':
-      return pan(progress, 'x', 24);
-    case 'tilt':
-    case 'crane_down':
-    case 'crane_up':
-      return pan(progress, 'y', 24);
-    case 'observe_static':
-    case 'steady_breathing':
-    case 'static':
-    default:
-      return staticCamera();
-  }
-}
-
-/** Camera, motion, transition, and depth transforms combine; none overwrites another. */
-export function mergeStyles(...styles: (React.CSSProperties | undefined)[]): React.CSSProperties {
-  const merged: React.CSSProperties = {};
-  for (const style of styles) {
-    if (!style) {
-      continue;
-    }
-    const {transform, ...rest} = style;
-    Object.assign(merged, rest);
-    if (transform) {
-      merged.transform = merged.transform ? `${merged.transform} ${transform}` : String(transform);
-    }
-  }
-  return merged;
-}
+/** Executes one scene's placed events in z-order. Multi-layer by construction. */
 
 function LayerContent({event, assets, theme, scene, ctaBranding, width, height, progress, isAITopic}: {
   event: EditEventProps;
@@ -267,6 +119,7 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
         bars?: {label: string; value: number}[];
         shapes?: {shape: 'circle' | 'rect' | 'line'; x: number; y: number; size: number; length?: number; color: string}[];
         path?: string;
+        topology?: string;
       };
       if (asset.kind === 'video') {
         return <VideoLayer src={requireAssetUrl(asset)} />;
@@ -286,6 +139,7 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
             height={height}
             nodes={(spec.nodes ?? []).map((node, index) => ({...node, x: node.x || width / 2, y: node.y || 300 + index * 260}))}
             connectors={spec.connectors ?? []}
+            topology={spec.topology}
             /* Element entrance completes within the first ~12% of the scene (~0.6s):
              * visuals are on screen while the narrator is already saying them. */
             reveal={event.motion_intent === 'assemble' || event.motion_intent === 'connect' ? Math.min(1, progress / 0.12) : 1}
@@ -333,7 +187,7 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
       if (!asset) {
         throw new Error(`Diagram event ${event.event_id} references no asset.`);
       }
-      const spec = (asset.nativeSpec ?? {}) as {nodes?: {id: string; label: string; x: number; y: number; details?: string[]; primary?: boolean; w?: number; h?: number}[]; connectors?: {from: string; to: string; label?: string}[]};
+      const spec = (asset.nativeSpec ?? {}) as {nodes?: {id: string; label: string; x: number; y: number; details?: string[]; primary?: boolean; w?: number; h?: number}[]; connectors?: {from: string; to: string; label?: string}[]; topology?: string};
       return (
         <DiagramLayer
           theme={theme}
@@ -341,6 +195,7 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
           height={height}
           nodes={(spec.nodes ?? []).map((node, index) => ({...node, x: node.x || width / 2, y: node.y || 300 + index * 260}))}
           connectors={spec.connectors ?? []}
+          topology={spec.topology}
           reveal={Math.min(1, progress / 0.4)}
         />
       );
@@ -359,100 +214,6 @@ function LayerContent({event, assets, theme, scene, ctaBranding, width, height, 
       return null;
     default:
       throw new Error(`Unsupported semantic layer role: ${event.role}`);
-  }
-}
-
-/**
- * Entrance style for the first `overlap` frames of an event.
- * Each element waits its stagger turn (enterState), then enters with a
- * role-specific move (content rises, details scale in) — never the whole
- * frame sliding as one unit. The progress reaches 1 on the last visible
- * entrance frame, so the incoming element is stable while still on screen.
- */
-function headStyleFor(intent: string | null, overlap: number, local: number, role = ''): React.CSSProperties {
-  if (overlap <= 0 || local >= overlap) {
-    return {};
-  }
-  const state = enterState(local, overlap, role);
-  if (state.hidden) {
-    return {opacity: 0};
-  }
-  const p = state.p;
-  const base = (() => {
-    switch (transitionModuleFor(intent)) {
-      case 'fade':
-        return fadeIn(p);
-      case 'wipe':
-        return wipeIn(p);
-      case 'zoom':
-        return zoomIn(p);
-      case 'objectTransition':
-        return objectIn(p);
-      case 'shapeMorph':
-        return morphIn(p);
-      case 'motionBlur':
-        return blurIn(p);
-      case 'matchCut':
-        return matchIn(p);
-      case 'slide':
-        return slideIn(p);
-      default:
-        return {};
-    }
-  })();
-  const opacity = base.opacity ?? p;
-  if (base.transform) {
-    return {...base, opacity};
-  }
-  if (role === 'character') {
-    // The mascot's spring entrance owns its motion — fade only.
-    return {opacity};
-  }
-  if (role === 'foreground' || role === 'diagram' || role === 'overlay') {
-    return {opacity, transform: `scale(${(0.93 + 0.07 * p).toFixed(4)})`};
-  }
-  return {opacity, transform: `translateY(${((1 - p) * 46).toFixed(1)}px)`};
-}
-
-/**
- * Exit style while an event lends its tail to the next entrance.
- * exitState guarantees progress reaches 1 on the event's LAST visible frame,
- * so the outgoing element finishes its exit before its parent scene unmounts
- * (no full-opacity hold followed by an abrupt boundary cut).
- */
-function tailStyleFor(intent: string | null, tail: number, intoTail: number, role = ''): React.CSSProperties {
-  if (tail <= 0) {
-    return {};
-  }
-  const state = exitState(intoTail, tail, role);
-  if (!state.active) {
-    return {};
-  }
-  const q = state.q;
-  if (transitionModuleFor(intent) === 'fade') {
-    if (role === 'foreground' || role === 'diagram' || role === 'overlay') {
-      return {opacity: 1 - q, transform: `scale(${(1 - 0.07 * q).toFixed(4)})`};
-    }
-    if (role === 'character') {
-      return {opacity: 1 - q};
-    }
-    return {opacity: 1 - q, transform: `translateY(${(-30 * q).toFixed(1)}px)`};
-  }
-  switch (transitionModuleFor(intent)) {
-    case 'zoom':
-      return zoomOut(q);
-    case 'objectTransition':
-      return objectOut(q);
-    case 'shapeMorph':
-      return morphOut(q);
-    case 'motionBlur':
-      return blurOut(q);
-    case 'matchCut':
-      return matchOut(q);
-    case 'slide':
-      return slideOut(q);
-    default:
-      return {};
   }
 }
 
@@ -688,40 +449,11 @@ export const SceneComposition: React.FC<SceneCompositionProps> = ({
             opacity: ctaAppear,
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-            }}
-          >
-            {/* Channel logo mark — rounded-square monogram with the brand's blue/amber accents. */}
-            <svg width={46} height={46} viewBox="0 0 46 46" aria-hidden>
-              <defs>
-                <linearGradient id="ctaLogoGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#3B82F6" />
-                  <stop offset="100%" stopColor="#1D4ED8" />
-                </linearGradient>
-              </defs>
-              <rect x="1" y="1" width="44" height="44" rx="13" fill="url(#ctaLogoGrad)" />
-              <rect x="1" y="1" width="44" height="44" rx="13" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
-              <path d="M11 33 L18.5 13 L23 13 L30.5 33" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              <path d="M14.6 26.5 H26.9" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-              <circle cx="35.5" cy="14.5" r="4" fill="#F59E0B" />
-            </svg>
-            <span
-              style={{
-                fontFamily: theme.fontFamily,
-                fontSize: 26,
-                fontWeight: 800,
-                letterSpacing: '0.12em',
-                color: '#F8FAFC',
-                textTransform: 'uppercase',
-              }}
-            >
-              {ctaBranding || 'AI SIMPLIFIED LAB'}
-            </span>
-          </div>
+          {/* Single brand lockup lives above the card (wordmark reveal); the
+              in-card logo+name row is removed to end the duplication. This
+              46px spacer preserves the subscribe button's exact canvas position
+              so ctaSubscribeAnchor stays in sync with the rendered control. */}
+          <div style={{height: 46}} aria-hidden />
 
           {/* One deliberate response to the mascot tap, then a stable branded ending. */}
           <div

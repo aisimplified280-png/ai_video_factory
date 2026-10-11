@@ -100,9 +100,10 @@ def test_five_scene_story_never_collapses():
     # Scene 5 must be brand/insignia or channel name
     assert "brand" in subjects[4].lower() or "insignia" in subjects[4].lower() or "simplified" in subjects[4].lower()
 
-    # 5. Camera movements must be diverse
+    # 5. Camera moves only when the action needs one (§5 static default): no
+    # un-needy push_in fallback anywhere in the five concepts.
     cameras = [c["camera_motion"] for c in concepts]
-    assert len(set(cameras)) >= 4
+    assert "push_in" not in cameras, cameras
 
     # 6. Scorecard verification
     scorecard = plan["visual_scorecard"]
@@ -214,9 +215,13 @@ def test_renderer_consumes_framing_and_camera_intents():
     """Step 17: Verify Remotion SceneComposition.tsx and ImageLayer.tsx consume framing and camera intents."""
     composer_dir = Path(__file__).resolve().parent.parent / "remotion-composer" / "src"
     scene_comp = (composer_dir / "compositions" / "SceneComposition.tsx").read_text(encoding="utf-8")
+    resolvers = (composer_dir / "runtime" / "styleResolvers.ts").read_text(encoding="utf-8")
     img_layer = (composer_dir / "primitives" / "ImageLayer.tsx").read_text(encoding="utf-8")
 
-    assert "pullOut" in scene_comp
+    # Camera intent implementations live in the tested resolvers module that
+    # SceneComposition renders through (extracted, not removed).
+    assert "pullOut" in resolvers
+    assert "from '../runtime/styleResolvers'" in scene_comp
     assert "framing={event.framing}" in scene_comp
     assert "framing" in img_layer
     assert "scale(" in img_layer

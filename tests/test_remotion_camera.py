@@ -15,10 +15,13 @@ INTENT_TO_MODULE = {
 
 
 def test_every_camera_intent_binds_to_a_behavior():
-    scene_source = (COMPOSER / "compositions" / "SceneComposition.tsx").read_text(encoding="utf-8")
+    resolvers = (COMPOSER / "runtime" / "styleResolvers.ts").read_text(encoding="utf-8")
     for intent, module in INTENT_TO_MODULE.items():
-        assert f"'{intent}'" in scene_source, intent
-        assert module in scene_source, module
+        assert f"'{intent}'" in resolvers, intent
+        assert module in resolvers, module
+    # SceneComposition renders through the tested resolvers, never inline math.
+    scene_source = (COMPOSER / "compositions" / "SceneComposition.tsx").read_text(encoding="utf-8")
+    assert "from '../runtime/styleResolvers'" in scene_source
 
 
 def test_camera_modules_are_pure_frame_functions():

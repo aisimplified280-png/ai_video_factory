@@ -16,18 +16,26 @@ TRANSITION_INTENTS = {"hard_cut", "cross_dissolve", "motion_blur", "match_cut", 
                       "zoom_transition", "object_transition", "shape_morph", "light_flash", "fade"}
 
 
+def _resolver_source() -> str:
+    return (COMPOSER / "runtime" / "styleResolvers.ts").read_text(encoding="utf-8")
+
+
 def test_every_camera_intent_has_an_implementation():
+    # Bindings live in the tested resolvers module that SceneComposition
+    # renders through (extracted from the composition, not removed).
     scene_source = (COMPOSER / "compositions" / "SceneComposition.tsx").read_text(encoding="utf-8")
+    assert "from '../runtime/styleResolvers'" in scene_source
+    resolvers = _resolver_source()
     for intent in CAMERA_INTENTS:
-        assert f"'{intent}'" in scene_source, intent
+        assert f"'{intent}'" in resolvers, intent
     for module in ("static", "pushIn", "pullOut", "pan", "tracking", "parallax", "zoom", "focusShift"):
         assert (COMPOSER / "camera" / f"{module}.ts").is_file()
 
 
 def test_every_motion_intent_has_an_implementation():
-    scene_source = (COMPOSER / "compositions" / "SceneComposition.tsx").read_text(encoding="utf-8")
+    resolvers = _resolver_source()
     for intent in MOTION_INTENTS:
-        assert f"'{intent}'" in scene_source, intent
+        assert f"'{intent}'" in resolvers, intent
     for module in ("appear", "reveal", "grow", "move", "connect", "pulse", "transform",
                    "trace", "count", "compare", "focus"):
         path = COMPOSER / "motion" / f"{module}.ts"
@@ -36,9 +44,9 @@ def test_every_motion_intent_has_an_implementation():
 
 
 def test_every_transition_intent_resolves_to_a_module():
-    scene_source = (COMPOSER / "compositions" / "SceneComposition.tsx").read_text(encoding="utf-8")
+    resolvers = _resolver_source()
     for intent in TRANSITION_INTENTS:
-        assert f"'{intent}'" in scene_source, intent
+        assert f"'{intent}'" in resolvers, intent
     for module in ("hardCut", "fade", "wipe", "zoom", "lightFlash", "motionBlur", "matchCut"):
         assert (COMPOSER / "transitions" / f"{module}.ts").is_file()
 

@@ -73,6 +73,37 @@ def _visual_activity(frames: list[Path]) -> tuple[float, float]:
     return hist_mean, spat_mean
 
 
+_STATIC_CAMERAS = frozenset({"static", "static_locked", "observe_static", "", None})
+_STATIC_MOTIONS = frozenset({"static", "", None})
+
+
+def activity_gate_applies(edit_data: dict) -> tuple[bool, str]:
+    """Whether the plan requires motion anywhere: any timeline event with a
+    non-static motion_intent, camera_intent, or mascot action. Fully static
+    plans waive the activity floors (freeze_check still rejects stuck output);
+    plans with a diagram assemble, camera move, or mascot stride/interact keep
+    both floors. Returns (applies, reason)."""
+    events = list(edit_data.get("timeline") or []) + list(edit_data.get("multi_layer_timeline") or [])
+    requiring = []
+    for e in events:
+        if not isinstance(e, dict):
+            continue
+        reasons = []
+        if e.get("motion_intent") not in _STATIC_MOTIONS:
+            reasons.append(f"motion={e.get('motion_intent')}")
+        if e.get("camera_intent") not in _STATIC_CAMERAS:
+            reasons.append(f"camera={e.get('camera_intent')}")
+        char_motion = (e.get("character_spec") or {}).get("motion") if isinstance(e.get("character_spec"), dict) else None
+        if char_motion not in _STATIC_MOTIONS:
+            reasons.append(f"mascot={char_motion}")
+        if reasons:
+            requiring.append(f"{e.get('event_id', '?')}({', '.join(reasons)})")
+    if requiring:
+        shown = ", ".join(requiring[:3]) + ("…" if len(requiring) > 3 else "")
+        return True, f"{len(requiring)} event(s) require motion: {shown}"
+    return False, f"{len(events)} event(s), all intents static"
+
+
 def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: float = 0.5) -> dict:
     """Evidence-based QA over the ENCODED mp4. Returns the qa_report payload."""
     from PIL import Image, ImageChops
@@ -121,15 +152,19 @@ def run_qa(production_id: str, video_path: Path, edit_data: dict, duration_tol: 
     frozen = sum(1 for a, b in zip(frames, frames[1:]) if _frames_identical(a, b))
     record("freeze_check", frozen == 0, f"{frozen} adjacent pixel-identical pairs of {len(frames) - 1} (per-pixel diff, ±1 tolerance)")
     hist_mean, spat_mean = _visual_activity(frames)
-    # Dual floors: the old single 0.20 histogram bar was calibrated when every
-    # scene repainted its own background. With the now-mandated constant canvas,
-    # frame-wide tonal churn is gone BY DESIGN while elements keep animating —
-    # so the gate now requires BOTH: histogram >= 0.12 still rejects dead or
-    # static output, and spatial >= 0.015 demands real pixel-level motion
-    # (evidence: constant-canvas production scored spatial 0.054; stuck output
-    # scores <0.005). freeze_check above still rejects identical frames.
-    record("visual_activity", hist_mean >= 0.12 and spat_mean >= 0.015,
-           f"histogram delta={hist_mean:.3f} (floor 0.12), spatial delta={spat_mean:.3f} (floor 0.015)")
+    # Conditional floors (P1): the old unconditional dual floor punished
+    # genuinely static-but-clear explanatory video. The floors apply only when
+    # the plan itself requires motion (a diagram assemble, a camera move, a
+    # mascot action); fully static plans are governed by freeze_check instead.
+    # Evidence: constant-canvas production scored spatial 0.054; stuck output
+    # scores <0.005 — freeze still rejects identical frames either way.
+    gate_applies, gate_reason = activity_gate_applies(edit_data)
+    if gate_applies:
+        record("visual_activity", hist_mean >= 0.12 and spat_mean >= 0.015,
+               f"histogram delta={hist_mean:.3f} (floor 0.12), spatial delta={spat_mean:.3f} (floor 0.015); {gate_reason}")
+    else:
+        record("visual_activity", True,
+               f"waived: plan requires no motion ({gate_reason}); freeze_check governs (frozen={frozen})")
 
     # Caption zone: the pill sits above a 220px bottom padding, so measure the
     # bottom 330px. It must carry text while captions are active.

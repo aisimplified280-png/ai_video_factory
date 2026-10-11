@@ -23,11 +23,15 @@ from .visual_director import UnifiedVisualPlan
 
 _DIAGRAM_TOPOLOGIES = (
     "process_flow", "object_transformation", "layered_architecture", "bipartite",
+    # Focal single-subject scenes render natively too: the hero node (with its
+    # concrete subject icon) draws as a subject hero in Remotion instead of a
+    # baked text card. Brand/CTA stays baked by design (never in this tuple).
+    "focal",
 )
 
 
 def _native_diagram_graph(graph: Any) -> bool:
-    """Flow-like topologies render as a NATIVE vector diagram in Remotion: nodes
+    """Flow-like and focal topologies render as a NATIVE vector diagram in Remotion: nodes
     and edges from the semantic scene graph animate in sequence (element motion)
     instead of the page moving. Single source of truth for both the manifest and
     the timeline decision."""

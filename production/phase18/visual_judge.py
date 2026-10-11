@@ -285,6 +285,65 @@ _RELATIONSHIP_KEYS = (
 )
 
 
+# Topologies the renderer places at graph bounds (native vector diagrams):
+# only these get a rendered-presence requirement. Baked/TSX scenes (brand,
+# CTA choreography) do not draw nodes at graph bounds — the CTA crest region
+# measures empty canvas (std 3.0) while the brand IS depicted elsewhere — so
+# alleging "not depicted" there would be false.
+_PRESENCE_TOPOLOGIES = frozenset({
+    "process_flow", "object_transformation", "layered_architecture",
+    "bipartite", "focal",
+})
+# Calibrated on audit2 renders (native node regions: std >= 51.9 /
+# edge >= 38.0 minima) plus the dev-renderer fixture layout (std 19.1 /
+# edge 14.1 at exact bounds, 107.9 / 19.1 with tolerance); empty canvas
+# scores std <= 3.0 / edge <= 6.4 (maxima, ±60px expansion: edge <= 7.4).
+# Floors sit clear of drawn content on one side and empty canvas on the other.
+_PRESENCE_STD_FLOOR = 12.0
+_PRESENCE_EDGE_FLOOR = 15.0
+# Graph bounds are layout boxes; rasterized strokes, glyphs and renderer
+# padding legitimately extend past them, and dev layouts sit looser, so the
+# sampled region grows by this margin (still localized to the subject area).
+_PRESENCE_BOUNDS_TOLERANCE = 60
+
+
+def verify_rendered_presence(mid_img: Image.Image, topology: str | None, nodes: list) -> tuple[list[str], list[str], int]:
+    """Render corroboration: which graph nodes are actually drawn in the frame?
+
+    Samples each node's graph-bounds region in the decoded mid frame: a drawn
+    node (card, glyph, text) carries far more luminance variance and edge
+    energy than empty canvas. Returns (visible_node_ids, missing_notes,
+    checked_count). Nodes without usable bounds are skipped, never failed;
+    non-native topologies are not applicable (no bounds mapping to check).
+    """
+    visible: list[str] = []
+    missing: list[str] = []
+    if (topology or "") not in _PRESENCE_TOPOLOGIES:
+        return visible, missing, 0
+    w, h = mid_img.size
+    gray = np.array(mid_img.convert("L"), dtype=np.float32)
+    for n in nodes or []:
+        bounds = getattr(n, "bounds", None)
+        if not bounds or len(bounds) != 4:
+            continue
+        x1, y1, x2, y2 = (int(v) for v in bounds)
+        if x2 - x1 < 40 or y2 - y1 < 40:
+            continue
+        # Tolerance-expanded sample region, clamped to the frame.
+        x1, y1 = max(0, x1 - _PRESENCE_BOUNDS_TOLERANCE), max(0, y1 - _PRESENCE_BOUNDS_TOLERANCE)
+        x2, y2 = min(w, x2 + _PRESENCE_BOUNDS_TOLERANCE), min(h, y2 + _PRESENCE_BOUNDS_TOLERANCE)
+        if x2 - x1 < 8 or y2 - y1 < 8:
+            continue
+        region = gray[y1:y2, x1:x2]
+        gx = ndi.sobel(region, axis=1)
+        gy = ndi.sobel(region, axis=0)
+        if float(region.std()) > _PRESENCE_STD_FLOOR and float(np.hypot(gx, gy).mean()) > _PRESENCE_EDGE_FLOOR:
+            visible.append(n.id)
+        else:
+            missing.append(f"node '{n.label}' not depicted in the rendered frame")
+    return visible, missing, len(visible) + len(missing)
+
+
 def verify_semantic_evidence(contract: Any, scene_graph: Any) -> tuple[str, list[str]]:
     """Expected-vs-observed semantic verification (§8).
 
@@ -514,6 +573,27 @@ def judge_scene_frames(
     #    cannot reach the release threshold. A generic card layout claiming a
     #    subject it never depicts is "contradicted" regardless of pixel quality.
     semantic_verdict, verdict_notes = verify_semantic_evidence(contract, scene_spec.scene_graph)
+    verdict_notes = list(verdict_notes)
+    # Render corroboration (P1): the graph verdict is plan validation
+    # until the frame confirms it. For natively-rendered topologies the nodes
+    # must actually be drawn at their graph bounds: a "verified" verdict with
+    # its primary node (or every node) missing from the pixels is downgraded
+    # to unverified — the renderer may have clipped, hidden, or misdrawn it.
+    graph_nodes = list(getattr(scene_spec.scene_graph, "nodes", []) or []) if scene_spec.scene_graph else []
+    render_visible, render_missing, render_checked = verify_rendered_presence(
+        mid_img, expected_topology, graph_nodes)
+    if semantic_verdict == "verified" and render_checked > 0:
+        primary_ids = {n.id for n in graph_nodes if getattr(n, "is_primary", False)}
+        if primary_ids and not (primary_ids & set(render_visible)):
+            semantic_verdict = "unverified"
+            verdict_notes.extend(render_missing)
+            verdict_notes.append("primary subject node not drawn in the rendered frame")
+        elif not render_visible:
+            semantic_verdict = "unverified"
+            verdict_notes.extend(render_missing)
+        else:
+            verdict_notes.append(
+                f"render corroboration: {len(render_visible)}/{render_checked} graph nodes drawn in frame")
     base_grounding = 7.0
     # No alignment evidence either way from an unmeasured centroid: the modifier
     # stays neutral instead of rewarding/penalising distance to a blob centre.

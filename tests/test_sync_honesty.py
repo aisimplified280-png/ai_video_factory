@@ -18,7 +18,8 @@ from pathlib import Path
 from production.artifact_store import ArtifactStore
 from production.state import StateStore
 from production.phase17.style_systems import get_style_system
-from production.phase18.sync import sync_authoritative_artifacts
+from production.phase18.sync import _native_diagram_graph, sync_authoritative_artifacts
+from production.phase18.scene_graph import build_semantic_scene_graph
 from production.phase18.visual_director import direct_production_scenes
 from schemas.models.artifact import ProducerInfo
 from schemas.models.common import ProducerKind
@@ -189,6 +190,34 @@ def test_timeline_has_no_background_events_and_static_default(tmp_path: Path):
                 f"forced motion on {e['role']}: {e.get('motion_intent')}"
             )
     assert diagram_mid_seen, "the GPS flow scene should get an assembling diagram"
+
+
+def test_focal_graphs_are_native_diagrams_but_brand_is_not(tmp_path: Path):
+    """Focal single-subject scenes render natively (subject hero) while the
+    brand/CTA crest stays baked by design — never a hero behind the card."""
+    focal = build_semantic_scene_graph(
+        scene_id="sec_focal",
+        narrative_role="context",
+        subject="Your phone",
+        visual_purpose="Explain",
+        spoken_text="Your phone displays the date and time clearly.",
+        topic="How GPS works",
+    )
+    assert focal.topology == "focal"
+    assert _native_diagram_graph(focal) is True
+    hero = next(n for n in focal.nodes if n.is_primary)
+    assert hero.icon != "", "hero must carry the concrete subject primitive"
+
+    brand = build_semantic_scene_graph(
+        scene_id="sec_cta",
+        narrative_role="cta",
+        subject="Subscribe",
+        visual_purpose="Convert",
+        spoken_text="Subscribe to AI Simplified Lab.",
+        topic="How GPS works",
+    )
+    assert brand.topology == "brand"
+    assert _native_diagram_graph(brand) is False
 
 
 def test_manifest_labels_background_as_diagnostic_and_keeps_semantics(tmp_path: Path):

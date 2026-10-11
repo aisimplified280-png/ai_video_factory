@@ -70,3 +70,30 @@ def test_visual_activity_tonal_change_raises_histogram(tmp_path):
     Image.new("RGB", (64, 36), (200, 200, 200)).save(b)
     hist, spat = qa._visual_activity([a, b])
     assert hist > 0.5 and spat > 0.4
+
+
+def test_activity_gate_applies_only_when_plan_requires_motion():
+    """The floors bind plans that declare motion; fully static plans are
+    governed by freeze_check instead (P1: no unconditional activity floor)."""
+    qa = _qa_module()
+    static_edit = {"timeline": [
+        {"event_id": "e1", "role": "midground", "motion_intent": None, "camera_intent": "static"},
+        {"event_id": "e2", "role": "character", "motion_intent": None, "camera_intent": None,
+         "character_spec": {"motion": "static"}},
+    ], "multi_layer_timeline": []}
+    applies, reason = qa.activity_gate_applies(static_edit)
+    assert applies is False, reason
+
+    for event in (
+        {"event_id": "d", "role": "midground", "motion_intent": "assemble", "camera_intent": "static"},
+        {"event_id": "c", "role": "midground", "motion_intent": None, "camera_intent": "push_in"},
+        {"event_id": "m", "role": "character", "motion_intent": None, "camera_intent": None,
+         "character_spec": {"motion": "stride"}},
+    ):
+        applies, reason = qa.activity_gate_applies({"timeline": [event], "multi_layer_timeline": []})
+        assert applies is True, (event, reason)
+
+    # The multi-layer timeline is scanned too, not just the primary track.
+    applies, _ = qa.activity_gate_applies({
+        "timeline": [], "multi_layer_timeline": [{"event_id": "x", "camera_intent": "tracking"}]})
+    assert applies is True

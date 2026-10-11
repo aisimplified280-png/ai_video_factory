@@ -37,6 +37,9 @@ export interface DiagramLayerProps {
   connectors: DiagramConnector[];
   /** 0..1 reveal driven by element-level assemble motion (never page motion). */
   reveal?: number;
+  /** Semantic topology selecting the layout: a 'focal' single-subject node
+   *  with a concrete icon renders as a subject hero, never a generic card. */
+  topology?: string;
 }
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -410,7 +413,7 @@ function connectorStyle(relationship: string | undefined): {
  * as the reveal front passes it and stays; connectors draw only once both
  * endpoints exist; the camera never moves.
  */
-export const DiagramLayer: React.FC<DiagramLayerProps> = ({theme, width, height, nodes, connectors, reveal = 1}) => {
+export const DiagramLayer: React.FC<DiagramLayerProps> = ({theme, width, height, nodes, connectors, reveal = 1, topology}) => {
   const r = clamp01(reveal);
   const count = Math.max(1, nodes.length);
 
@@ -418,6 +421,70 @@ export const DiagramLayer: React.FC<DiagramLayerProps> = ({theme, width, height,
   const nodeT = (index: number) => clamp01((r * count - index) / 0.6);
   const tById = new Map<string, number>(nodes.map((node, index) => [node.id, nodeT(index)]));
   const byId = new Map<string, DiagramNode>(nodes.map((node) => [node.id, node]));
+
+  // Focal hero: one subject, one concrete primitive — the object the narration
+  // names drawn large in a medallion, label and spoken facts beneath. No card
+  // box: a phone must read as a phone, not as another rounded rectangle.
+  // Single nodes WITHOUT a concrete icon stay on the card path (concepts that
+  // genuinely benefit from a card keep it).
+  const heroNode = topology === 'focal' && nodes.length === 1 && nodes[0].icon ? nodes[0] : null;
+  if (heroNode) {
+    const t = nodeT(0);
+    const nx = heroNode.x || width / 2;
+    const ny = heroNode.y || 705;
+    const labelLines = wrapLabel(heroNode.label, 18).slice(0, 3);
+    if (wrapLabel(heroNode.label, 18).length > 3 && labelLines.length > 0) {
+      labelLines[labelLines.length - 1] = `${labelLines[labelLines.length - 1]}…`;
+    }
+    const detailRows: string[] = [];
+    for (const detail of (heroNode.details ?? []).filter(Boolean).slice(0, 3)) {
+      for (const line of wrapDetailBullet(detail, 34)) {
+        if (detailRows.length < 4) {
+          detailRows.push(line);
+        }
+      }
+    }
+    const labelY = ny + 12;
+    const detailsY = labelY + labelLines.length * 54 + 20;
+    return (
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        {t > 0.02 ? (
+          <g data-hero="focal" opacity={t}>
+            <circle cx={nx} cy={ny - 150} r={95} fill={theme.surface} stroke={theme.accent} strokeWidth={5} />
+            <DiagramGlyph icon={heroNode.icon as string} x={nx - 55} y={ny - 150 - 55} size={110} accent={theme.accent} />
+            {labelLines.map((line, li) => (
+              <text
+                key={`h${li}`}
+                x={nx}
+                y={labelY + li * 54}
+                textAnchor="middle"
+                fontSize={46}
+                fontWeight={800}
+                fill={theme.text}
+                fontFamily={theme.fontFamily}
+              >
+                {line}
+              </text>
+            ))}
+            {detailRows.map((line, ri) => (
+              <text
+                key={`d${ri}`}
+                x={nx}
+                y={detailsY + ri * 36}
+                textAnchor="middle"
+                fontSize={26}
+                fontWeight={600}
+                fill={theme.mutedText}
+                fontFamily={theme.fontFamily}
+              >
+                {line}
+              </text>
+            ))}
+          </g>
+        ) : null}
+      </svg>
+    );
+  }
 
   // Exit point of a center-to-edge ray for an axis-aligned box.
   const boxExit = (node: DiagramNode, ux: number, uy: number): number => {

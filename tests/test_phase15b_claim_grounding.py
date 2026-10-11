@@ -93,6 +93,27 @@ def test_entity_and_action_preservation():
     assert "control" in plan.subject.lower() or "control" in plan.action.lower()
 
 
+def test_camera_defaults_to_static_unless_action_needs_motion():
+    """Static is the default (§5): neutral narration gets no camera move — not
+    even the old forced opening push-in — while flow language keeps tracking."""
+    director = ShotDirector()
+    neutral = {
+        "spoken_text": "Your phone displays the date and time clearly.",
+        "narrative_role": "context",
+    }
+    for idx in (0, 2):
+        intent = analyze_scene_intent(neutral, scene_idx=idx, total_scenes=5, topic="How GPS works")
+        plan = director._direct_single_scene(intent, scene_idx=idx, total_scenes=5, topic="How GPS works")
+        assert plan.camera_motion == "static", f"idx={idx}: {plan.camera_motion}"
+    flow = {
+        "spoken_text": "Data flows through the pipeline into storage.",
+        "narrative_role": "mechanism",
+    }
+    intent = analyze_scene_intent(flow, scene_idx=1, total_scenes=5, topic="How GPS works")
+    plan = director._direct_single_scene(intent, scene_idx=1, total_scenes=5, topic="How GPS works")
+    assert plan.camera_motion == "tracking", plan.camera_motion
+
+
 def test_generic_metaphor_rejected_for_physical_control():
     """Verify that an abstract neural void or generic warehouse without control fails grounding QA."""
     claim_plan = ClaimVisualPlan(

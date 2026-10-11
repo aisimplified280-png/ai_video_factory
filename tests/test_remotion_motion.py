@@ -23,12 +23,17 @@ INTENT_TO_MODULE = {
 
 
 def test_every_motion_intent_binds_to_an_implementation():
-    scene_source = (COMPOSER / "compositions" / "SceneComposition.tsx").read_text(encoding="utf-8")
+    resolvers = (COMPOSER / "runtime" / "styleResolvers.ts").read_text(encoding="utf-8")
     for intent, module in INTENT_TO_MODULE.items():
-        assert f"'{intent}'" in scene_source, intent
-        assert module in scene_source, module
+        assert f"'{intent}'" in resolvers, intent
+        assert module in resolvers, module
     # `reorder` is an editorial ordering concept; it resolves through reveal.
-    assert "'reorder'" in scene_source
+    assert "'reorder'" in resolvers
+    # SceneComposition renders through the tested resolvers, never inline math.
+    scene_source = (COMPOSER / "compositions" / "SceneComposition.tsx").read_text(encoding="utf-8")
+    assert "from '../runtime/styleResolvers'" in scene_source
+    # Static is the default: unknown/missing intents style nothing (no back-door reveal).
+    assert "default:\n      return {};" in resolvers
 
 
 def test_motion_modules_produce_style_objects():

@@ -545,7 +545,10 @@ class ShotDirector:
                 sem_camera = "slow_pan"
                 sem_composition = "center_focus"
             else:
-                sem_camera = "push_in"
+                # Static is the default (§5): a camera move is assigned only when
+                # the action semantically needs it (flow/tracking, scale/crane,
+                # matrix/slow_pan above) — never as a fallback drift.
+                sem_camera = "static"
                 sem_composition = "center_focus"
 
             if chosen_mode == VisualMode.BRAND_CTA:
@@ -563,7 +566,9 @@ class ShotDirector:
 
             custom_opt = {
                 "shot_type": custom_shot_type,
-                "camera_motion": "push_in" if scene_idx == 0 else sem_camera,
+                # No forced opening push-in: scene 0 uses the same semantic
+                # derivation (static unless the action needs motion).
+                "camera_motion": sem_camera,
                 "camera_angle": "macro_probe_level" if (scene_idx == 0 and is_rob) else "eye_level_three_quarter",
                 "composition": "tight_macro_crop" if (scene_idx == 0 and is_rob) else sem_composition,
                 "subject": (

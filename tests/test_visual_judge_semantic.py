@@ -179,12 +179,18 @@ def test_verify_is_pure_and_handles_degenerate_inputs():
 
 def _synthetic_frame(tmp_path: Path, name: str, box=None) -> Path:
     """Deterministic 1080x1920 probe frames: box=None → uniform canvas,
-    otherwise a solid (x1, y1, x2, y2) subject box on a light canvas."""
+    otherwise a solid subject box WITH drawn text strokes on a light canvas
+    (flat fills carry no variance — real nodes contain glyphs and text)."""
     from PIL import Image, ImageDraw
 
     img = Image.new("RGB", (1080, 1920), (232, 238, 244))
     if box is not None:
-        ImageDraw.Draw(img).rectangle(box, fill=(30, 41, 59))
+        d = ImageDraw.Draw(img)
+        d.rectangle(box, fill=(30, 41, 59))
+        x1, y1, x2, y2 = box
+        for i, yy in enumerate(range(y1 + 30, y2 - 20, 44)):
+            d.line([(x1 + 24, yy), (x2 - 24, yy)], fill=(248, 250, 252), width=5)
+            d.text((x1 + 24, yy + 6), f"spoken fact line {i + 1}", fill=(226, 232, 240))
     path = tmp_path / f"{name}.png"
     img.save(path)
     return path
@@ -259,3 +265,68 @@ def test_judge_keeps_offset_advisory_when_centroid_measured_and_far(tmp_path: Pa
     )
     assert any("Mascot target vector offset" in r for r in judgement.reasons), judgement.reasons
     assert "primary subject at (300, 780)" in judgement.visible_description, judgement.visible_description
+
+
+def test_rendered_presence_finds_drawn_nodes_and_missing_blanks(tmp_path: Path):
+    """Render corroboration unit behavior: textured subject boxes read drawn,
+    uniform canvas reads missing, unusable bounds never fail."""
+    from production.phase18.visual_judge import verify_rendered_presence
+
+    class _N:
+        def __init__(self, id, label, bounds):
+            self.id = id
+            self.label = label
+            self.bounds = bounds
+
+    drawn = _synthetic_frame(tmp_path, "drawn", box=(200, 700, 400, 860))
+    with Image.open(drawn) as img:
+        visible, missing, checked = verify_rendered_presence(
+            img, "process_flow", [_N("n1", "PHONE", (200, 700, 400, 860))])
+    assert visible == ["n1"] and missing == [] and checked == 1
+
+    with Image.open(drawn) as img:
+        visible, missing, checked = verify_rendered_presence(
+            img, "process_flow", [_N("n1", "PHONE", (700, 1200, 900, 1400))])
+    assert visible == [] and checked == 1
+    assert any("PHONE" in m and "not depicted" in m for m in missing), missing
+
+    uniform = _synthetic_frame(tmp_path, "blank")
+    with Image.open(uniform) as img:
+        visible, missing, checked = verify_rendered_presence(
+            img, "focal", [_N("n1", "PHONE", (200, 550, 880, 860))])
+    assert visible == [] and checked == 1
+
+    with Image.open(uniform) as img:
+        # Non-native topologies and unusable bounds are skipped, never failed.
+        assert verify_rendered_presence(img, "brand", [_N("n1", "X", (200, 550, 880, 860))])[2] == 0
+        assert verify_rendered_presence(img, "focal", [_N("n1", "X", (0, 0, 10, 10))])[2] == 0
+        assert verify_rendered_presence(img, "focal", [_N("n1", "X", None)])[2] == 0
+
+
+def test_judge_downgrades_verified_when_primary_node_missing(tmp_path: Path):
+    """Graph says verified but the frame shows nothing at the node bounds →
+    unverified (capped), naming the missing node. This is the render-side
+    half of semantic verification the audit demanded."""
+    from production.phase18.scene_graph import build_semantic_scene_graph
+
+    graph = build_semantic_scene_graph(
+        scene_id="sec_hide",
+        narrative_role="mechanism",
+        subject="GPS positioning",
+        visual_purpose="Explain satellite positioning",
+        spoken_text=GPS_NARRATION,
+        topic="How GPS works",
+    )
+    spec = _scene_spec_with_graph(graph, "sec_hide")
+    # Content drawn far from every node bounds: no blank-frame fatal, but no
+    # node depicted either — isolates the presence check itself.
+    elsewhere = _synthetic_frame(tmp_path, "elsewhere", box=(700, 1200, 900, 1400))
+    judgement = judge_scene_frames(
+        scene_spec=spec,
+        scene_frames={"mid": elsewhere, "start": elsewhere, "end": elsewhere},
+        topic="How GPS works",
+    )
+    assert judgement.semantic_evidence == "unverified", judgement.visible_description
+    assert judgement.semantic_grounding_score <= 6.5
+    assert judgement.passed is False
+    assert any("not depicted in the rendered frame" in r for r in judgement.reasons), judgement.reasons

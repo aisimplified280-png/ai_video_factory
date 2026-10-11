@@ -100,6 +100,66 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
         })
       : 0;
 
+  // The held tool renders INDEPENDENTLY of the arm pose: a target anchor
+  // selects the pointing arm, never hides the scene-specific tool. Both
+  // branches below call this helper — inspect-with-scanner points AND shows
+  // the scanner instead of dropping it.
+  // Resting hand anchors per tool (exact pre-existing geometry).
+  const TOOL_ANCHORS: Record<string, [number, number]> = {
+    vector_token: [186, 140],
+    quantum_stylus: [184, 130],
+    optical_scanner: [180, 132],
+    telemetry_hud_panel: [178, 125],
+    briefing_tablet: [182, 135],
+  };
+  const renderHeldTool = (x?: number, y?: number): React.ReactNode => {
+    const anchor: [number, number] =
+      x !== undefined && y !== undefined ? [x, y] : (TOOL_ANCHORS[spec.tool_held ?? ''] ?? [186, 140]);
+    const [ax, ay] = anchor;
+    return (
+    <>
+      {spec.tool_held === 'vector_token' && (
+        <g transform={`translate(${ax}, ${ay})`}>
+          <rect x="0" y="0" width="28" height="28" rx="6" fill="#1E40AF" stroke="#60A5FA" strokeWidth={2} />
+          <path d="M6 14H22M14 6V22" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round" />
+        </g>
+      )}
+
+      {spec.tool_held === 'quantum_stylus' && (
+        <g transform={`translate(${ax}, ${ay})`}>
+          <line x1="0" y1="0" x2="16" y2="28" stroke="#D97706" strokeWidth={4} strokeLinecap="round" />
+          <circle cx="16" cy="28" r="4" fill="#F59E0B" />
+        </g>
+      )}
+
+      {spec.tool_held === 'optical_scanner' && (
+        <g transform={`translate(${ax}, ${ay})`}>
+          <rect x="0" y="0" width="26" height="20" rx="4" fill="#0F172A" stroke="#38BDF8" strokeWidth={2} />
+          <circle cx="13" cy="10" r="5" fill="#38BDF8" />
+        </g>
+      )}
+
+      {spec.tool_held === 'telemetry_hud_panel' && (
+        <g transform={`translate(${ax}, ${ay})`}>
+          <rect x="0" y="0" width="36" height="30" rx="6" fill="rgba(15, 23, 42, 0.9)" stroke="#10B981" strokeWidth={2} />
+          <line x1="6" y1="8" x2="30" y2="8" stroke="#10B981" strokeWidth={2} strokeLinecap="round" />
+          <line x1="6" y1="16" x2="24" y2="16" stroke="#34D399" strokeWidth={1.5} strokeLinecap="round" />
+          <line x1="6" y1="22" x2="28" y2="22" stroke="#34D399" strokeWidth={1.5} strokeLinecap="round" />
+        </g>
+      )}
+
+      {spec.tool_held === 'briefing_tablet' && (
+        <g transform={`translate(${ax}, ${ay})`}>
+          <rect x="0" y="0" width="34" height="42" rx="4" fill="#0F172A" stroke="#38BDF8" strokeWidth={2} />
+          <line x1="6" y1="10" x2="28" y2="10" stroke="#38BDF8" strokeWidth={2} strokeLinecap="round" />
+          <line x1="6" y1="18" x2="22" y2="18" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" />
+          <line x1="6" y1="26" x2="26" y2="26" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" />
+        </g>
+      )}
+    </>
+    );
+  };
+
   return (
     <div
       style={{
@@ -266,6 +326,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
                 strokeWidth="3"
               />
               <circle cx="206" cy="121" r="5" fill={visorColor} />
+              {renderHeldTool(188, 96)}
             </g>
           </g>
         ) : (
@@ -282,44 +343,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({
             />
             <circle cx="184" cy="157" r="5" fill={visorColor} opacity="0.8" />
 
-            {spec.tool_held === 'vector_token' && (
-              <g transform="translate(186, 140)">
-                <rect x="0" y="0" width="28" height="28" rx="6" fill="#1E40AF" stroke="#60A5FA" strokeWidth={2} />
-                <path d="M6 14H22M14 6V22" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round" />
-              </g>
-            )}
-
-            {spec.tool_held === 'quantum_stylus' && (
-              <g transform="translate(184, 130)">
-                <line x1="0" y1="0" x2="16" y2="28" stroke="#D97706" strokeWidth={4} strokeLinecap="round" />
-                <circle cx="16" cy="28" r="4" fill="#F59E0B" />
-              </g>
-            )}
-
-            {spec.tool_held === 'optical_scanner' && (
-              <g transform="translate(180, 132)">
-                <rect x="0" y="0" width="26" height="20" rx="4" fill="#0F172A" stroke="#38BDF8" strokeWidth={2} />
-                <circle cx="13" cy="10" r="5" fill="#38BDF8" />
-              </g>
-            )}
-
-            {spec.tool_held === 'telemetry_hud_panel' && (
-              <g transform="translate(178, 125)">
-                <rect x="0" y="0" width="36" height="30" rx="6" fill="rgba(15, 23, 42, 0.9)" stroke="#10B981" strokeWidth={2} />
-                <line x1="6" y1="8" x2="30" y2="8" stroke="#10B981" strokeWidth={2} strokeLinecap="round" />
-                <line x1="6" y1="16" x2="24" y2="16" stroke="#34D399" strokeWidth={1.5} strokeLinecap="round" />
-                <line x1="6" y1="22" x2="28" y2="22" stroke="#34D399" strokeWidth={1.5} strokeLinecap="round" />
-              </g>
-            )}
-
-            {spec.tool_held === 'briefing_tablet' && (
-              <g transform="translate(182, 135)">
-                <rect x="0" y="0" width="34" height="42" rx="4" fill="#0F172A" stroke="#38BDF8" strokeWidth={2} />
-                <line x1="6" y1="10" x2="28" y2="10" stroke="#38BDF8" strokeWidth={2} strokeLinecap="round" />
-                <line x1="6" y1="18" x2="22" y2="18" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" />
-                <line x1="6" y1="26" x2="26" y2="26" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" />
-              </g>
-            )}
+            {renderHeldTool()}
           </g>
         )}
       </svg>

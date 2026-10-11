@@ -16,7 +16,8 @@ import {eventFrames} from '../runtime/timeline';
 import {placeEvent} from '../runtime/eventTiming';
 import {assertValidProps} from '../runtime/validators';
 import type {EditEventProps, ProductionCompositionProps} from '../runtime/props';
-import {SceneComposition, transitionModuleFor, type PlacedAudio, type PlacedEvent, type SceneBoundaryTransition} from './SceneComposition';
+import {SceneComposition, type PlacedAudio, type PlacedEvent, type SceneBoundaryTransition} from './SceneComposition';
+import {transitionModuleFor} from '../runtime/styleResolvers';
 
 /** Overlap borrowed from the outgoing event for an incoming transition. */
 export function transitionOverlapFrames(intent: string | null, fps: number): number {
