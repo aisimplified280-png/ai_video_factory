@@ -114,6 +114,36 @@ def test_camera_defaults_to_static_unless_action_needs_motion():
     assert plan.camera_motion == "tracking", plan.camera_motion
 
 
+def test_no_claim_plan_neutral_scene_holds_static():
+    """The static fallback holds with no claim plan either: palette defaults
+    must not drift a scene whose narration justifies no movement."""
+    from production.phase15.shot_director import enforce_static_camera_fallback
+
+    director = ShotDirector()
+    section = {
+        "spoken_text": "Your phone displays the date and time clearly.",
+        "narrative_role": "context",
+    }
+    intent = analyze_scene_intent(section, scene_idx=1, total_scenes=5, topic="How GPS works")
+    assert intent.claim_plan is not None, "fixture must start from the claim path"
+    object.__setattr__(intent, "claim_plan", None)
+    plan = director._direct_single_scene(intent, scene_idx=1, total_scenes=5, topic="How GPS works")
+    assert plan.camera_motion == "static", plan.camera_motion
+
+
+def test_static_fallback_helper_keeps_justified_moves():
+    """Unit behavior of the fallback: unjustified palette moves become static;
+    justified moves, deliberate CTA drift, and existing statics are untouched."""
+    from production.phase15.models import VisualMode
+    from production.phase15.shot_director import enforce_static_camera_fallback
+
+    assert enforce_static_camera_fallback("fast_push_in", VisualMode.LITERAL, "Your phone displays the date.") == "static"
+    assert enforce_static_camera_fallback("tracking", VisualMode.LITERAL, "Data flows through the pipeline.") == "tracking"
+    assert enforce_static_camera_fallback("slow_pan", VisualMode.BRAND_CTA, "Subscribe now.") == "slow_pan"
+    assert enforce_static_camera_fallback("static", VisualMode.LITERAL, "Anything.") == "static"
+    assert enforce_static_camera_fallback(None, VisualMode.LITERAL, "Anything.") == "static"
+
+
 def test_generic_metaphor_rejected_for_physical_control():
     """Verify that an abstract neural void or generic warehouse without control fails grounding QA."""
     claim_plan = ClaimVisualPlan(

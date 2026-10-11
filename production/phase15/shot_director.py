@@ -473,6 +473,33 @@ DIRECTORIAL_PALETTES[VisualMode.CONSEQUENCE] = DIRECTORIAL_PALETTES[VisualMode.S
 DIRECTORIAL_PALETTES[VisualMode.HUMAN_IMPACT] = DIRECTORIAL_PALETTES[VisualMode.LITERAL]
 
 
+# Vocabulary that semantically justifies a camera move — the same words the
+# semantic derivation uses (flow/tracking, scale/crane, matrix/slow_pan,
+# control/tracking, contrast deliberation). Anything else holds still.
+_CAMERA_JUSTIFYING_KEYWORDS = (
+    "flow", "route", "token", "transform", "pipeline", "stream", "pass",
+    "cluster", "scale", "gpu", "accelerator", "infrastructure", "fleet", "hardware",
+    "matrix", "attention", "transformer", "embedding", "vector", "layer", "latent", "space",
+    "control", "command", "sensor", "actuator", "motor",
+    "contrast", "vs", "versus", "comparison", "difference", "delta",
+)
+
+_STATIC_CAMERAS = frozenset({"static", "static_locked", "observe_static", "", None})
+
+
+def enforce_static_camera_fallback(camera: str | None, chosen_mode: object, basis_text: str | None) -> str:
+    """Static fallback on every path (§5): keep the winning option's camera only
+    when the scene semantics justify movement (claim text or spoken text names
+    a justifying action, or the mode is BRAND_CTA with its deliberate slow
+    push). Otherwise a palette default like fast_push_in must never drift an
+    otherwise static scene — with or without a claim plan."""
+    if (camera or "") in _STATIC_CAMERAS:
+        return camera or "static"
+    text = (basis_text or "").lower()
+    justified = chosen_mode == VisualMode.BRAND_CTA or any(k in text for k in _CAMERA_JUSTIFYING_KEYWORDS)
+    return camera if justified else "static"
+
+
 class ShotDirector:
     """Directs scene visual execution, prioritizing claim grounding over diversity (Phase 15B)."""
 
@@ -652,6 +679,24 @@ class ShotDirector:
                 best_score = composite_score
                 best_option = opt
                 best_eval = eval_record
+
+        # Static fallback on every path (§5): the winning palette option keeps
+        # its camera only when the scene semantics justify movement. Basis is
+        # the claim text when present, else the spoken text — so scenes without
+        # a claim plan get the same static default, not a canned fast_push_in.
+        if claim_plan:
+            _camera_basis = f"{claim_plan.action} {claim_plan.relationship} {' '.join(claim_plan.entities)}"
+        else:
+            _camera_basis = (
+                f"{getattr(intent, 'what_is_said', '') or ''} "
+                f"{getattr(intent, 'what_viewer_sees', '') or ''} "
+                f"{getattr(intent, 'spoken_text', '') or ''}"
+            )
+        best_option = dict(
+            best_option,
+            camera_motion=enforce_static_camera_fallback(
+                best_option.get("camera_motion"), chosen_mode, _camera_basis),
+        )
 
         # Construct final prompt strictly describing evidence (Step 7 + Phase 15B)
         bg_prompt = (
