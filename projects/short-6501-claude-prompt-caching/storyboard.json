@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "id": "short-6501-claude-prompt-caching",
+  "topic": "Claude Prompt Caching",
+  "totalDuration": 26.233333333333334,
+  "beatsCount": 4,
+  "beats": [
+    {
+      "beatId": "beat-1-hook",
+      "sceneIndex": 0,
+      "narrativePurpose": "Hook attention and isolate the core operational bottleneck.",
+      "viewerQuestion": "What mistake is slowing down my system or workflow?",
+      "spokenLine": "If you are building with Claude, re-sending entire documents on every prompt wastes substantial bandwidth.",
+      "startTime": 0,
+      "endTime": 6.3107,
+      "duration": 6.3107,
+      "visualMode": "hook",
+      "visualTitle": "The Power of Prompt Caching",
+      "visualBody": "Re-sending large context files on every API call slows down your pipeline.",
+      "badge": "ARCHITECTURE INSIGHT",
+      "source": "Anthropic Engineering Guide",
+      "assetId": null,
+      "assetData": null,
+      "motion": {
+        "transition": "back.out(1.5)",
+        "cameraPush": true,
+        "staggerRate": 0.12
+      },
+      "sfxCue": "hook-impact"
+    },
+    {
+      "beatId": "beat-2-architecture",
+      "sceneIndex": 1,
+      "narrativePurpose": "Visually demonstrate data flow and memory lifecycle.",
+      "viewerQuestion": "How does data move through the actual system components?",
+      "spokenLine": "Prompt caching stores your system instructions in memory, allowing subsequent calls to read directly from cache.",
+      "startTime": 6.3107,
+      "endTime": 13.0461,
+      "duration": 6.735399999999999,
+      "visualMode": "architecture-diagram",
+      "visualTitle": "Prompt Cache Architecture",
+      "visualBody": "Cached prompt prefixes bypass repetitive context ingestion on subsequent calls.",
+      "badge": "DATA FLOW",
+      "source": null,
+      "assetId": "fix-prompt-caching-diagram-01",
+      "assetData": {
+        "assetId": "fix-prompt-caching-diagram-01",
+        "cachedPath": "assets/cache/fix-prompt-caching-diagram-01.svg",
+        "licenseId": "CC0-1.0",
+        "attributionText": "AI Simplified Lab (CC0)"
+      },
+      "motion": {
+        "transition": "power3.out",
+        "cameraPush": true,
+        "staggerRate": 0.12
+      },
+      "sfxCue": "zoom-swish",
+      "diagramNodes": [
+        {
+          "label": "Base Prompt",
+          "sub": "Static Context"
+        },
+        {
+          "label": "Ephemeral Cache",
+          "sub": "5-Min Lifetime"
+        },
+        {
+          "label": "Claude Model",
+          "sub": "Instant Warm Hit"
+        }
+      ]
+    },
+    {
+      "beatId": "beat-3-implementation",
+      "sceneIndex": 2,
+      "narrativePurpose": "Provide authentic, copy-pasteable syntax with zero pseudo-code.",
+      "viewerQuestion": "What exact configuration or command line syntax is needed?",
+      "spokenLine": "Simply add the ephemeral cache control block to your system prompt to activate instant prefix matching.",
+      "startTime": 13.0461,
+      "endTime": 19.3083,
+      "duration": 6.2622,
+      "visualMode": "code",
+      "visualTitle": "Prompt Caching Header",
+      "visualBody": "",
+      "badge": "AUTHENTIC API SYNTAX",
+      "source": null,
+      "assetId": null,
+      "assetData": null,
+      "motion": {
+        "transition": "power3.out",
+        "cameraPush": true,
+        "staggerRate": 0.12
+      },
+      "sfxCue": "ui-pop",
+      "codeSnippet": "response = client.messages.create(\n    model=\"claude-3-5-sonnet-20241022\",\n    system=[{\n        \"type\": \"text\",\n        \"text\": system_prompt,\n        \"cache_control\": {\"type\": \"ephemeral\"}\n    }],\n    messages=user_messages\n)",
+      "terminalTitle": "anthropic_request.py",
+      "terminalLang": "Python"
+    },
+    {
+      "beatId": "beat-4-payoff",
+      "sceneIndex": 3,
+      "narrativePurpose": "Deliver verifiable conclusion citing authentic documentation.",
+      "viewerQuestion": "What is the concrete architectural takeaway?",
+      "spokenLine": "Structure your static context at the start of the prompt to maximize warm cache hits and minimize latency.",
+      "startTime": 19.3083,
+      "endTime": 26.233333333333334,
+      "duration": 6.925033333333335,
+      "visualMode": "concept-explainer",
+      "visualTitle": "Smarter Context Design",
+      "visualBody": "Place static instructions at the top and dynamic queries at the bottom to maximize cache hits.",
+      "badge": "CORE PRINCIPLE",
+      "source": "Anthropic Prompt Caching Documentation",
+      "assetId": null,
+      "assetData": null,
+      "motion": {
+        "transition": "power3.out",
+        "cameraPush": true,
+        "staggerRate": 0.12
+      },
+      "sfxCue": "clean-ding"
+    }
+  ],
+  "createdAt": "2026-10-21T11:02:27.046Z"
+}

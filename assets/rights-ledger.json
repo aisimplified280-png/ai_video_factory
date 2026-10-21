@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-10-21T11:02:27.044Z",
+  "assets": {
+    "fix-prompt-caching-diagram-01": {
+      "assetId": "fix-prompt-caching-diagram-01",
+      "type": "svg",
+      "sourceProvider": "offline-fixture",
+      "sourcePage": "file:///assets/fixtures/prompt-caching-diagram.svg",
+      "downloadUrl": "C:\\Users\\USER\\Documents\\AI-Simplified-Lab\\assets\\fixtures\\prompt-caching-diagram.svg",
+      "creator": "AI Simplified Lab Engineering Team",
+      "licenseId": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "commercialUse": true,
+      "modificationsAllowed": true,
+      "attributionRequired": false,
+      "attributionText": "AI Simplified Lab (CC0)",
+      "localFilePath": "C:\\Users\\USER\\Documents\\AI-Simplified-Lab\\assets\\fixtures\\prompt-caching-diagram.svg",
+      "reviewFlags": {
+        "recognizablePerson": false,
+        "trademarkLogo": false,
+        "sensitiveContent": false
+      },
+      "status": "APPROVED",
+      "sha256": "4c9e8f8f8c911a1cf8307571dc81dfd31d0fce93ac358413bcd1484393c0e105",
+      "cachedPath": "assets/cache/fix-prompt-caching-diagram-01.svg",
+      "absolutePath": "C:\\Users\\USER\\Documents\\AI-Simplified-Lab\\assets\\cache\\fix-prompt-caching-diagram-01.svg",
+      "verifiedAt": "2026-10-21T11:02:27.044Z",
+      "rightsAuditReason": "Approved for unrestricted commercial reuse."
+    }
+  }
+}

@@ -6,6 +6,8 @@ import { ROOT_DIR } from "./config.mjs";
 import { generateAudio } from "./audio-generator.mjs";
 import { generateComposition } from "./composition-generator.mjs";
 import { renderAndMux } from "./render-and-mux.mjs";
+import { AssetRegistry } from "./asset-scout/registry.mjs";
+import { planStoryboard } from "./storyboard-planner.mjs";
 
 /**
  * Generate a topic-specific, evidence-backed script without hardcoded fake claims.
@@ -177,30 +179,64 @@ async function main() {
   await fs.writeFile(path.join(projectDir, "script.json"), JSON.stringify(scriptData, null, 2));
 
   // Step 1: Generate Voiceover & Aligned SFX using exact SentenceBoundary timing
-  console.log(`[Step 1/3] Generating Speech and Audio Mix (Exact Timings)...`);
+  console.log(`[Step 1/4] Generating Speech and Audio Mix (Exact Timings)...`);
   const audioResult = await generateAudio(projectDir, scriptData);
   console.log(`✓ Audio complete: ${audioResult.totalDuration}s (${audioResult.totalFrames} frames @ ${audioResult.fps} fps)\n`);
 
-  // Step 2: Build HTML & GSAP Composition (Offline Vendored GSAP + Escaping)
-  console.log(`[Step 2/3] Synthesizing HyperFrames Composition (Offline Vendored)...`);
+  // Step 2: Scout verified assets & construct semantic storyboard
+  console.log(`[Step 2/4] Directing Semantic Storyboard & Auditing Asset Rights...`);
+  const assetRegistry = new AssetRegistry();
+  await assetRegistry.init();
+
+  const storyboardData = await planStoryboard(
+    projectDir,
+    { ...scriptData, ...audioResult },
+    assetRegistry
+  );
+  console.log(`✓ Storyboard planned with ${storyboardData.beatsCount} beats.\n`);
+
+  // Step 3: Build HTML & GSAP Composition (Offline Vendored GSAP + Verified Scouted Assets)
+  console.log(`[Step 3/4] Synthesizing HyperFrames Composition (Offline Vendored & Asset-Aware)...`);
   const compositionData = {
     ...scriptData,
     totalDuration: audioResult.totalDuration,
     totalFrames: audioResult.totalFrames,
     fps: audioResult.fps,
-    scenes: audioResult.scenes,
+    scenes: storyboardData.beats.map((beat) => ({
+      id: beat.beatId,
+      cardType: beat.visualMode,
+      badge: beat.badge,
+      visualTitle: beat.visualTitle,
+      visualBody: beat.visualBody,
+      voiceText: beat.spokenLine,
+      startTime: beat.startTime,
+      endTime: beat.endTime,
+      duration: beat.duration,
+      sfx: beat.sfxCue,
+      source: beat.source,
+      assetData: beat.assetData,
+      diagramNodes: beat.diagramNodes,
+      codeSnippet: beat.codeSnippet,
+      terminalTitle: beat.terminalTitle,
+      terminalLang: beat.terminalLang,
+      steps: beat.steps,
+      oldWay: beat.oldWay,
+      newWay: beat.newWay,
+    })),
+    rightsLedger: assetRegistry.ledger,
   };
   await generateComposition(compDir, compositionData);
   console.log(`✓ Composition synthesized at: ${compDir}\n`);
 
-  // Step 3: Render, Mux, Verify & Package
-  console.log(`[Step 3/3] Rendering and Packaging Verified Short...`);
+  // Step 4: Render, Mux, Verify & Package
+  console.log(`[Step 4/4] Rendering and Packaging Verified Short...`);
   const finalResult = await renderAndMux(projectDir, compositionData);
 
   console.log(`\n🎉 DELIVERABLE COMPLETED SUCCESSFULLY!`);
-  console.log(`   📹 Video:       ${finalResult.finalMp4}`);
-  console.log(`   🖼️ Cover:       ${finalResult.coverPng}`);
-  console.log(`   📋 Truthful QA: ${path.join(projectDir, "exports", "youtube-package.json")}\n`);
+  console.log(`   📹 Video:         ${finalResult.finalMp4}`);
+  console.log(`   🖼️ Cover:         ${finalResult.coverPng}`);
+  console.log(`   🖼️ Contact Sheet: ${finalResult.contactSheetPng}`);
+  console.log(`   📋 Truthful QA:   ${path.join(projectDir, "exports", "youtube-package.json")}\n`);
 }
 
 main().catch((err) => {

@@ -42,6 +42,15 @@ Build a ₹0 ongoing-cost workflow for creating YouTube Shorts from idea to fini
   - **Modular Semantic Storyboards**: Implemented Data-Flow Architecture Diagrams, Step-Process lists, authentic syntax terminals, and cited concept explainers.
   - **Truthful Segregated QA Manifest**: Separated media engineering checks (`automatedMediaQA: PASS`) from editorial oversight (`youtubePolicyReview: UNASSESSED`).
   - Rendered and verified `projects/short-2324-claude-prompt-caching` (26.23s, 787 frames @ 30fps).
+- [x] Checkpoint 5 (2026-10-21): **Asset-Aware Video Engine, License Gate & Programmatic QA Verified**.
+  - **Asset Scout & Rights Ledger**: Built `pipeline/rights-gate.mjs`, `pipeline/asset-scout/registry.mjs`, and provider adapters (`FixtureProvider`, `OpenverseProvider`, `PexelsProvider`). Enforces commercial use, checks no-derivatives, flags likeness/trademarks to `REVIEW_REQUIRED`, computes SHA-256 hashes, and records manifests in `assets/rights-ledger.json`.
+  - **Story-First Semantic Storyboard**: Built `pipeline/storyboard-planner.mjs` generating editable intermediate representation `storyboard.json` with narrative purposes, viewer questions, visual modes, exact timestamps, and verified asset IDs.
+  - **Scouted Asset Rendering**: Updated `pipeline/composition-generator.mjs` to copy and embed verified scouted diagrams/graphics inside Claude-styled cards with GSAP entrance scaling.
+  - **Programmatic QA & Release Governance**: Implemented `pipeline/qa-gate.mjs` replacing hardcoded results with actual FFmpeg `blackdetect` parsing, stream parameter checks, chronological script alignment, and `evaluateReleaseEligibility()`.
+  - **Contact Sheet Generation**: Updated `pipeline/render-and-mux.mjs` to extract scene midpoint frames and compile `exports/contact-sheet.png` for instant visual diversity evaluation.
+  - **5 Antigravity Project Skills**: Created `asset-scout-rights`, `storyboard-director`, `composition-builder`, `rendered-video-critique`, and `release-governance` under `.agents/skills/`.
+  - **Verified Test Suite**: 13/13 unit tests passing in ~170ms with 0 API keys required.
+  - **End-to-End Proven Short**: Generated, linted, rendered, muxed, and packaged `short-6501-claude-prompt-caching` (26.23s, 787 frames @ 30fps, 1080x1920) with verified CC0 SVG diagram and `releaseEligible: true`.
 
 ## Resume Instruction
-Review `NEXT_SESSION.md` and proceed with Phase 2 implementation.
+The asset-aware video engine and governance pipeline are fully operational offline. To run with external providers, configure `PEXELS_API_KEY` or Openverse credentials.

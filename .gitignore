@@ -18,9 +18,12 @@ Thumbs.db
 *.hf-transaction*
 projects/**/.silent.hf-transaction*
 projects/**/silent.mp4
+projects/**/final.mp4
+projects/**/audio-mix.wav
 projects/**/audio-mix.sfx.wav
 projects/**/audio-mix.plan.json
 projects/**/audio-mix.premix.wav
+projects/**/voice.mp3
 
 # Setup check test renders
 .favstash-studio/setup-check/smoke-test.mp4

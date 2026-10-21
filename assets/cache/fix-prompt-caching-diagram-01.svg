@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+        <rect width="100%" height="100%" fill="#faf8f5" rx="24"/>
+        <rect x="40" y="40" width="720" height="420" fill="#ffffff" stroke="#e7d8cc" stroke-width="2" rx="20"/>
+        <text x="70" y="90" font-family="-apple-system, sans-serif" font-size="24" font-weight="bold" fill="#1c1917">Prompt Caching Topology</text>
+        <rect x="70" y="140" width="180" height="120" fill="#fbf3ee" stroke="#d97757" stroke-width="2" rx="12"/>
+        <text x="90" y="190" font-family="-apple-system, sans-serif" font-size="18" font-weight="bold" fill="#a45338">Static Context</text>
+        <text x="90" y="220" font-family="-apple-system, sans-serif" font-size="14" fill="#78716c">10k+ Tokens</text>
+        <path d="M 260 200 L 330 200" stroke="#d97757" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+        <rect x="340" y="140" width="180" height="120" fill="#f4ede6" stroke="#cc785c" stroke-width="2" rx="12"/>
+        <text x="360" y="190" font-family="-apple-system, sans-serif" font-size="18" font-weight="bold" fill="#a45338">Ephemeral RAM</text>
+        <text x="360" y="220" font-family="-apple-system, sans-serif" font-size="14" fill="#78716c">5-Min Warm Window</text>
+        <path d="M 530 200 L 600 200" stroke="#d97757" stroke-width="3" fill="none"/>
+        <rect x="610" y="140" width="130" height="120" fill="#ffffff" stroke="#16a34a" stroke-width="2" rx="12"/>
+        <text x="630" y="190" font-family="-apple-system, sans-serif" font-size="18" font-weight="bold" fill="#166534">Claude 3.5</text>
+        <text x="630" y="220" font-family="-apple-system, sans-serif" font-size="14" fill="#16a34a">Instant Hit</text>
+      </svg>

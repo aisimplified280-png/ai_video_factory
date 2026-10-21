@@ -54,6 +54,25 @@ export async function generateComposition(compDir, projectData) {
   };
   await fs.writeFile(path.join(compDir, "hyperframes.json"), JSON.stringify(hyperframesJson, null, 2));
 
+  // 2b. Copy referenced scouted assets if any
+  const scoutedDir = path.join(compDir, "assets", "scouted");
+  await fs.mkdir(scoutedDir, { recursive: true });
+  for (const scene of scenes) {
+    if (scene.assetData && scene.assetData.cachedPath) {
+      const srcPath = path.isAbsolute(scene.assetData.cachedPath)
+        ? scene.assetData.cachedPath
+        : path.join(ROOT_DIR, scene.assetData.cachedPath);
+      const filename = path.basename(srcPath);
+      const destPath = path.join(scoutedDir, filename);
+      try {
+        await fs.copyFile(srcPath, destPath);
+        scene._assetFilename = filename;
+      } catch (err) {
+        console.warn(`[Composition] Could not copy asset ${srcPath}:`, err.message);
+      }
+    }
+  }
+
   // 3. Render modular semantic scene cards
   const scenesHtml = scenes.map((scene, idx) => {
     const isFirst = idx === 0;
@@ -77,27 +96,54 @@ export async function generateComposition(compDir, projectData) {
         </div>
       `;
     } else if (cardType === "architecture-diagram") {
-      // Data Flow Diagram: Input -> Pipeline -> Output
-      const nodes = scene.diagramNodes || [
-        { label: "User Input", sub: "Raw Context" },
-        { label: "Semantic Filter", sub: "Vector / RAG" },
-        { label: "LLM Model", sub: "Cached Response" }
-      ];
-      cardContent = `
-        <div class="scene-badge">${escapeHtml(scene.badge || "ARCHITECTURE")}</div>
-        <h2 class="scene-title">${scene.visualTitle}</h2>
-        <div class="feature-card flow-card">
-          <div class="flow-container">
-            ${nodes.map((node, nIdx) => `
-              <div class="flow-node node-${nIdx}">
-                <div class="node-dot"></div>
-                <div class="node-title">${escapeHtml(node.label)}</div>
-                <div class="node-sub">${escapeHtml(node.sub || "")}</div>
-              </div>
-              ${nIdx < nodes.length - 1 ? '<div class="flow-arrow">➔</div>' : ''}
-            `).join("")}
+      if (scene._assetFilename) {
+        // Render verified scouted architecture graphic / diagram asset
+        cardContent = `
+          <div class="scene-badge">${escapeHtml(scene.badge || "ARCHITECTURE")}</div>
+          <h2 class="scene-title">${scene.visualTitle}</h2>
+          <div class="feature-card asset-card">
+            <div class="asset-display-frame">
+              <img src="./assets/scouted/${scene._assetFilename}" class="scouted-asset-img" alt="${escapeHtml(scene.visualTitle)}" />
+            </div>
+            <p class="card-highlight flow-caption">${escapeHtml(scene.visualBody)}</p>
+            ${scene.assetData?.attributionText ? `<div class="asset-attribution-tag">Verified Asset • ${escapeHtml(scene.assetData.licenseId || "CC0")}</div>` : ""}
           </div>
-          <p class="card-highlight flow-caption">${escapeHtml(scene.visualBody)}</p>
+        `;
+      } else {
+        // Data Flow Diagram: Input -> Pipeline -> Output
+        const nodes = scene.diagramNodes || [
+          { label: "User Input", sub: "Raw Context" },
+          { label: "Semantic Filter", sub: "Vector / RAG" },
+          { label: "LLM Model", sub: "Cached Response" }
+        ];
+        cardContent = `
+          <div class="scene-badge">${escapeHtml(scene.badge || "ARCHITECTURE")}</div>
+          <h2 class="scene-title">${scene.visualTitle}</h2>
+          <div class="feature-card flow-card">
+            <div class="flow-container">
+              ${nodes.map((node, nIdx) => `
+                <div class="flow-node node-${nIdx}">
+                  <div class="node-dot"></div>
+                  <div class="node-title">${escapeHtml(node.label)}</div>
+                  <div class="node-sub">${escapeHtml(node.sub || "")}</div>
+                </div>
+                ${nIdx < nodes.length - 1 ? '<div class="flow-arrow">➔</div>' : ''}
+              `).join("")}
+            </div>
+            <p class="card-highlight flow-caption">${escapeHtml(scene.visualBody)}</p>
+          </div>
+        `;
+      }
+    } else if (cardType === "asset-reveal") {
+      cardContent = `
+        <div class="scene-badge">${escapeHtml(scene.badge || "VERIFIED MEDIA")}</div>
+        <h2 class="scene-title">${scene.visualTitle}</h2>
+        <div class="feature-card asset-card">
+          <div class="asset-display-frame">
+            <img src="./assets/scouted/${scene._assetFilename || 'diagram.svg'}" class="scouted-asset-img" alt="${escapeHtml(scene.visualTitle)}" />
+          </div>
+          <p class="card-highlight">${escapeHtml(scene.visualBody)}</p>
+          ${scene.assetData?.attributionText ? `<div class="asset-attribution-tag">License: ${escapeHtml(scene.assetData.licenseId)}</div>` : ""}
         </div>
       `;
     } else if (cardType === "step-process") {
@@ -249,6 +295,18 @@ export async function generateComposition(compDir, projectData) {
           const target = document.getElementById("sub-scene-${idx}");
           if (target) target.classList.add('active');
         }, null, ${startT});
+      `;
+    }
+
+    if (scene._assetFilename) {
+      gsapTimelineScript += `
+        tl.from("#scene-${idx} .asset-display-frame", {
+          scale: 0.94,
+          opacity: 0,
+          y: 20,
+          duration: 0.5,
+          ease: "back.out(1.4)"
+        }, ${startT + 0.2});
       `;
     }
 
@@ -497,6 +555,37 @@ export async function generateComposition(compDir, projectData) {
         color: #78716c;
         border-top: 1px solid #f0ebe4;
         padding-top: 16px;
+      }
+
+      /* Scouted Asset Cards */
+      .asset-card {
+        padding: 24px 32px;
+      }
+      .asset-display-frame {
+        width: 100%;
+        max-height: 440px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fdfcf9;
+        border: 1px solid #e7ded4;
+        border-radius: 20px;
+        padding: 16px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 16px rgba(44, 38, 30, 0.04);
+      }
+      .scouted-asset-img {
+        max-width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+      }
+      .asset-attribution-tag {
+        margin-top: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #78716c;
       }
 
       /* Architecture Flow Diagram */
