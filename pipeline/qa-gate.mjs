@@ -200,7 +200,7 @@ export function verifyStreamProperties(
  * Determine overall release eligibility strictly with fail-closed governance.
  * UNKNOWN, missing, or malformed checks strictly block release.
  */
-export function evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudit, visualDiversity = null) {
+export function evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudit, visualDiversity = null, visualCritique = null) {
   const blockers = [];
 
   // 1. Mandatory Media Checks (Fail closed: must be explicitly PASS)
@@ -243,6 +243,16 @@ export function evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudi
   if (visualDiversity) {
     if (visualDiversity.passed === false && Array.isArray(visualDiversity.criticalIssues) && visualDiversity.criticalIssues.length > 0) {
       blockers.push(`Visual diversity check failed: ${visualDiversity.criticalIssues.join("; ")}`);
+    }
+  }
+
+  // 5. Visual Critique & Ranked Polish Checks (Fail closed on P0 Critical Blockers)
+  if (visualCritique) {
+    if (visualCritique.p0Count > 0) {
+      const p0Messages = (visualCritique.issues || [])
+        .filter((i) => i.severity === "P0_CRITICAL_BLOCKER")
+        .map((i) => i.message);
+      blockers.push(`Visual critique identified ${visualCritique.p0Count} P0 critical blocker(s): ${p0Messages.join("; ")}`);
     }
   }
 

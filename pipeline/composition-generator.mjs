@@ -797,6 +797,25 @@ export async function generateComposition(compDir, projectData) {
         tl.from("#scene-${idx} .surreal-icon", { rotation: -20, scale: 0.5, opacity: 0, duration: 0.6, ease: "back.out(1.8)" }, ${startT + 0.35});
       `;
     } else {
+      let continuityScript = "";
+      const prevScene = scenes[idx - 1];
+      const prevContinuity = prevScene?.sceneGraph?.transition?.continuity;
+      if (prevContinuity?.persistentElement && prevContinuity?.morphTarget) {
+        continuityScript = `
+        // Continuous Object Transformation: #${prevContinuity.persistentElement} -> #${prevContinuity.morphTarget}
+        tl.to("#scene-${idx - 1} #${prevContinuity.persistentElement}", {
+          scale: 0.55,
+          opacity: 0.6,
+          duration: 0.25,
+          ease: "power2.in"
+        }, ${(startT - 0.25).toFixed(3)});
+        tl.fromTo("#scene-${idx} #${prevContinuity.morphTarget}", 
+          { scale: 0.6, opacity: 0.7 },
+          { scale: 1.0, opacity: 1, duration: 0.42, ease: "back.out(2)" },
+          ${startT.toFixed(3)}
+        );`;
+      }
+
       gsapTimelineScript += `
         // Transition Scene ${idx - 1} -> Scene ${idx}
         tl.to("#scene-${idx - 1}", { opacity: 0, scale: 0.96, y: -25, duration: 0.3, ease: "power2.in" }, ${startT - 0.2});
@@ -805,6 +824,7 @@ export async function generateComposition(compDir, projectData) {
           { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
           ${startT}
         );
+        ${continuityScript}
 
         // Subtitle scene switch
         tl.call(() => {

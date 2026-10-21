@@ -152,6 +152,25 @@ export function lintVisualDiversity(storyboard) {
       } else {
         criticalIssues.push(`Beat ${idx + 1} sceneGraph actions must be a non-empty array.`);
       }
+
+      // Check transition continuity into next beat
+      if (sg.transition && sg.transition.continuity && idx < beats.length - 1) {
+        const { persistentElement, morphTarget } = sg.transition.continuity;
+        if (persistentElement && !elementIds.has(persistentElement)) {
+          criticalIssues.push(
+            `Beat ${idx + 1} transition specifies persistentElement '${persistentElement}' not found in Beat ${idx + 1} elements.`
+          );
+        }
+        const nextBeat = beats[idx + 1];
+        if (nextBeat.sceneGraph && Array.isArray(nextBeat.sceneGraph.elements)) {
+          const nextElementIds = new Set(nextBeat.sceneGraph.elements.map((el) => el.id));
+          if (morphTarget && !nextElementIds.has(morphTarget)) {
+            criticalIssues.push(
+              `Beat ${idx + 1} transition specifies morphTarget '${morphTarget}' not found in Beat ${idx + 2} elements.`
+            );
+          }
+        }
+      }
     }
   });
 

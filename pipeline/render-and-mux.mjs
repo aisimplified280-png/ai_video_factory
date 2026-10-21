@@ -12,6 +12,7 @@ import {
   evaluateReleaseEligibility,
 } from "./qa-gate.mjs";
 import { generateCreditsReport } from "./rights-gate.mjs";
+import { critiqueRenderedSceneMoments } from "./visual-critique.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -246,6 +247,12 @@ export async function renderAndMux(projectDir, projectData) {
 
   const creditsReport = generateCreditsReport(projectReferencedAssets);
 
+  // 5. Visual Critique & Ranked Polish Inspection (claude-motion & motion-graphics-skills review loop)
+  const visualCritique = critiqueRenderedSceneMoments(projectData, motionFrameFiles);
+  const critiqueReportPath = path.join(exportsDir, "visual-critique-report.json");
+  await fs.writeFile(critiqueReportPath, JSON.stringify(visualCritique, null, 2), "utf8");
+  console.log(`[Critique] ${visualCritique.critiqueSummary}`);
+
   // Evaluate final release eligibility (Fail closed)
   const mediaQA = {
     streamIntegrity: streamVerdict.status,
@@ -262,7 +269,7 @@ export async function renderAndMux(projectDir, projectData) {
   };
 
   const visualDiversity = projectData.visualDiversity || null;
-  const releaseEvaluation = evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudit, visualDiversity);
+  const releaseEvaluation = evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudit, visualDiversity, visualCritique);
 
   // 6. Generate Truthful, Segregated QA Report & YouTube Packaging Manifest
   let descriptionBody = `${projectData.youtubeDescription || projectData.title}\n\nSubscribe to AI Simplified Lab (@AISimplifiedLab) for honest, zero-fluff AI workflows and code tutorials.\n\n#Shorts #AI #Engineering #AISimplifiedLab`;
@@ -311,6 +318,15 @@ export async function renderAndMux(projectDir, projectData) {
           warnings: visualDiversity.warnings,
           uniqueModesCount: visualDiversity.uniqueModesCount,
         } : "UNASSESSED",
+        visualCritique: {
+          score: visualCritique.score,
+          passed: visualCritique.passed,
+          p0Count: visualCritique.p0Count,
+          p1Count: visualCritique.p1Count,
+          p2Count: visualCritique.p2Count,
+          summary: visualCritique.critiqueSummary,
+          rankedChecklist: visualCritique.rankedChecklist,
+        },
       },
       rightsProvenance: {
         status: rightsStatus,
@@ -332,6 +348,7 @@ export async function renderAndMux(projectDir, projectData) {
       coverThumbnail: "cover-frame.png",
       contactSheet: "contact-sheet.png",
       motionContactSheet: "motion-contact-sheet.png",
+      visualCritiqueReport: "visual-critique-report.json",
       format: probeData.format,
       streams: probeData.streams,
     },

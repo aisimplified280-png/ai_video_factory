@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "id": "short-9327-vector-database-indexing",
+  "id": "short-7466-vector-database-indexing",
   "topic": "Vector Database Indexing",
   "styleProfile": "ai_simplified_purple_collage",
   "totalDuration": 27.833333333333332,
@@ -20,6 +20,8 @@
       "visualBody": "Brute force cosine distance compares against millions of points linearly, collapsing search throughput.",
       "badge": "VECTOR SEARCH SCALING",
       "source": "Vector Indexing Technical Papers",
+      "assetDecision": "bespoke-procedural-svg",
+      "assetDecisionReason": "Scene uses bespoke procedural graphics.",
       "assetId": null,
       "assetData": null,
       "motion": {
@@ -84,6 +86,7 @@
             "action": "step-scan-points",
             "target": "linear-search-marker",
             "duration": 1.8,
+            "sfxCue": "linear-scan-tick",
             "purpose": "Demonstrate marker checking vector points one-by-one linearly",
             "causeAndEffect": {
               "triggerElement": "linear-search-marker",
@@ -101,6 +104,7 @@
             "action": "stall-and-flash-bottleneck",
             "target": "bottleneck-indicator",
             "duration": 1.4,
+            "sfxCue": "bottleneck-alarm",
             "purpose": "Visually emphasize search stalling and bottleneck collapse",
             "causeAndEffect": {
               "triggerElement": "bottleneck-indicator",
@@ -117,6 +121,11 @@
           "persistingElements": [
             "linear-search-marker"
           ],
+          "continuity": {
+            "persistentElement": "linear-search-marker",
+            "morphTarget": "search-probe",
+            "transformType": "compress-to-highway-probe"
+          },
           "duration": 0.4
         }
       }
@@ -135,6 +144,8 @@
       "visualBody": "Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.",
       "badge": "HIERARCHICAL HIGHWAY",
       "source": null,
+      "assetDecision": "bespoke-procedural-svg",
+      "assetDecisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
       "assetId": null,
       "assetData": null,
       "motion": {
@@ -218,6 +229,7 @@
             "action": "enter-probe-and-lock-node-a",
             "target": "search-probe",
             "duration": 0.8,
+            "sfxCue": "probe-launch",
             "purpose": "Probe enters upper express tier and locks onto Node A",
             "causeAndEffect": {
               "triggerElement": "search-probe",
@@ -234,6 +246,7 @@
             "action": "traverse-express-bridge",
             "target": "search-probe",
             "duration": 1.6,
+            "sfxCue": "express-bridge-whoosh",
             "purpose": "Animate query probe leaping across upper express bridge from Node A to Node B",
             "causeAndEffect": {
               "triggerElement": "search-probe",
@@ -252,6 +265,7 @@
             "action": "illuminate-express-nodes",
             "target": "node-b",
             "duration": 1.2,
+            "sfxCue": "skip-counter-chime",
             "purpose": "Illuminate express tier nodes to highlight highway shortcut efficiency",
             "causeAndEffect": {
               "triggerElement": "node-b",
@@ -267,6 +281,11 @@
           "persistingElements": [
             "search-probe"
           ],
+          "continuity": {
+            "persistentElement": "search-probe",
+            "morphTarget": "query-descent-probe",
+            "transformType": "bridge-to-vertical-descent"
+          },
           "duration": 0.3
         }
       }
@@ -285,6 +304,8 @@
       "visualBody": "Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.",
       "badge": "GRAPH TOPOLOGY",
       "source": null,
+      "assetDecision": "bespoke-procedural-svg",
+      "assetDecisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
       "assetId": null,
       "assetData": null,
       "motion": {
@@ -375,6 +396,7 @@
             "action": "activate-entry-hop",
             "target": "entry-node-l2",
             "duration": 0.9,
+            "sfxCue": "entry-hop-blip",
             "purpose": "Hit entry point in sparse top layer",
             "causeAndEffect": {
               "triggerElement": "query-descent-probe",
@@ -391,6 +413,7 @@
             "action": "descend-to-base",
             "target": "query-descent-probe",
             "duration": 1.4,
+            "sfxCue": "laser-descent-whoosh",
             "purpose": "Animate probe sliding down vertical descent beam to intermediate and base tiers",
             "causeAndEffect": {
               "triggerElement": "query-descent-probe",
@@ -408,6 +431,7 @@
             "action": "lock-target-nearest-vector",
             "target": "target-beacon-l0",
             "duration": 1.2,
+            "sfxCue": "target-lock-snap",
             "purpose": "Target beacon pulses with neon flare while surrounding points dim down",
             "causeAndEffect": {
               "triggerElement": "target-beacon-l0",
@@ -420,6 +444,11 @@
         ],
         "transition": {
           "type": "converged-focus",
+          "continuity": {
+            "persistentElement": "target-beacon-l0",
+            "morphTarget": "rule-stamp",
+            "transformType": "target-radiate-to-stamp"
+          },
           "duration": 0.4
         }
       }
@@ -438,6 +467,8 @@
       "visualBody": "Tune graph connectivity M and construction breadth efSearch to balance recall against memory footprint.",
       "badge": "PRODUCTION RULE",
       "source": "HNSW Algorithm & Vector DB Standards",
+      "assetDecision": "bespoke-procedural-svg",
+      "assetDecisionReason": "Scene uses bespoke procedural graphics.",
       "assetId": null,
       "assetData": null,
       "motion": {
@@ -484,6 +515,7 @@
             "action": "stamp-rule-entrance",
             "target": "rule-stamp",
             "duration": 0.7,
+            "sfxCue": "stamp-bounce-thud",
             "purpose": "Drop definitive production rule stamp with physical bounce",
             "causeAndEffect": {
               "triggerElement": "rule-stamp",
@@ -500,6 +532,7 @@
             "action": "lock-latency-meter",
             "target": "latency-gauge",
             "duration": 1,
+            "sfxCue": "latency-speedometer-lock",
             "purpose": "Lock metric to sub-millisecond status",
             "causeAndEffect": {
               "triggerElement": "latency-gauge",
@@ -518,5 +551,5 @@
     }
   ],
   "projectAssets": [],
-  "createdAt": "2026-10-21T12:37:28.374Z"
+  "createdAt": "2026-10-21T12:56:09.438Z"
 }

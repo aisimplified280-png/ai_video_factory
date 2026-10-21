@@ -1010,7 +1010,7 @@
     </style>
   </head>
   <body>
-    <div class="composition-root" data-composition-id="short-9327-vector-database-indexing" data-width="1080" data-height="1920" data-duration="27.833333333333332">
+    <div class="composition-root" data-composition-id="short-7466-vector-database-indexing" data-width="1080" data-height="1920" data-duration="27.833333333333332">
       <div class="halftone-overlay"></div>
       <div id="orb-violet" class="glow-orb orb-violet"></div>
       <div id="orb-lime" class="glow-orb orb-lime"></div>
@@ -1553,6 +1553,19 @@
           { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
           6.6262
         );
+        
+        // Continuous Object Transformation: #linear-search-marker -> #search-probe
+        tl.to("#scene-0 #linear-search-marker", {
+          scale: 0.55,
+          opacity: 0.6,
+          duration: 0.25,
+          ease: "power2.in"
+        }, 6.376);
+        tl.fromTo("#scene-1 #search-probe", 
+          { scale: 0.6, opacity: 0.7 },
+          { scale: 1.0, opacity: 1, duration: 0.42, ease: "back.out(2)" },
+          6.626
+        );
 
         // Subtitle scene switch
         tl.call(() => {
@@ -1853,6 +1866,19 @@
           { opacity: 0, scale: 1.04, y: 30 },
           { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
           13.8835
+        );
+        
+        // Continuous Object Transformation: #search-probe -> #query-descent-probe
+        tl.to("#scene-1 #search-probe", {
+          scale: 0.55,
+          opacity: 0.6,
+          duration: 0.25,
+          ease: "power2.in"
+        }, 13.633);
+        tl.fromTo("#scene-2 #query-descent-probe", 
+          { scale: 0.6, opacity: 0.7 },
+          { scale: 1.0, opacity: 1, duration: 0.42, ease: "back.out(2)" },
+          13.883
         );
 
         // Subtitle scene switch
@@ -2211,6 +2237,19 @@
           { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
           20.2427
         );
+        
+        // Continuous Object Transformation: #target-beacon-l0 -> #rule-stamp
+        tl.to("#scene-2 #target-beacon-l0", {
+          scale: 0.55,
+          opacity: 0.6,
+          duration: 0.25,
+          ease: "power2.in"
+        }, 19.993);
+        tl.fromTo("#scene-3 #rule-stamp", 
+          { scale: 0.6, opacity: 0.7 },
+          { scale: 1.0, opacity: 1, duration: 0.42, ease: "back.out(2)" },
+          20.243
+        );
 
         // Subtitle scene switch
         tl.call(() => {
@@ -2491,7 +2530,7 @@
           ease: "power2.out"
         }, 27.779114523809522);
       
-    window.__timelines["short-9327-vector-database-indexing"] = tl;
+    window.__timelines["short-7466-vector-database-indexing"] = tl;
   
     </script>
   </body>

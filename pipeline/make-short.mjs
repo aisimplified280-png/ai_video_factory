@@ -212,11 +212,14 @@ async function main() {
   let scriptData = null;
   let customScriptPath = null;
 
+  let explicitId = null;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--script" && args[i + 1]) {
       customScriptPath = path.resolve(args[i + 1]);
     } else if ((args[i] === "--prompt" || args[i] === "--topic") && args[i + 1]) {
       scriptData = buildSemanticScript(args[i + 1]);
+    } else if (args[i] === "--id" && args[i + 1]) {
+      explicitId = args[i + 1];
     }
   }
 
@@ -227,6 +230,10 @@ async function main() {
 
   if (!scriptData) {
     scriptData = buildSemanticScript("Claude Prompt Caching");
+  }
+
+  if (explicitId) {
+    scriptData.id = explicitId;
   }
 
   console.log(`\n=============================================================`);

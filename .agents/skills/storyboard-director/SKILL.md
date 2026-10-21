@@ -3,40 +3,49 @@ name: storyboard-director
 description: "Direct story-first, beat-by-beat storyboards for YouTube Shorts in the AI Simplified Lab Purple Collage style: assign narrative purposes, match viewer questions to visual modes, and eliminate monotonous template repetition."
 ---
 
-# Storyboard Director (AI Simplified Lab Purple Collage)
+# Storyboard Director & Motion Choreographer (AI Simplified Lab Purple Collage)
+(Inspired by `claude-motion` motion timing, `motion-graphics-skills` brand fidelity, and `motion-graphics` continuous transformations)
 
-Direct narrative-driven visual pacing for technical and educational Shorts. Avoid generic stock clips dropped behind every paragraph and avoid repetitive white card templates; direct the exact visual mode that teaches what the spoken line describes.
+Direct narrative-driven visual pacing for technical and educational Shorts. Avoid generic stock clips dropped behind every paragraph and avoid repetitive card templates; direct the exact visual mode, asset selection, and motion choreography that teaches what the spoken line describes.
 
 ## Visual Identity: AI Simplified Lab Purple Collage
 
-- **Palette**: Deep ink canvas (`#0d0819`), rich violet (`#8b5cf6`), lavender (`#e9d5ff`), neon chartreuse (`#a3e635`), and crisp white (`#ffffff`).
+- **Palette**: Deep ink canvas (`#0b0518` to `#241147`), rich lavender (`#c084fc`), neon chartreuse (`#a3e635`), and crisp white (`#ffffff`).
 - **Texture**: Tactile halftone dot-matrix pattern with dimensional atmospheric glows.
-- **Composition Diversity**: Moves beyond uniform rounded cards. Uses full-frame hooks, large illuminated architecture diagrams, physical metaphors (conveyor tracks, memory vaults), dark syntax terminals, and asymmetric comparison collages.
+- **Composition Diversity**: Moves beyond uniform rounded cards. Uses full-frame hooks, large illuminated architecture diagrams, physical metaphors (conveyor tracks, memory vaults, multi-tier highways), dark syntax terminals, and asymmetric comparison collages.
 
-## Narrative Purpose & Visual Mode Mapping
+## Asset Intelligence Decision Matrix
 
-Each narrative beat must answer a specific viewer question using an appropriate visual mode:
+For every visual beat, evaluate material across 4 criteria:
+1. **Semantic Relevance**: Direct keyword and conceptual alignment with the spoken sentence (not broad topic tags).
+2. **Visual Suitability**: Scalable vector SVG with transparent background preferred over noisy stock photos.
+3. **Scene Participation**: Can the asset move, highlight, or transform in choreography (probe, node, laser, meter) rather than sit as passive wallpaper?
+4. **License Safety**: CC0 or verified commercial royalty-free license without NC/ND restrictions.
 
-| Narrative Purpose | Viewer Question | Visual Mode | Treatment |
-|---|---|---|---|
-| Isolate core operational bottleneck | What mistake is slowing down my system? | `hook-bold-object` | Oversized white hero title, neon chartreuse badge, surreal dimensional icon |
-| Visually demonstrate data flow / lifecycle | How does data move through system components? | `architecture-diagram` | Large illuminated glass frame with verified SVG asset or glowing node pipeline |
-| Make abstract software concepts concrete | What physical object illustrates this invisible dynamic? | `physical-metaphor` | Tangible metaphor (conveyor belt, pinned RAM block, multi-tier graph highway) |
-| Show copy-pasteable authentic syntax | What exact configuration or syntax is needed? | `code` or `terminal` | Deep violet syntax terminal with glowing active line highlight and cursor |
-| Contrast legacy friction with automation | How does the improved methodology differ? | `comparison` | Asymmetric split: red strikethrough legacy vs neon chartreuse optimized |
-| Deliver verifiable evidence-backed takeaway | What is the concrete takeaway and rule of thumb? | `concept-explainer` | Architectural stamp, bold summary, authentic documentation citation |
-| Reveal physical or software artifact | What does the real asset or interface look like? | `asset-reveal` | Verified media frame with license attribution badge |
+**Procedural Fallback Rule**: If external candidates score < 25 or if the concept is an abstract computational/geometric mechanism (vector indexing, token caching, hash tables, compiler ASTs), explicitly select bespoke procedural SVG. Never force an irrelevant stock photo into a technical scene.
+
+## Motion Choreographer: Cause-and-Effect Architecture
+
+Every scene must define a validated `sceneGraph` with:
+- **Visual Metaphor**: Concrete metaphor explaining the underlying mechanism.
+- **Primary Subject**: Explicit focal element leading viewer attention.
+- **Actions with Cause-and-Effect**: Every action must specify:
+  - `trigger`: Spoken phrase or audio anchor synchronized to transcript timing.
+  - `sfxCue`: Synchronized sound design cue (e.g. `probe-launch`, `target-lock-snap`, `stamp-bounce-thud`).
+  - `causeAndEffect`: Explicit `triggerElement`, `reactingElements`, and `reaction` (e.g. visited nodes pulse green, unvisited dots dim, shockwave radiates).
+- **Transition Continuity**: Specify `persistentElement` and `morphTarget` to morph objects across scene cuts rather than jumping between disconnected cards.
 
 ## Procedure
 
 1. **Sentence Alignment**: Anchor each beat to exact start and end timestamps extracted from TTS sentence boundaries.
-2. **Visual Diversity Linting**: Ensure consecutive beats do not use the same visual mode and no single mode exceeds 50% of the video.
-3. **Asset Association**: If a beat explains an architecture or requires visible proof, associate a strictly approved asset ID from the `AssetRegistry`.
-4. **Intermediate Representation**: Export `storyboard.json` (version 2) with `styleProfile: "ai_simplified_purple_collage"`.
+2. **Asset Intelligence**: Run multi-criteria scoring; assign approved external media or generate bespoke procedural SVGs.
+3. **Scene Graph & Motion Score**: Specify primary subject, elements, cause-and-effect actions, and transition continuities.
+4. **Visual Diversity & Integrity Linting**: Run `lintVisualDiversity()` to enforce no consecutive layout repeats and sceneGraph integrity.
+5. **Export Representation**: Export `storyboard.json` (version 2) with `styleProfile: "ai_simplified_purple_collage"`.
 
 ## Observable Completion Criteria
 
-- `storyboard.json` exists with structured beats, narrative purposes, and viewer questions.
+- `storyboard.json` (v2) contains structured beats, narrative purposes, viewer questions, and validated `sceneGraph` objects.
+- Every beat contains actions with `causeAndEffect`, spoken phrase triggers, and `sfxCue` sound hooks.
+- Transition continuities link moving focal objects across adjacent beats.
 - `lintVisualDiversity()` passes with score >= 75.
-- No two consecutive scenes use identical layouts or visual modes without explicit narrative reason.
-- Exact millisecond timestamps match speech audio boundaries.

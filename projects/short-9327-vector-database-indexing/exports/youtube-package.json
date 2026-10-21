@@ -41,6 +41,15 @@
         "criticalIssues": [],
         "warnings": [],
         "uniqueModesCount": 4
+      },
+      "visualCritique": {
+        "score": 100,
+        "passed": true,
+        "p0Count": 0,
+        "p1Count": 0,
+        "p2Count": 0,
+        "summary": "Visual Critique Score: 100/100 (P0 Blockers: 0, P1 Polish: 0, P2 Aesthetics: 0)",
+        "rankedChecklist": []
       }
     },
     "rightsProvenance": {
@@ -62,9 +71,10 @@
     "coverThumbnail": "cover-frame.png",
     "contactSheet": "contact-sheet.png",
     "motionContactSheet": "motion-contact-sheet.png",
+    "visualCritiqueReport": "visual-critique-report.json",
     "format": {
       "duration": "27.833333",
-      "size": "8611289"
+      "size": "8665871"
     },
     "streams": [
       {

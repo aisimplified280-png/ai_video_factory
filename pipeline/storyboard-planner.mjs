@@ -70,6 +70,75 @@ export function scoreCandidateRelevance(candidate, scene, usedAssetIds = new Map
 }
 
 /**
+ * Multi-criteria asset evaluation engine.
+ * Evaluates candidates across semantic relevance, visual suitability, scene participation, and licensing.
+ * If external candidates fall below threshold or the concept is abstract computational architecture,
+ * explicitly decides on bespoke procedural SVG / graphics and records the rationale.
+ */
+export function evaluateAssetChoice(candidates, scene, usedAssetIds = new Map()) {
+  const isTechTopic = /\b(vector|graph|database|prompt|cache|token|model|server|api|code|algorithm|latency|hnsw|hash)\b/i.test(
+    `${scene.visualTitle || ""} ${scene.visualIntent || ""} ${scene.voiceText || scene.spokenLine || ""}`
+  );
+
+  if (scene.preferOriginalDiagram === true) {
+    return {
+      selectedCandidate: null,
+      decision: "bespoke-procedural-svg",
+      reason: "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
+    };
+  }
+
+  if (!Array.isArray(candidates) || candidates.length === 0) {
+    return {
+      selectedCandidate: null,
+      decision: "bespoke-procedural-svg",
+      reason: "No external stock candidates found. Generated bespoke procedural vector graphic.",
+    };
+  }
+
+  const scored = candidates.map((cand) => {
+    const relevanceScore = scoreCandidateRelevance(cand, scene, usedAssetIds);
+
+    // Visual suitability (SVG/vector format preferred for scaling and transparent-background choreography)
+    let visualSuitability = 0;
+    if (cand.type === "svg" || (cand.downloadUrl && cand.downloadUrl.endsWith(".svg"))) {
+      visualSuitability += 20;
+    } else if (cand.type === "illustration") {
+      visualSuitability += 10;
+    }
+
+    // Participation score (Can this asset be animated as an interactive element in choreography?)
+    const participation = cand.type === "svg" ? 15 : 5;
+
+    // License safety bonus
+    const licenseBonus = cand.licenseId === "CC0-1.0" ? 10 : 5;
+
+    const totalScore = relevanceScore + visualSuitability + participation + licenseBonus;
+    return { candidate: cand, totalScore, relevanceScore };
+  });
+
+  scored.sort((a, b) => b.totalScore - a.totalScore);
+  const best = scored[0];
+
+  if (!best || best.totalScore < 25 || best.relevanceScore < 5) {
+    return {
+      selectedCandidate: null,
+      decision: "bespoke-procedural-svg",
+      reason: isTechTopic
+        ? "Abstract computational concept requires bespoke interactive SVG geometry; stock media is insufficiently relevant or cannot participate in scene choreography."
+        : "Stock candidates failed relevance and scene-participation thresholds; choosing procedural artwork.",
+    };
+  }
+
+  return {
+    selectedCandidate: best.candidate,
+    decision: "approved-stock",
+    score: best.totalScore,
+    reason: `Candidate '${best.candidate.assetId}' selected with multi-criteria score ${best.totalScore}.`,
+  };
+}
+
+/**
  * Plan a structured, editable storyboard from a topic or script data,
  * matching beats to visual modes, narrative purposes, and strictly approved assets.
  */
@@ -114,26 +183,22 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       viewerQuestion = "How does the improved methodology differ from legacy practice?";
     }
 
-    // Story-Aware Asset Discovery & Rights Verification
+    // Story-Aware Asset Discovery & Multi-Criteria Evaluation
     let assignedAsset = null;
+    let assetDecision = "bespoke-procedural-svg";
+    let assetDecisionReason = "Scene uses bespoke procedural graphics.";
     const allowsAssets = (visualMode === "architecture-diagram" || visualMode === "asset-reveal" || visualMode === "physical-metaphor");
-    const preferProcedural = scene.preferOriginalDiagram === true;
 
-    if (assetRegistry && allowsAssets && !preferProcedural) {
+    if (assetRegistry && allowsAssets) {
       const searchQuery = scene.assetQuery || scene.visualIntent || scriptData.topic;
       const candidates = await assetRegistry.searchAssets(searchQuery, { count: 5 });
+      const evaluation = evaluateAssetChoice(candidates, scene, usedAssetIds);
 
-      // Rank candidates by scene relevance score
-      const rankedCandidates = candidates
-        .map((cand) => ({
-          candidate: cand,
-          score: scoreCandidateRelevance(cand, scene, usedAssetIds),
-        }))
-        .filter((entry) => entry.score >= 10) // Minimum relevance threshold
-        .sort((a, b) => b.score - a.score);
+      assetDecision = evaluation.decision;
+      assetDecisionReason = evaluation.reason;
 
-      for (const entry of rankedCandidates) {
-        const acquisition = await assetRegistry.acquireAndVerifyAsset(entry.candidate);
+      if (evaluation.selectedCandidate) {
+        const acquisition = await assetRegistry.acquireAndVerifyAsset(evaluation.selectedCandidate);
         if (
           acquisition.asset &&
           (acquisition.status === RIGHTS_STATUS.APPROVED || acquisition.status === RIGHTS_STATUS.APPROVED_WITH_ATTRIBUTION)
@@ -143,9 +208,10 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
           
           const pastUsage = usedAssetIds.get(acquisition.asset.assetId) || [];
           usedAssetIds.set(acquisition.asset.assetId, [...pastUsage, idx]);
-          break; // Highest-scoring compliant candidate chosen
         } else {
-          console.warn(`[Storyboard] Candidate '${entry.candidate.assetId}' skipped due to rights status: ${acquisition.status}`);
+          console.warn(`[Storyboard] Candidate '${evaluation.selectedCandidate.assetId}' skipped due to rights status: ${acquisition.status}`);
+          assetDecision = "bespoke-procedural-svg";
+          assetDecisionReason = `Candidate rights verification yielded ${acquisition.status}; defaulted to bespoke procedural graphic.`;
         }
       }
     }
@@ -164,6 +230,8 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       visualBody: scene.visualBody || "",
       badge: scene.badge || "METHODOLOGY",
       source: scene.source || null,
+      assetDecision,
+      assetDecisionReason,
       assetId: assignedAsset ? assignedAsset.assetId : null,
       assetData: assignedAsset
         ? {
@@ -277,6 +345,15 @@ export function validateSceneGraph(sceneGraph) {
       errors.push(`sceneGraph primarySubject '${sceneGraph.primarySubject}' not found in elements.`);
     }
   }
+  if (sceneGraph.transition && sceneGraph.transition.continuity) {
+    const { persistentElement, morphTarget } = sceneGraph.transition.continuity;
+    if (persistentElement && typeof persistentElement !== "string") {
+      errors.push("transition continuity persistentElement must be a string.");
+    }
+    if (morphTarget && typeof morphTarget !== "string") {
+      errors.push("transition continuity morphTarget must be a string.");
+    }
+  }
   return { valid: errors.length === 0, errors };
 }
 
@@ -324,6 +401,7 @@ export function planSceneGraph(scene, beat, scriptData) {
             action: "step-scan-points",
             target: "linear-search-marker",
             duration: 1.8,
+            sfxCue: "linear-scan-tick",
             purpose: "Demonstrate marker checking vector points one-by-one linearly",
             causeAndEffect: {
               triggerElement: "linear-search-marker",
@@ -338,6 +416,7 @@ export function planSceneGraph(scene, beat, scriptData) {
             action: "stall-and-flash-bottleneck",
             target: "bottleneck-indicator",
             duration: 1.4,
+            sfxCue: "bottleneck-alarm",
             purpose: "Visually emphasize search stalling and bottleneck collapse",
             causeAndEffect: {
               triggerElement: "bottleneck-indicator",
@@ -346,7 +425,16 @@ export function planSceneGraph(scene, beat, scriptData) {
             }
           },
         ],
-        transition: { type: "match-cut-compress", persistingElements: ["linear-search-marker"], duration: 0.4 }
+        transition: {
+          type: "match-cut-compress",
+          persistingElements: ["linear-search-marker"],
+          continuity: {
+            persistentElement: "linear-search-marker",
+            morphTarget: "search-probe",
+            transformType: "compress-to-highway-probe"
+          },
+          duration: 0.4
+        }
       };
     }
 
@@ -368,7 +456,13 @@ export function planSceneGraph(scene, beat, scriptData) {
           action: "burst-emblem",
           target: "hero-emblem",
           duration: 0.8,
+          sfxCue: "hero-burst",
           purpose: "Capture viewer visual focus with radial burst",
+          causeAndEffect: {
+            triggerElement: "hero-emblem",
+            reactingElements: ["glow-ring", "statement-box"],
+            reaction: "expand-and-settle"
+          }
         },
       ],
     };
@@ -405,6 +499,7 @@ export function planSceneGraph(scene, beat, scriptData) {
             action: "enter-probe-and-lock-node-a",
             target: "search-probe",
             duration: 0.8,
+            sfxCue: "probe-launch",
             purpose: "Probe enters upper express tier and locks onto Node A",
             causeAndEffect: {
               triggerElement: "search-probe",
@@ -419,6 +514,7 @@ export function planSceneGraph(scene, beat, scriptData) {
             action: "traverse-express-bridge",
             target: "search-probe",
             duration: 1.6,
+            sfxCue: "express-bridge-whoosh",
             purpose: "Animate query probe leaping across upper express bridge from Node A to Node B",
             causeAndEffect: {
               triggerElement: "search-probe",
@@ -433,6 +529,7 @@ export function planSceneGraph(scene, beat, scriptData) {
             action: "illuminate-express-nodes",
             target: "node-b",
             duration: 1.2,
+            sfxCue: "skip-counter-chime",
             purpose: "Illuminate express tier nodes to highlight highway shortcut efficiency",
             causeAndEffect: {
               triggerElement: "node-b",
@@ -441,7 +538,16 @@ export function planSceneGraph(scene, beat, scriptData) {
             }
           },
         ],
-        transition: { type: "layer-descent-prep", persistingElements: ["search-probe"], duration: 0.3 }
+        transition: {
+          type: "layer-descent-prep",
+          persistingElements: ["search-probe"],
+          continuity: {
+            persistentElement: "search-probe",
+            morphTarget: "query-descent-probe",
+            transformType: "bridge-to-vertical-descent"
+          },
+          duration: 0.3
+        }
       };
     }
 
@@ -463,7 +569,13 @@ export function planSceneGraph(scene, beat, scriptData) {
           action: "pin-cache-ram",
           target: "static-pinned-item",
           duration: 1.0,
+          sfxCue: "cache-pin-snap",
           purpose: "Lock static system prompt into warm ephemeral RAM",
+          causeAndEffect: {
+            triggerElement: "static-pinned-item",
+            reactingElements: ["conveyor-track"],
+            reaction: "lock-slot-color"
+          }
         },
         {
           trigger: "spoken-phrase",
@@ -472,7 +584,13 @@ export function planSceneGraph(scene, beat, scriptData) {
           action: "instant-query-hit",
           target: "dynamic-query-item",
           duration: 1.2,
+          sfxCue: "cache-hit-ding",
           purpose: "Slide query into match position with instant latency hit",
+          causeAndEffect: {
+            triggerElement: "dynamic-query-item",
+            reactingElements: ["static-pinned-item"],
+            reaction: "flash-cache-match"
+          }
         },
       ],
     };
@@ -508,6 +626,7 @@ export function planSceneGraph(scene, beat, scriptData) {
             action: "activate-entry-hop",
             target: "entry-node-l2",
             duration: 0.9,
+            sfxCue: "entry-hop-blip",
             purpose: "Hit entry point in sparse top layer",
             causeAndEffect: {
               triggerElement: "query-descent-probe",
@@ -522,6 +641,7 @@ export function planSceneGraph(scene, beat, scriptData) {
             action: "descend-to-base",
             target: "query-descent-probe",
             duration: 1.4,
+            sfxCue: "laser-descent-whoosh",
             purpose: "Animate probe sliding down vertical descent beam to intermediate and base tiers",
             causeAndEffect: {
               triggerElement: "query-descent-probe",
@@ -536,6 +656,7 @@ export function planSceneGraph(scene, beat, scriptData) {
             action: "lock-target-nearest-vector",
             target: "target-beacon-l0",
             duration: 1.2,
+            sfxCue: "target-lock-snap",
             purpose: "Target beacon pulses with neon flare while surrounding points dim down",
             causeAndEffect: {
               triggerElement: "target-beacon-l0",
@@ -544,7 +665,15 @@ export function planSceneGraph(scene, beat, scriptData) {
             }
           },
         ],
-        transition: { type: "converged-focus", duration: 0.4 }
+        transition: {
+          type: "converged-focus",
+          continuity: {
+            persistentElement: "target-beacon-l0",
+            morphTarget: "rule-stamp",
+            transformType: "target-radiate-to-stamp"
+          },
+          duration: 0.4
+        }
       };
     }
 
@@ -565,7 +694,13 @@ export function planSceneGraph(scene, beat, scriptData) {
           action: "advance-flow-packet",
           target: "flow-packet",
           duration: 1.5,
+          sfxCue: "packet-flow",
           purpose: "Trace data movement through topology nodes",
+          causeAndEffect: {
+            triggerElement: "flow-packet",
+            reactingElements: ["flow-nodes"],
+            reaction: "pulse-node-stream"
+          }
         },
       ],
     };
@@ -590,6 +725,7 @@ export function planSceneGraph(scene, beat, scriptData) {
         action: "stamp-rule-entrance",
         target: "rule-stamp",
         duration: 0.7,
+        sfxCue: "stamp-bounce-thud",
         purpose: "Drop definitive production rule stamp with physical bounce",
         causeAndEffect: {
           triggerElement: "rule-stamp",
@@ -604,6 +740,7 @@ export function planSceneGraph(scene, beat, scriptData) {
         action: "lock-latency-meter",
         target: "latency-gauge",
         duration: 1.0,
+        sfxCue: "latency-speedometer-lock",
         purpose: "Lock metric to sub-millisecond status",
         causeAndEffect: {
           triggerElement: "latency-gauge",
