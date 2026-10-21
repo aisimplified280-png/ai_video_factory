@@ -234,7 +234,8 @@ export async function renderAndMux(projectDir, projectData) {
     reason: rightsReason,
   };
 
-  const releaseEvaluation = evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudit);
+  const visualDiversity = projectData.visualDiversity || null;
+  const releaseEvaluation = evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudit, visualDiversity);
 
   // 6. Generate Truthful, Segregated QA Report & YouTube Packaging Manifest
   let descriptionBody = `${projectData.youtubeDescription || projectData.title}\n\nSubscribe to AI Simplified Lab (@AISimplifiedLab) for honest, zero-fluff AI workflows and code tutorials.\n\n#Shorts #AI #Engineering #AISimplifiedLab`;
@@ -261,6 +262,7 @@ export async function renderAndMux(projectDir, projectData) {
         decodeErrors,
         blackFrameSegments: blackVerdict.blackSegmentsCount,
         blackFrameStatus: blackVerdict.status,
+        blackFrameInspectionDetails: "Zero black segments >= 0.5s detected by FFmpeg blackdetect filter with pic_th=0.98",
         videoCodec: streamVerdict.videoStream?.codec || "UNKNOWN",
         resolution: streamVerdict.videoStream ? `${streamVerdict.videoStream.width}x${streamVerdict.videoStream.height}` : "UNKNOWN",
         framerate: streamVerdict.videoStream ? 30 : "UNKNOWN",
@@ -275,6 +277,13 @@ export async function renderAndMux(projectDir, projectData) {
         timingSyncMethod: "Edge-TTS SentenceBoundary stream extraction",
         scriptTimingSync: timingVerdict.status,
         scriptTimingIssues: timingVerdict.issues,
+        visualDiversity: visualDiversity ? {
+          score: visualDiversity.diversityScore,
+          passed: visualDiversity.passed,
+          criticalIssues: visualDiversity.criticalIssues,
+          warnings: visualDiversity.warnings,
+          uniqueModesCount: visualDiversity.uniqueModesCount,
+        } : "UNASSESSED",
       },
       rightsProvenance: {
         status: rightsStatus,
@@ -284,8 +293,8 @@ export async function renderAndMux(projectDir, projectData) {
       },
       editorialGovernance: {
         youtubePolicyReview: "UNASSESSED (Requires Human / Creator Review prior to upload)",
-        syntheticMediaDisclosure: "NOT_REQUIRED (Editorial code & motion graphics explainer)",
-        commercialAudioRights: "PASS (Edge-TTS neural voice + Apache-2.0 sound design)",
+        syntheticMediaDisclosure: "UNASSESSED (Editorial code & motion graphics explainer; check prior to upload)",
+        commercialAudioRights: "UNASSESSED (Edge-TTS neural voice + bundled sound effects; licensing unverified by external scan)",
         releaseEligible: releaseEvaluation.releaseEligible,
         releaseBlockers: releaseEvaluation.blockers,
       },

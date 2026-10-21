@@ -79,6 +79,8 @@ export async function generateComposition(compDir, projectData) {
 
     if (cardType === "hook" || cardType === "hook-bold-object") {
       // Full-frame hook with surreal dimensional object & oversized typography
+      const isVector = (scene.visualTitle || "").toLowerCase().includes("vector") || (title || "").toLowerCase().includes("vector");
+      const iconSymbol = isVector ? "🧭" : "⚡";
       cardContent = `
         <div class="purple-badge">
           <span class="badge-dot pulse-lime"></span>
@@ -88,7 +90,7 @@ export async function generateComposition(compDir, projectData) {
         <div class="collage-hero-card">
           <div class="surreal-object-container">
             <div class="surreal-glow-ring"></div>
-            <div class="surreal-icon">⚡</div>
+            <div class="surreal-icon">${iconSymbol}</div>
           </div>
           <div class="hero-statement-box">
             <div class="card-tag">${escapeHtml(scene.tag || "OBSERVATION")}</div>
@@ -143,33 +145,82 @@ export async function generateComposition(compDir, projectData) {
         `;
       }
     } else if (cardType === "physical-metaphor") {
-      // Physical metaphor for invisible software dynamics
-      cardContent = `
-        <div class="purple-badge">
-          <span class="badge-dot pulse-lime"></span>
-          ${escapeHtml(scene.badge || "PHYSICAL METAPHOR")}
-        </div>
-        <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
-        <div class="metaphor-collage-stage">
-          <div class="metaphor-block conveyor-block">
-            <div class="conveyor-track">
-              <div class="conveyor-item item-static">
-                <span class="item-tag">STATIC PREFIX</span>
-                <span class="item-desc">System Prompt &amp; Context</span>
-                <span class="item-status">📌 Pinned in RAM</span>
-              </div>
-              <div class="conveyor-arrow">⬇ Instant Match</div>
-              <div class="conveyor-item item-dynamic">
-                <span class="item-tag">DYNAMIC QUERY</span>
-                <span class="item-desc">User Message</span>
-                <span class="item-status">⚡ Instant Hit</span>
-              </div>
-            </div>
-            <div class="ttl-badge">⏳ 5-Min Default • 1-Hour Extended TTL</div>
+      if (scene.metaphorType === "hnsw-highway" || (scene.visualTitle && scene.visualTitle.toLowerCase().includes("highway"))) {
+        // Multi-Layer Graph Highway Metaphor for Vector DB
+        cardContent = `
+          <div class="purple-badge">
+            <span class="badge-dot pulse-lime"></span>
+            ${escapeHtml(scene.badge || "EXPRESS HIGHWAY METAPHOR")}
           </div>
-          <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
-        </div>
-      `;
+          <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
+          <div class="metaphor-collage-stage">
+            <div class="hnsw-highway-stage">
+              <div class="highway-tier tier-express">
+                <div class="tier-label">TOP LAYER 2 • EXPRESS HIGHWAY</div>
+                <div class="highway-track">
+                  <div class="highway-node active-node">Node A</div>
+                  <div class="express-arc">═════════ Express Skip ═════════➔</div>
+                  <div class="highway-node active-node">Node B</div>
+                </div>
+                <div class="tier-sub">Skips 99% of irrelevant points in high-dimensional space</div>
+              </div>
+
+              <div class="highway-tier tier-mid">
+                <div class="tier-label">LAYER 1 • CLUSTER ROUTING</div>
+                <div class="highway-track">
+                  <div class="highway-node">A₁</div>
+                  <div class="local-arc">───➔</div>
+                  <div class="highway-node active-node">A₂</div>
+                  <div class="local-arc">───➔</div>
+                  <div class="highway-node">A₃</div>
+                </div>
+              </div>
+
+              <div class="highway-tier tier-base">
+                <div class="tier-label">BASE LAYER 0 • EXACT NEAREST NEIGHBORS</div>
+                <div class="highway-track base-grid">
+                  <span class="base-dot"></span>
+                  <span class="base-dot"></span>
+                  <span class="base-dot target-hit">🎯 Target Nearest Vector</span>
+                  <span class="base-dot"></span>
+                  <span class="base-dot"></span>
+                </div>
+              </div>
+
+              <div class="ttl-badge">⚡ Sub-Millisecond Nearest Neighbor Convergence</div>
+            </div>
+            <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
+          </div>
+        `;
+      } else {
+        // Pinned memory / Token conveyor metaphor
+        cardContent = `
+          <div class="purple-badge">
+            <span class="badge-dot pulse-lime"></span>
+            ${escapeHtml(scene.badge || "PHYSICAL METAPHOR")}
+          </div>
+          <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
+          <div class="metaphor-collage-stage">
+            <div class="metaphor-block conveyor-block">
+              <div class="conveyor-track">
+                <div class="conveyor-item item-static">
+                  <span class="item-tag">STATIC PREFIX</span>
+                  <span class="item-desc">System Prompt &amp; Context</span>
+                  <span class="item-status">📌 Pinned in RAM</span>
+                </div>
+                <div class="conveyor-arrow">⬇ Instant Match</div>
+                <div class="conveyor-item item-dynamic">
+                  <span class="item-tag">DYNAMIC QUERY</span>
+                  <span class="item-desc">User Message</span>
+                  <span class="item-status">⚡ Instant Hit</span>
+                </div>
+              </div>
+              <div class="ttl-badge">⏳ 5-Min Default • 1-Hour Extended TTL</div>
+            </div>
+            <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
+          </div>
+        `;
+      }
     } else if (cardType === "code" || cardType === "terminal") {
       // Authentic syntax terminal with glowing highlighted lines
       cardContent = `
@@ -772,6 +823,100 @@ export async function generateComposition(compDir, projectData) {
         color: #e9d5ff;
         text-align: center;
         letter-spacing: 0.04em;
+      }
+
+      /* HNSW Multi-Layer Highway Stage */
+      .hnsw-highway-stage {
+        width: 100%;
+        padding: 28px;
+        border-radius: 26px;
+        background: rgba(22, 10, 44, 0.92);
+        border: 1px solid rgba(192, 132, 252, 0.4);
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .highway-tier {
+        padding: 16px 20px;
+        border-radius: 18px;
+        text-align: left;
+      }
+      .tier-express {
+        background: rgba(163, 230, 53, 0.12);
+        border: 1px solid rgba(163, 230, 53, 0.45);
+      }
+      .tier-mid {
+        background: rgba(192, 132, 252, 0.12);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+      }
+      .tier-base {
+        background: rgba(147, 51, 234, 0.1);
+        border: 1px dashed rgba(192, 132, 252, 0.3);
+      }
+      .tier-label {
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #a3e635;
+        margin-bottom: 8px;
+      }
+      .tier-sub {
+        font-size: 16px;
+        color: #cbd5e1;
+        margin-top: 6px;
+      }
+      .highway-track {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .highway-node {
+        padding: 8px 18px;
+        border-radius: 12px;
+        background: rgba(36, 18, 66, 0.9);
+        border: 1px solid rgba(192, 132, 252, 0.5);
+        font-size: 18px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .highway-node.active-node {
+        border-color: #a3e635;
+        box-shadow: 0 0 14px rgba(163, 230, 53, 0.5);
+      }
+      .express-arc {
+        font-size: 15px;
+        font-weight: 800;
+        color: #a3e635;
+        letter-spacing: 0.05em;
+      }
+      .local-arc {
+        font-size: 20px;
+        color: #c084fc;
+        font-weight: 800;
+      }
+      .base-grid {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 8px 0;
+      }
+      .base-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: rgba(192, 132, 252, 0.4);
+      }
+      .base-dot.target-hit {
+        width: auto;
+        height: auto;
+        background: transparent;
+        font-size: 18px;
+        font-weight: 800;
+        color: #a3e635;
+        text-shadow: 0 0 10px rgba(163, 230, 53, 0.8);
       }
       .metaphor-caption {
         text-align: left;

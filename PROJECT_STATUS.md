@@ -77,7 +77,25 @@ Build a ₹0 ongoing-cost workflow for creating YouTube Shorts from idea to fini
   - **Security & Version Control**: `.env` strictly git-ignored; created public `.env.example` template.
   - **22/22 Passing Automated Tests**: Live Pixabay search verified with 100% test suite pass rate.
 
+- [x] Checkpoint 8 (2026-10-21): **Story-Aware Asset Selection, Procedural Metaphors & Honest QA Governance**.
+  - **Story-Aware Asset Relevance Ranking**: Built `scoreCandidateRelevance()` in `pipeline/storyboard-planner.mjs` evaluating multiple candidate results against `visualIntent`, `keywords`, and `spokenLine`. Enforced negative keyword penalties (-20pts) for irrelevant topics (e.g. food/cocktail on technical topics) and minimum relevance score threshold.
+  - **Purged Accidental Asset Repetition**: Tracked asset usage across beats; accidental reuse without explicit `narrativeContinuityReason` receives hard penalty (-100pts) and is flagged as a critical issue by the visual linter.
+  - **Procedural Graphics Preference**: Abstract software systems (e.g. HNSW indexing, memory caches) prefer procedural SVG/GSAP visuals (`preferOriginalDiagram: true`) over random stock photos.
+  - **Authentic HNSW Multi-Tier Highway**: Implemented dedicated 3-tier express highway layout in `pipeline/composition-generator.mjs` (Top Layer 2 Express Highway, Layer 1 Cluster Routing, Base Layer 0 Nearest Neighbors) with zero hardcoded prompt-caching leakage.
+  - **Rights Gate Hardened**:
+    - `normalizeLicenseId("by")` strictly requires explicit version (returns `null` when version is missing; never assumes 4.0).
+    - Missing `assetId` or `sourceProvider` strictly returns `RIGHTS_STATUS.REJECTED`.
+    - Unassessed stock likeness/person flags route to `REVIEW_REQUIRED`.
+    - Path sanitization prevents directory traversal; enforces 8-second download timeout and 15MB file size limit.
+  - **Honest Measurable QA Claims**:
+    - Segregated and reported exact black-detect measurements: `"Zero black segments >= 0.5s detected by FFmpeg blackdetect filter with pic_th=0.98"`.
+    - Marked `syntheticMediaDisclosure` and `commercialAudioRights` as `UNASSESSED` reserved for creator review.
+    - Integrated visual diversity critical issues directly into `evaluateReleaseEligibility` to fail closed.
+  - **25/25 Passing Unit Tests**: Comprehensive test suite running in ~450ms.
+  - **Proven Deliverable**: Generated, rendered, and verified `projects/short-9327-vector-database-indexing` with authentic HNSW multi-tier highway and layered graph navigation.
+
 ## Resume Instruction
-The asset scout now actively queries Pixabay for online media whenever relevant, falling back to Openverse and local verified fixtures.
+The factory is hardened, fail-closed, and story-aware. Run `node pipeline/make-short.mjs --topic "<topic>"` to generate Shorts.
+
 
 

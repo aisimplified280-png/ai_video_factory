@@ -13,6 +13,7 @@ import { FixtureProvider } from "../pipeline/asset-scout/providers/fixture-provi
 import { PixabayProvider } from "../pipeline/asset-scout/providers/pixabay-provider.mjs";
 import { AssetRegistry } from "../pipeline/asset-scout/registry.mjs";
 import { lintVisualDiversity } from "../pipeline/visual-linter.mjs";
+import { scoreCandidateRelevance } from "../pipeline/storyboard-planner.mjs";
 import { ROOT_DIR } from "../pipeline/config.mjs";
 
 test("normalizeLicenseId correctly normalizes valid identifiers and never assumes missing licenses", () => {
@@ -21,7 +22,8 @@ test("normalizeLicenseId correctly normalizes valid identifiers and never assume
   assert.equal(normalizeLicenseId("pdm"), "Public Domain");
   assert.equal(normalizeLicenseId("by", "4.0"), "CC-BY-4.0");
   assert.equal(normalizeLicenseId("by", "3.0"), "CC-BY-3.0");
-  assert.equal(normalizeLicenseId("by"), "CC-BY-4.0");
+  assert.equal(normalizeLicenseId("by"), null); // Never assume 4.0 when version is omitted
+  assert.equal(normalizeLicenseId("by", ""), null);
   assert.equal(normalizeLicenseId("by-nc", "4.0"), "CC-BY-NC-4.0");
   assert.equal(normalizeLicenseId("by-nd", "4.0"), "CC-BY-ND-4.0");
   assert.equal(normalizeLicenseId("apache-2.0"), "Apache-2.0");
@@ -222,6 +224,9 @@ test("PixabayProvider fetches and parses valid royalty-free illustrations with a
 
 test("auditAssetRights approves Pixabay-Content-License without mandatory attribution", () => {
   const pixabayAsset = {
+    assetId: "pixabay-test-1",
+    sourceProvider: "pixabay",
+    downloadUrl: "https://example.com/img.jpg",
     licenseId: "Pixabay-Content-License",
     commercialUse: true,
     modificationsAllowed: true,
@@ -229,4 +234,81 @@ test("auditAssetRights approves Pixabay-Content-License without mandatory attrib
   const verdict = auditAssetRights(pixabayAsset, true);
   assert.equal(verdict.status, RIGHTS_STATUS.APPROVED);
 });
+
+test("auditAssetRights strictly rejects assets missing assetId or sourceProvider", () => {
+  const missingIdAsset = {
+    sourceProvider: "openverse",
+    downloadUrl: "https://example.com/img.jpg",
+    licenseId: "CC0-1.0",
+    commercialUse: true,
+    modificationsAllowed: true,
+  };
+  assert.equal(auditAssetRights(missingIdAsset).status, RIGHTS_STATUS.REJECTED);
+
+  const missingProviderAsset = {
+    assetId: "asset-123",
+    downloadUrl: "https://example.com/img.jpg",
+    licenseId: "CC0-1.0",
+    commercialUse: true,
+    modificationsAllowed: true,
+  };
+  assert.equal(auditAssetRights(missingProviderAsset).status, RIGHTS_STATUS.REJECTED);
+});
+
+test("scoreCandidateRelevance prioritizes keyword matches and penalizes accidental reuse and unrelated topics", () => {
+  const scene = {
+    visualTitle: "Vector Database Indexing",
+    visualIntent: "HNSW multi-layer graph navigation",
+    keywords: ["vector", "graph", "hnsw", "indexing"],
+  };
+
+  const goodCand = {
+    assetId: "cand-hnsw-graph",
+    title: "Vector Database HNSW Graph",
+    tags: "vector, index, graph, algorithm",
+  };
+  const badCand = {
+    assetId: "cand-cocktail-bar",
+    title: "3 Bottle Bar Cocktail Menu",
+    tags: "cocktail, bar, drinks, food",
+  };
+
+  const goodScore = scoreCandidateRelevance(goodCand, scene, new Map());
+  const badScore = scoreCandidateRelevance(badCand, scene, new Map());
+
+  assert.ok(goodScore >= 15);
+  assert.ok(badScore < 0); // Severe negative penalty for cocktail/food on tech topics
+
+  // Accidental reuse penalty
+  const usedMap = new Map([["cand-hnsw-graph", [0]]]);
+  const reuseScore = scoreCandidateRelevance(goodCand, scene, usedMap);
+  assert.equal(reuseScore, -100); // Hard rejection without narrativeContinuityReason
+});
+
+test("lintVisualDiversity flags accidental asset reuse and severe irrelevance as critical issues", () => {
+  const badStoryboard = {
+    beats: [
+      {
+        visualMode: "physical-metaphor",
+        spokenLine: "First line",
+        visualTitle: "Vector Search",
+        assetId: "asset-repeat",
+        assetData: { assetId: "asset-repeat", title: "Cocktail Bar Drinks" }, // Irrelevant
+      },
+      {
+        visualMode: "architecture-diagram",
+        spokenLine: "Second line",
+        visualTitle: "Layered Navigation",
+        assetId: "asset-repeat", // Accidental reuse without continuity
+        assetData: { assetId: "asset-repeat", title: "Cocktail Bar Drinks" },
+      },
+    ],
+  };
+
+  const lintRes = lintVisualDiversity(badStoryboard);
+  assert.equal(lintRes.passed, false);
+  assert.ok(lintRes.criticalIssues.some((i) => i.includes("Accidental asset reuse")));
+  assert.ok(lintRes.criticalIssues.some((i) => i.includes("Irrelevant asset")));
+});
+
 

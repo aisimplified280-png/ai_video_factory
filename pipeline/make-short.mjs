@@ -104,6 +104,9 @@ function buildSemanticScript(topic) {
           id: "metaphor",
           cardType: "physical-metaphor",
           badge: "HIERARCHICAL HIGHWAY",
+          metaphorType: "hnsw-highway",
+          preferOriginalDiagram: true,
+          keywords: ["highway", "hnsw", "graph", "vector", "layer"],
           visualTitle: "The Multi-Layer Graph Highway",
           visualBody: "Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.",
           voiceText: "Hierarchical Navigable Small World graphs skip dense clusters like multi-tier highways across high-dimensional space.",
@@ -113,6 +116,9 @@ function buildSemanticScript(topic) {
           id: "architecture",
           cardType: "architecture-diagram",
           badge: "GRAPH TOPOLOGY",
+          diagramType: "hnsw-graph",
+          preferOriginalDiagram: true,
+          keywords: ["topology", "graph", "layer", "hops", "vector"],
           visualTitle: "HNSW Layered Navigation",
           diagramNodes: [
             { label: "Entry Point", sub: "Top Layer 2" },
@@ -291,6 +297,8 @@ async function main() {
       newWay: beat.newWay,
     })),
     rightsLedger: assetRegistry.ledger,
+    storyboard: storyboardData,
+    visualDiversity: diversityLint,
   };
   await generateComposition(compDir, compositionData);
   console.log(`✓ Composition synthesized at: ${compDir}\n`);

@@ -108,4 +108,18 @@ test("evaluateReleaseEligibility fails closed on UNKNOWN black frames or missing
   );
   assert.equal(res2.releaseEligible, false);
   assert.ok(res2.blockers.some((b) => b.includes("Missing rightsAudit")));
+
+  // Case 3: Visual diversity with critical issues blocks release
+  const badVisualDiversity = {
+    passed: false,
+    criticalIssues: ["Accidental asset reuse: Beat 2 repeats asset 'xyz' without continuity."],
+  };
+  const res3 = evaluateReleaseEligibility(
+    { streamIntegrity: STATUS.PASS, decodeErrors: 0, blackFrameDetection: STATUS.PASS },
+    contentIntegrity,
+    rightsAudit,
+    badVisualDiversity
+  );
+  assert.equal(res3.releaseEligible, false);
+  assert.ok(res3.blockers.some((b) => b.includes("Visual diversity check failed")));
 });

@@ -20,6 +20,56 @@ export const VISUAL_MODES = new Set([
 ]);
 
 /**
+ * Score a candidate asset's relevance to a scene based on keywords,
+ * visual intent, and spoken narration.
+ */
+export function scoreCandidateRelevance(candidate, scene, usedAssetIds = new Map()) {
+  if (!candidate) return 0;
+  
+  // Rule: Prevent accidental asset repetition across scenes unless narrative continuity is explicitly justified
+  if (usedAssetIds.has(candidate.assetId) && !scene.narrativeContinuityReason) {
+    return -100; // Hard rejection for unjustified reuse
+  }
+
+  let score = 0;
+  const candText = `${candidate.title || ""} ${candidate.tags || ""} ${candidate.assetId || ""}`.toLowerCase();
+  const sceneKeywords = Array.isArray(scene.keywords)
+    ? scene.keywords
+    : (scene.visualIntent || scene.visualTitle || "").toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+
+  // 1. Keyword matches (+5 points per keyword)
+  for (const kw of sceneKeywords) {
+    const cleanKw = kw.toLowerCase().trim();
+    if (cleanKw && candText.includes(cleanKw)) {
+      score += 5;
+    }
+  }
+
+  // 2. Visual query match (+10 points)
+  if (scene.assetQuery) {
+    const queryWords = scene.assetQuery.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+    for (const qw of queryWords) {
+      if (candText.includes(qw)) score += 3;
+    }
+  }
+
+  // 3. Negative mismatch penalty for unrelated subjects (e.g. food, drinks, fashion)
+  const unrelatedWords = ["cocktail", "bar", "bottle", "wine", "beer", "drink", "recipe", "food", "kitchen", "fashion", "wedding"];
+  const isTechTopic = /\b(vector|graph|database|prompt|cache|token|model|server|api|code|algorithm|latency)\b/i.test(
+    `${scene.visualTitle || ""} ${scene.visualIntent || ""} ${scene.spokenLine || ""}`
+  );
+  if (isTechTopic) {
+    for (const uw of unrelatedWords) {
+      if (candText.includes(uw)) {
+        score -= 20; // Severe penalty for irrelevant stock media
+      }
+    }
+  }
+
+  return score;
+}
+
+/**
  * Plan a structured, editable storyboard from a topic or script data,
  * matching beats to visual modes, narrative purposes, and strictly approved assets.
  */
@@ -27,6 +77,7 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
   const beats = [];
   const scenes = scriptData.scenes || [];
   const projectAssets = [];
+  const usedAssetIds = new Map(); // assetId -> [beatIndex]
 
   for (let idx = 0; idx < scenes.length; idx++) {
     const scene = scenes[idx];
@@ -63,21 +114,38 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       viewerQuestion = "How does the improved methodology differ from legacy practice?";
     }
 
-    // Asset Discovery & Rights Verification for visual modes that benefit from assets
+    // Story-Aware Asset Discovery & Rights Verification
     let assignedAsset = null;
-    if (assetRegistry && (visualMode === "architecture-diagram" || visualMode === "asset-reveal" || visualMode === "physical-metaphor")) {
-      const candidates = await assetRegistry.searchAssets(scene.assetQuery || scriptData.topic || "ai-architecture", { count: 1 });
-      if (candidates.length > 0) {
-        const acquisition = await assetRegistry.acquireAndVerifyAsset(candidates[0]);
-        // Strict gate: NEVER assign an asset that requires review or is rejected
+    const allowsAssets = (visualMode === "architecture-diagram" || visualMode === "asset-reveal" || visualMode === "physical-metaphor");
+    const preferProcedural = scene.preferOriginalDiagram === true;
+
+    if (assetRegistry && allowsAssets && !preferProcedural) {
+      const searchQuery = scene.assetQuery || scene.visualIntent || scriptData.topic;
+      const candidates = await assetRegistry.searchAssets(searchQuery, { count: 5 });
+
+      // Rank candidates by scene relevance score
+      const rankedCandidates = candidates
+        .map((cand) => ({
+          candidate: cand,
+          score: scoreCandidateRelevance(cand, scene, usedAssetIds),
+        }))
+        .filter((entry) => entry.score >= 10) // Minimum relevance threshold
+        .sort((a, b) => b.score - a.score);
+
+      for (const entry of rankedCandidates) {
+        const acquisition = await assetRegistry.acquireAndVerifyAsset(entry.candidate);
         if (
           acquisition.asset &&
           (acquisition.status === RIGHTS_STATUS.APPROVED || acquisition.status === RIGHTS_STATUS.APPROVED_WITH_ATTRIBUTION)
         ) {
           assignedAsset = acquisition.asset;
           projectAssets.push(acquisition.asset);
+          
+          const pastUsage = usedAssetIds.get(acquisition.asset.assetId) || [];
+          usedAssetIds.set(acquisition.asset.assetId, [...pastUsage, idx]);
+          break; // Highest-scoring compliant candidate chosen
         } else {
-          console.warn(`[Storyboard] Candidate asset '${candidates[0].assetId}' skipped due to rights status: ${acquisition.status}`);
+          console.warn(`[Storyboard] Candidate '${entry.candidate.assetId}' skipped due to rights status: ${acquisition.status}`);
         }
       }
     }

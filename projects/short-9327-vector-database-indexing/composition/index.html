@@ -408,6 +408,100 @@
         text-align: center;
         letter-spacing: 0.04em;
       }
+
+      /* HNSW Multi-Layer Highway Stage */
+      .hnsw-highway-stage {
+        width: 100%;
+        padding: 28px;
+        border-radius: 26px;
+        background: rgba(22, 10, 44, 0.92);
+        border: 1px solid rgba(192, 132, 252, 0.4);
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .highway-tier {
+        padding: 16px 20px;
+        border-radius: 18px;
+        text-align: left;
+      }
+      .tier-express {
+        background: rgba(163, 230, 53, 0.12);
+        border: 1px solid rgba(163, 230, 53, 0.45);
+      }
+      .tier-mid {
+        background: rgba(192, 132, 252, 0.12);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+      }
+      .tier-base {
+        background: rgba(147, 51, 234, 0.1);
+        border: 1px dashed rgba(192, 132, 252, 0.3);
+      }
+      .tier-label {
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #a3e635;
+        margin-bottom: 8px;
+      }
+      .tier-sub {
+        font-size: 16px;
+        color: #cbd5e1;
+        margin-top: 6px;
+      }
+      .highway-track {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .highway-node {
+        padding: 8px 18px;
+        border-radius: 12px;
+        background: rgba(36, 18, 66, 0.9);
+        border: 1px solid rgba(192, 132, 252, 0.5);
+        font-size: 18px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .highway-node.active-node {
+        border-color: #a3e635;
+        box-shadow: 0 0 14px rgba(163, 230, 53, 0.5);
+      }
+      .express-arc {
+        font-size: 15px;
+        font-weight: 800;
+        color: #a3e635;
+        letter-spacing: 0.05em;
+      }
+      .local-arc {
+        font-size: 20px;
+        color: #c084fc;
+        font-weight: 800;
+      }
+      .base-grid {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 8px 0;
+      }
+      .base-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: rgba(192, 132, 252, 0.4);
+      }
+      .base-dot.target-hit {
+        width: auto;
+        height: auto;
+        background: transparent;
+        font-size: 18px;
+        font-weight: 800;
+        color: #a3e635;
+        text-shadow: 0 0 10px rgba(163, 230, 53, 0.8);
+      }
       .metaphor-caption {
         text-align: left;
         margin-bottom: 0;
@@ -575,7 +669,7 @@
     </style>
   </head>
   <body>
-    <div class="composition-root" data-composition-id="short-3325-vector-database-indexing" data-width="1080" data-height="1920" data-duration="27.833333333333332">
+    <div class="composition-root" data-composition-id="short-9327-vector-database-indexing" data-width="1080" data-height="1920" data-duration="27.833333333333332">
       <div class="halftone-overlay"></div>
       <div id="orb-violet" class="glow-orb orb-violet"></div>
       <div id="orb-lime" class="glow-orb orb-lime"></div>
@@ -605,7 +699,7 @@
         <div class="collage-hero-card">
           <div class="surreal-object-container">
             <div class="surreal-glow-ring"></div>
-            <div class="surreal-icon">⚡</div>
+            <div class="surreal-icon">🧭</div>
           </div>
           <div class="hero-statement-box">
             <div class="card-tag">OBSERVATION</div>
@@ -619,31 +713,50 @@
 
       <div id="scene-1" class="scene-layer clip" data-start="6.6262" data-duration="7.2573" style="opacity: 0;">
         
-        <div class="purple-badge">
-          <span class="badge-dot pulse-lime"></span>
-          HIERARCHICAL HIGHWAY
-        </div>
-        <h2 class="scene-title">The Multi-Layer Graph Highway</h2>
-        <div class="metaphor-collage-stage">
-          <div class="metaphor-block conveyor-block">
-            <div class="conveyor-track">
-              <div class="conveyor-item item-static">
-                <span class="item-tag">STATIC PREFIX</span>
-                <span class="item-desc">System Prompt &amp; Context</span>
-                <span class="item-status">📌 Pinned in RAM</span>
-              </div>
-              <div class="conveyor-arrow">⬇ Instant Match</div>
-              <div class="conveyor-item item-dynamic">
-                <span class="item-tag">DYNAMIC QUERY</span>
-                <span class="item-desc">User Message</span>
-                <span class="item-status">⚡ Instant Hit</span>
-              </div>
-            </div>
-            <div class="ttl-badge">⏳ 5-Min Default • 1-Hour Extended TTL</div>
+          <div class="purple-badge">
+            <span class="badge-dot pulse-lime"></span>
+            HIERARCHICAL HIGHWAY
           </div>
-          <p class="card-highlight metaphor-caption">Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.</p>
-        </div>
-      
+          <h2 class="scene-title">The Multi-Layer Graph Highway</h2>
+          <div class="metaphor-collage-stage">
+            <div class="hnsw-highway-stage">
+              <div class="highway-tier tier-express">
+                <div class="tier-label">TOP LAYER 2 • EXPRESS HIGHWAY</div>
+                <div class="highway-track">
+                  <div class="highway-node active-node">Node A</div>
+                  <div class="express-arc">═════════ Express Skip ═════════➔</div>
+                  <div class="highway-node active-node">Node B</div>
+                </div>
+                <div class="tier-sub">Skips 99% of irrelevant points in high-dimensional space</div>
+              </div>
+
+              <div class="highway-tier tier-mid">
+                <div class="tier-label">LAYER 1 • CLUSTER ROUTING</div>
+                <div class="highway-track">
+                  <div class="highway-node">A₁</div>
+                  <div class="local-arc">───➔</div>
+                  <div class="highway-node active-node">A₂</div>
+                  <div class="local-arc">───➔</div>
+                  <div class="highway-node">A₃</div>
+                </div>
+              </div>
+
+              <div class="highway-tier tier-base">
+                <div class="tier-label">BASE LAYER 0 • EXACT NEAREST NEIGHBORS</div>
+                <div class="highway-track base-grid">
+                  <span class="base-dot"></span>
+                  <span class="base-dot"></span>
+                  <span class="base-dot target-hit">🎯 Target Nearest Vector</span>
+                  <span class="base-dot"></span>
+                  <span class="base-dot"></span>
+                </div>
+              </div>
+
+              <div class="ttl-badge">⚡ Sub-Millisecond Nearest Neighbor Convergence</div>
+            </div>
+            <p class="card-highlight metaphor-caption">Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.</p>
+          </div>
+        
       </div>
     
 
@@ -654,12 +767,32 @@
             GRAPH TOPOLOGY
           </div>
           <h2 class="scene-title">HNSW Layered Navigation</h2>
-          <div class="diagram-hero-frame">
-            <img src="./assets/scouted/openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985.jpg" class="scouted-asset-img" alt="HNSW Layered Navigation" />
-            <div class="diagram-caption-strip">
-              <span class="caption-text">Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.</span>
-              <span class="asset-attribution-badge">Verified Media • CC-BY-2.0</span>
-            </div>
+          <div class="purple-flow-container">
+            
+              <div class="purple-flow-node node-0">
+                <div class="node-icon-dot"></div>
+                <div class="node-title">Entry Point</div>
+                <div class="node-sub">Top Layer 2</div>
+              </div>
+              <div class="purple-flow-arrow">➔</div>
+            
+              <div class="purple-flow-node node-1">
+                <div class="node-icon-dot"></div>
+                <div class="node-title">Intermediate Leap</div>
+                <div class="node-sub">Layer 1 Hops</div>
+              </div>
+              <div class="purple-flow-arrow">➔</div>
+            
+              <div class="purple-flow-node node-2">
+                <div class="node-icon-dot"></div>
+                <div class="node-title">Exact Nearest Point</div>
+                <div class="node-sub">Base Layer 0</div>
+              </div>
+              
+            
+          </div>
+          <div class="collage-note-box">
+            <p class="card-highlight">Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.</p>
           </div>
         
       </div>
@@ -971,14 +1104,6 @@
           if (target) target.classList.add('active');
         }, null, 6.6262);
       
-        tl.from("#scene-1 .diagram-hero-frame", {
-          scale: 0.92,
-          opacity: 0,
-          y: 20,
-          duration: 0.5,
-          ease: "back.out(1.4)"
-        }, 6.8262);
-      
         tl.to("#w-1-0", {
           color: "#a3e635",
           backgroundColor: "rgba(163, 230, 53, 0.18)",
@@ -1231,14 +1356,6 @@
           const target = document.getElementById("sub-scene-2");
           if (target) target.classList.add('active');
         }, null, 13.8835);
-      
-        tl.from("#scene-2 .diagram-hero-frame", {
-          scale: 0.92,
-          opacity: 0,
-          y: 20,
-          duration: 0.5,
-          ease: "back.out(1.4)"
-        }, 14.083499999999999);
       
         tl.to("#w-2-0", {
           color: "#a3e635",
@@ -1782,7 +1899,7 @@
           ease: "power2.out"
         }, 27.779114523809522);
       
-    window.__timelines["short-3325-vector-database-indexing"] = tl;
+    window.__timelines["short-9327-vector-database-indexing"] = tl;
   
     </script>
   </body>

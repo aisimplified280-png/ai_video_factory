@@ -1,5 +1,5 @@
 {
-  "id": "short-3325-vector-database-indexing",
+  "id": "short-9327-vector-database-indexing",
   "topic": "Vector Database Indexing",
   "title": "How HNSW Vector Search Works",
   "youtubeTitle": "How Vector Search Works in Milliseconds ⚡ #Shorts",
@@ -23,6 +23,15 @@
       "id": "metaphor",
       "cardType": "physical-metaphor",
       "badge": "HIERARCHICAL HIGHWAY",
+      "metaphorType": "hnsw-highway",
+      "preferOriginalDiagram": true,
+      "keywords": [
+        "highway",
+        "hnsw",
+        "graph",
+        "vector",
+        "layer"
+      ],
       "visualTitle": "The Multi-Layer Graph Highway",
       "visualBody": "Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.",
       "voiceText": "Hierarchical Navigable Small World graphs skip dense clusters like multi-tier highways across high-dimensional space.",
@@ -32,6 +41,15 @@
       "id": "architecture",
       "cardType": "architecture-diagram",
       "badge": "GRAPH TOPOLOGY",
+      "diagramType": "hnsw-graph",
+      "preferOriginalDiagram": true,
+      "keywords": [
+        "topology",
+        "graph",
+        "layer",
+        "hops",
+        "vector"
+      ],
       "visualTitle": "HNSW Layered Navigation",
       "diagramNodes": [
         {

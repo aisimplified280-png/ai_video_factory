@@ -1,6 +1,6 @@
 {
   "title": "How Vector Search Works in Milliseconds ⚡ #Shorts",
-  "description": "Understand how Hierarchical Navigable Small World (HNSW) graphs index dense vector embeddings to achieve sub-millisecond similarity search.\n\nSubscribe to AI Simplified Lab (@AISimplifiedLab) for honest, zero-fluff AI workflows and code tutorials.\n\n#Shorts #AI #Engineering #AISimplifiedLab\n\nVisual & Media Credits (Verified Licenses):\n• 3 Bottle Bar by H.i. Williams (1943) page xi by MetaGrrrl via Openverse (CC-BY-2.0) [CC-BY-2.0] — https://www.flickr.com/photos/35468156668@N01/2155542715",
+  "description": "Understand how Hierarchical Navigable Small World (HNSW) graphs index dense vector embeddings to achieve sub-millisecond similarity search.\n\nSubscribe to AI Simplified Lab (@AISimplifiedLab) for honest, zero-fluff AI workflows and code tutorials.\n\n#Shorts #AI #Engineering #AISimplifiedLab",
   "tags": [
     "Shorts",
     "AI",
@@ -20,6 +20,7 @@
       "decodeErrors": 0,
       "blackFrameSegments": 0,
       "blackFrameStatus": "PASS",
+      "blackFrameInspectionDetails": "Zero black segments >= 0.5s detected by FFmpeg blackdetect filter with pic_th=0.98",
       "videoCodec": "h264",
       "resolution": "1080x1920",
       "framerate": 30,
@@ -33,18 +34,25 @@
       "hardcodedFictionalMetrics": 0,
       "timingSyncMethod": "Edge-TTS SentenceBoundary stream extraction",
       "scriptTimingSync": "PASS",
-      "scriptTimingIssues": []
+      "scriptTimingIssues": [],
+      "visualDiversity": {
+        "score": 100,
+        "passed": true,
+        "criticalIssues": [],
+        "warnings": [],
+        "uniqueModesCount": 4
+      }
     },
     "rightsProvenance": {
       "status": "PASS",
-      "details": "All external assets referenced by scenes possess verified compatible licenses.",
-      "projectAssetsCount": 1,
-      "credits": "Visual & Media Credits (Verified Licenses):\n• 3 Bottle Bar by H.i. Williams (1943) page xi by MetaGrrrl via Openverse (CC-BY-2.0) [CC-BY-2.0] — https://www.flickr.com/photos/35468156668@N01/2155542715"
+      "details": "All scenes use original procedural graphics and vector assets.",
+      "projectAssetsCount": 0,
+      "credits": "No external assets requiring attribution were used."
     },
     "editorialGovernance": {
       "youtubePolicyReview": "UNASSESSED (Requires Human / Creator Review prior to upload)",
-      "syntheticMediaDisclosure": "NOT_REQUIRED (Editorial code & motion graphics explainer)",
-      "commercialAudioRights": "PASS (Edge-TTS neural voice + Apache-2.0 sound design)",
+      "syntheticMediaDisclosure": "UNASSESSED (Editorial code & motion graphics explainer; check prior to upload)",
+      "commercialAudioRights": "UNASSESSED (Edge-TTS neural voice + bundled sound effects; licensing unverified by external scan)",
       "releaseEligible": true,
       "releaseBlockers": []
     }
@@ -55,7 +63,7 @@
     "contactSheet": "contact-sheet.png",
     "format": {
       "duration": "27.833333",
-      "size": "8270689"
+      "size": "8384557"
     },
     "streams": [
       {

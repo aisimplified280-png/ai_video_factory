@@ -91,17 +91,74 @@ export class AssetRegistry {
       };
     }
 
-    // 2. Cache / save local file
-    const ext = path.extname(candidateMetadata.downloadUrl) || (candidateMetadata.type === "svg" ? ".svg" : ".png");
-    const localCachedFile = path.join(this.cacheDir, `${candidateMetadata.assetId}${ext}`);
+    // 2. Cache / save local file with path sanitization and boundary check
+    const sanitizedId = String(candidateMetadata.assetId).replace(/[^a-zA-Z0-9_-]/g, "_");
+    const rawExt = candidateMetadata.downloadUrl ? path.extname(new URL(candidateMetadata.downloadUrl, "https://example.com").pathname) : "";
+    const ext = rawExt || (candidateMetadata.type === "svg" ? ".svg" : ".png");
+    const localCachedFile = path.resolve(this.cacheDir, `${sanitizedId}${ext}`);
+
+    // Verify path safety (prevent directory traversal)
+    if (!localCachedFile.startsWith(path.resolve(this.cacheDir))) {
+      return {
+        status: RIGHTS_STATUS.REJECTED,
+        reason: "Invalid asset path: directory traversal detected.",
+        asset: null,
+      };
+    }
 
     if (candidateMetadata.localFilePath) {
       await fs.copyFile(candidateMetadata.localFilePath, localCachedFile);
-    } else if (candidateMetadata.downloadUrl.startsWith("http")) {
-      const res = await fetch(candidateMetadata.downloadUrl);
-      if (!res.ok) throw new Error(`Failed to download asset from ${candidateMetadata.downloadUrl}`);
-      const buf = Buffer.from(await res.arrayBuffer());
-      await fs.writeFile(localCachedFile, buf);
+    } else if (candidateMetadata.downloadUrl) {
+      const urlStr = candidateMetadata.downloadUrl;
+      if (!urlStr.startsWith("https://") && !urlStr.startsWith("http://")) {
+        return {
+          status: RIGHTS_STATUS.REJECTED,
+          reason: "Invalid download URL protocol.",
+          asset: null,
+        };
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout
+        const res = await fetch(urlStr, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          return {
+            status: RIGHTS_STATUS.REJECTED,
+            reason: `Download failed with HTTP status ${res.status}`,
+            asset: null,
+          };
+        }
+
+        const contentLength = res.headers.get("content-length");
+        const maxBytes = 15 * 1024 * 1024; // 15MB limit
+        if (contentLength && parseInt(contentLength, 10) > maxBytes) {
+          return {
+            status: RIGHTS_STATUS.REJECTED,
+            reason: `Asset size (${contentLength} bytes) exceeds 15MB limit.`,
+            asset: null,
+          };
+        }
+
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.length > maxBytes) {
+          return {
+            status: RIGHTS_STATUS.REJECTED,
+            reason: `Downloaded asset exceeds 15MB limit.`,
+            asset: null,
+          };
+        }
+
+        await fs.writeFile(localCachedFile, buf);
+      } catch (dlErr) {
+        return {
+          status: RIGHTS_STATUS.REJECTED,
+          reason: `Network error or timeout during download: ${dlErr.message}`,
+          asset: null,
+        };
+      }
     }
 
     // 3. Compute SHA-256 hash for file content identification

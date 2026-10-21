@@ -200,7 +200,7 @@ export function verifyStreamProperties(
  * Determine overall release eligibility strictly with fail-closed governance.
  * UNKNOWN, missing, or malformed checks strictly block release.
  */
-export function evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudit) {
+export function evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudit, visualDiversity = null) {
   const blockers = [];
 
   // 1. Mandatory Media Checks (Fail closed: must be explicitly PASS)
@@ -236,6 +236,13 @@ export function evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudi
   } else {
     if (rightsAudit.status !== STATUS.PASS && rightsAudit.status !== "APPROVED" && rightsAudit.status !== "APPROVED_WITH_ATTRIBUTION") {
       blockers.push(`Rights audit must be approved (got ${rightsAudit.status || "MISSING"}: ${rightsAudit.reason || "Unverified rights"}).`);
+    }
+  }
+
+  // 4. Visual Diversity & Storyboard Checks (Fail closed on critical issues)
+  if (visualDiversity) {
+    if (visualDiversity.passed === false && Array.isArray(visualDiversity.criticalIssues) && visualDiversity.criticalIssues.length > 0) {
+      blockers.push(`Visual diversity check failed: ${visualDiversity.criticalIssues.join("; ")}`);
     }
   }
 

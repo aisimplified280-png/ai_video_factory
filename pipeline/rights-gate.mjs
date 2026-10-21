@@ -40,9 +40,10 @@ export function normalizeLicenseId(rawLicense, rawVersion = "") {
   if (lic === "cc0" || lic === "cc0-1.0" || lic === "cc0 1.0") return "CC0-1.0";
   if (lic === "pdm" || lic === "public domain" || lic === "publicdomain") return "Public Domain";
 
-  // Creative Commons Attribution
+  // Creative Commons Attribution - requires explicit version
   if (lic === "by") {
-    if (ver === "4.0" || !ver) return "CC-BY-4.0";
+    if (!ver) return null; // Never guess or assume default version when missing
+    if (ver === "4.0") return "CC-BY-4.0";
     if (ver === "3.0") return "CC-BY-3.0";
     if (ver === "2.0") return "CC-BY-2.0";
     return `CC-BY-${ver}`;
@@ -93,14 +94,26 @@ export function auditAssetRights(assetMetadata, plannedTransformations = true) {
   const issues = [];
   const flags = assetMetadata.reviewFlags || {};
 
-  // 1. Mandatory metadata checks - Missing metadata cannot result in approval
-  if (!assetMetadata.assetId) issues.push("Missing assetId.");
-  if (!assetMetadata.sourceProvider) issues.push("Missing sourceProvider.");
+  // 1. Mandatory metadata checks - Missing metadata must strictly REJECT the asset
+  if (!assetMetadata.assetId || typeof assetMetadata.assetId !== "string" || !assetMetadata.assetId.trim()) {
+    return {
+      status: RIGHTS_STATUS.REJECTED,
+      reason: "Asset metadata is missing valid assetId; cannot approve unidentifiable asset.",
+      issues: ["Missing assetId."],
+    };
+  }
+  if (!assetMetadata.sourceProvider || typeof assetMetadata.sourceProvider !== "string" || !assetMetadata.sourceProvider.trim()) {
+    return {
+      status: RIGHTS_STATUS.REJECTED,
+      reason: "Asset metadata is missing sourceProvider provenance.",
+      issues: ["Missing sourceProvider."],
+    };
+  }
   if (!assetMetadata.licenseId) {
     return {
       status: RIGHTS_STATUS.REJECTED,
       reason: "Asset metadata is missing licenseId; cannot assume license.",
-      issues: [...issues, "Missing licenseId."],
+      issues: ["Missing licenseId."],
     };
   }
 
@@ -132,18 +145,34 @@ export function auditAssetRights(assetMetadata, plannedTransformations = true) {
   }
 
   // 5. Likeness, privacy, and trademark flags (Route to review, never silently approve)
-  if (flags.recognizablePerson) {
+  if (flags.recognizablePerson === true || flags.personDetected === true) {
     return {
       status: RIGHTS_STATUS.REVIEW_REQUIRED,
       reason: "Asset contains recognizable person; requires model release check.",
       issues,
     };
   }
-  if (flags.trademarkLogo) {
+  if (flags.likenessInspection === "UNASSESSED" || flags.unassessedStockPhoto === true) {
+    return {
+      status: RIGHTS_STATUS.REVIEW_REQUIRED,
+      reason: "Stock photograph likeness is unassessed; requires creator verification prior to release.",
+      issues,
+    };
+  }
+  if (flags.trademarkLogo === true || flags.trademarkDetected === true) {
     return {
       status: RIGHTS_STATUS.REVIEW_REQUIRED,
       reason: "Asset contains prominent commercial trademark/logo; requires editorial fair-use audit.",
       issues,
+    };
+  }
+
+  // 6. Source location check
+  if (assetMetadata.downloadUrl === null && assetMetadata.localFilePath === null) {
+    return {
+      status: RIGHTS_STATUS.REJECTED,
+      reason: "Asset metadata is missing download source.",
+      issues: ["Missing download source."],
     };
   }
 
