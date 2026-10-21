@@ -2,8 +2,23 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import fs from "node:fs";
+import process from "node:process";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT_DIR = path.resolve(__dirname, "..");
+
+// Automatically load local .env file if available in Node 20.6+
+try {
+  if (typeof process.loadEnvFile === "function") {
+    const envPath = path.join(ROOT_DIR, ".env");
+    if (fs.existsSync(envPath)) {
+      process.loadEnvFile(envPath);
+    }
+  }
+} catch {
+  // Silent fallback if .env is not present
+}
 
 export const HYPERFRAMES_BIN = path.join(ROOT_DIR, ".favstash-studio", "runtime", "node_modules", ".bin", "hyperframes.cmd");
 export const SFX_SYNC_BIN = path.join(ROOT_DIR, ".favstash-studio", "skills-source", "skills", "3-editing", "edit-video", "scripts", "sfx-sync.mjs");

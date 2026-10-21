@@ -10,6 +10,7 @@ import {
   normalizeLicenseId,
 } from "../pipeline/rights-gate.mjs";
 import { FixtureProvider } from "../pipeline/asset-scout/providers/fixture-provider.mjs";
+import { PixabayProvider } from "../pipeline/asset-scout/providers/pixabay-provider.mjs";
 import { AssetRegistry } from "../pipeline/asset-scout/registry.mjs";
 import { lintVisualDiversity } from "../pipeline/visual-linter.mjs";
 import { ROOT_DIR } from "../pipeline/config.mjs";
@@ -197,3 +198,35 @@ test("lintVisualDiversity flags consecutive repetitions and overused layouts", (
   assert.equal(lintRes2.passed, true);
   assert.equal(lintRes2.diversityScore, 100);
 });
+
+test("PixabayProvider returns empty array when key is missing and handles unconfigured state safely", async () => {
+  const unconfiguredProvider = new PixabayProvider({ apiKey: "" });
+  const results = await unconfiguredProvider.search({ query: "artificial intelligence" });
+  assert.deepEqual(results, []);
+});
+
+test("PixabayProvider fetches and parses valid royalty-free illustrations with active key", async () => {
+  if (!process.env.PIXABAY_API_KEY) return; // Skip if no network/key in minimal CI
+
+  const provider = new PixabayProvider();
+  const results = await provider.search({ query: "artificial intelligence", count: 2 });
+  assert.ok(Array.isArray(results));
+  if (results.length > 0) {
+    assert.ok(results[0].assetId.startsWith("pixabay-"));
+    assert.equal(results[0].licenseId, "Pixabay-Content-License");
+    assert.equal(results[0].commercialUse, true);
+    assert.equal(results[0].modificationsAllowed, true);
+    assert.ok(results[0].downloadUrl.startsWith("http"));
+  }
+});
+
+test("auditAssetRights approves Pixabay-Content-License without mandatory attribution", () => {
+  const pixabayAsset = {
+    licenseId: "Pixabay-Content-License",
+    commercialUse: true,
+    modificationsAllowed: true,
+  };
+  const verdict = auditAssetRights(pixabayAsset, true);
+  assert.equal(verdict.status, RIGHTS_STATUS.APPROVED);
+});
+

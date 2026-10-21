@@ -12,6 +12,10 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+.env
+.env.*
+!.env.example
+.env.local
 
 # Temporary HyperFrames transactions and audio stems
 .silent.hf-transaction*

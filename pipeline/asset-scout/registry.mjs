@@ -4,6 +4,7 @@ import path from "node:path";
 import { ROOT_DIR } from "../config.mjs";
 import { auditAssetRights, computeSha256, RIGHTS_STATUS, generateCreditsReport } from "../rights-gate.mjs";
 import { FixtureProvider } from "./providers/fixture-provider.mjs";
+import { PixabayProvider } from "./providers/pixabay-provider.mjs";
 import { OpenverseProvider } from "./providers/openverse-provider.mjs";
 import { PexelsProvider } from "./providers/pexels-provider.mjs";
 
@@ -14,8 +15,9 @@ export class AssetRegistry {
     
     // Online providers are searched first so online assets are selectable
     this.onlineProviders = [
-      new PexelsProvider(),
+      new PixabayProvider(),
       new OpenverseProvider(),
+      new PexelsProvider(),
     ];
 
     // Offline fixture provider serves as deterministic fallback

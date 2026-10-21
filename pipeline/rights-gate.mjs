@@ -21,6 +21,7 @@ export const COMPATIBLE_LICENSES = new Set([
   "CC-BY-3.0",
   "CC-BY-2.0",
   "Pexels-License",
+  "Pixabay-License",
   "Pixabay-Content-License",
   "Apache-2.0",
   "MIT",
