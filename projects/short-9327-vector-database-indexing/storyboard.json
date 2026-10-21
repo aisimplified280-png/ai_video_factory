@@ -22,18 +22,9 @@
       "visualBody": "Brute force cosine distance compares against millions of points linearly, collapsing search throughput.",
       "badge": "VECTOR SEARCH SCALING",
       "source": "Vector Indexing Technical Papers",
-      "assetDecision": "approved-stock",
-      "assetDecisionReason": "Candidate 'pixabay-76517' selected with multi-criteria score 39.",
-      "assignedAssetId": "pixabay-76517",
-      "characterCue": {
-        "visible": true,
-        "role": "problem-presenter",
-        "pose": "contemplate",
-        "position": "bottom-left",
-        "scale": "compact",
-        "action": "enter-and-contemplate",
-        "purpose": "Enters to introduce the dilemma thoughtfully without blocking the central bottleneck title"
-      },
+      "assetDecision": "bespoke-procedural-svg",
+      "assetDecisionReason": "Candidate rights verification yielded REJECTED; defaulted to bespoke procedural graphic.",
+      "assignedAssetId": null,
       "evaluationReport": {
         "decision": "approved-stock",
         "reason": "Candidate 'pixabay-76517' selected with multi-criteria score 39.",
@@ -112,19 +103,8 @@
           }
         ]
       },
-      "assetId": "pixabay-76517",
-      "assetData": {
-        "assetId": "pixabay-76517",
-        "cachedPath": "assets/cache/pixabay-76517.png",
-        "licenseId": "Pixabay-Content-License",
-        "attributionText": "Visual by Simon via Pixabay (Pixabay Content License)",
-        "attributionRequired": false,
-        "status": "APPROVED",
-        "creator": "Simon",
-        "sourceProvider": "pixabay",
-        "sourcePage": "https://pixabay.com/illustrations/google-search-engine-browser-search-76517/",
-        "licenseUrl": "https://pixabay.com/service/license-summary/"
-      },
+      "assetId": null,
+      "assetData": null,
       "motion": {
         "transition": "back.out(1.5)",
         "cameraPush": true,
@@ -248,15 +228,6 @@
       "assetDecision": "bespoke-procedural-svg",
       "assetDecisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
       "assignedAssetId": null,
-      "characterCue": {
-        "visible": true,
-        "role": "motion-tracker",
-        "pose": "track",
-        "position": "bottom-right",
-        "scale": "compact",
-        "action": "track-probe-movement",
-        "purpose": "Turns glowing visor following moving elements across layers"
-      },
       "evaluationReport": {
         "decision": "bespoke-procedural-svg",
         "reason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
@@ -425,15 +396,6 @@
       "assetDecision": "bespoke-procedural-svg",
       "assetDecisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
       "assignedAssetId": null,
-      "characterCue": {
-        "visible": false,
-        "role": "diagram-focus",
-        "pose": "standby",
-        "position": "offstage",
-        "scale": "compact",
-        "action": "step-offstage",
-        "purpose": "Steps offstage cleanly to maximize visual space and legibility for dense technical topology"
-      },
       "evaluationReport": {
         "decision": "bespoke-procedural-svg",
         "reason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
@@ -605,15 +567,6 @@
       "assetDecision": "bespoke-procedural-svg",
       "assetDecisionReason": "Abstract computational concept requires bespoke interactive SVG geometry; stock media is insufficiently relevant or cannot participate in scene choreography.",
       "assignedAssetId": null,
-      "characterCue": {
-        "visible": true,
-        "role": "breakthrough-celebrator",
-        "pose": "react",
-        "position": "bottom-left",
-        "scale": "compact",
-        "action": "celebrate-breakthrough",
-        "purpose": "Celebrates breakthrough performance alongside the production rule takeaway"
-      },
       "evaluationReport": {
         "decision": "bespoke-procedural-svg",
         "reason": "Abstract computational concept requires bespoke interactive SVG geometry; stock media is insufficiently relevant or cannot participate in scene choreography.",
@@ -789,15 +742,6 @@
       "assetDecision": "bespoke-procedural-svg",
       "assetDecisionReason": "Scene uses bespoke procedural graphics.",
       "assignedAssetId": null,
-      "characterCue": {
-        "visible": true,
-        "role": "community-guide",
-        "pose": "outro-cta",
-        "position": "bottom-right",
-        "scale": "compact",
-        "action": "guide-subscribe-cta",
-        "purpose": "Guide viewer attention warmly toward channel subscribe button and notification bell"
-      },
       "evaluationReport": null,
       "assetId": null,
       "assetData": null,
@@ -809,7 +753,7 @@
       "sfxCue": "ui-pop",
       "sceneGraph": {
         "visualMetaphor": "channel-community-outro",
-        "metaphorExplanation": "Branded channel outro with faceless guide character directing viewer to interactive subscribe action.",
+        "metaphorExplanation": "Branded channel outro with interactive subscribe conversion and notification bell.",
         "primarySubject": "yt-sub-btn",
         "safeZone": {
           "top": 250,
@@ -835,12 +779,6 @@
             "role": "action-trigger",
             "assetSource": "procedural-html",
             "depth": 3
-          },
-          {
-            "id": "guide-outro",
-            "role": "audience-guide",
-            "assetSource": "procedural-svg",
-            "depth": 4
           }
         ],
         "actions": [
@@ -856,10 +794,9 @@
             "causeAndEffect": {
               "triggerElement": "yt-sub-btn",
               "reactingElements": [
-                "yt-bell-btn",
-                "guide-outro"
+                "yt-bell-btn"
               ],
-              "reaction": "ring-bell-and-wave"
+              "reaction": "ring-bell-notification"
             }
           }
         ],
@@ -870,65 +807,6 @@
       }
     }
   ],
-  "projectAssets": [
-    {
-      "assetId": "pixabay-76517",
-      "type": "illustration",
-      "title": "Google",
-      "tags": [
-        "google",
-        "search engine",
-        "browser",
-        "search",
-        "internet",
-        "www",
-        "http",
-        "web",
-        "google chrome",
-        "web browser",
-        "technology",
-        "pc",
-        "computer",
-        "google",
-        "google",
-        "google",
-        "google",
-        "google"
-      ],
-      "rawTags": "google, search engine, browser, search, internet, www, http, web, google chrome, web browser, technology, pc, computer, google, google, google, google, google",
-      "description": "google, search engine, browser, search, internet, www, http, web, google chrome, web browser, technology, pc, computer, google, google, google, google, google",
-      "sourceProvider": "pixabay",
-      "sourcePage": "https://pixabay.com/illustrations/google-search-engine-browser-search-76517/",
-      "downloadUrl": "https://pixabay.com/get/gfffb237e15b69c4c2b0cd92774f6c7bb2299f2b5d91be60a85869dec6ea08a6a48fc838c1637e1d4d6195a19d110435b_1280.png",
-      "previewUrl": "https://cdn.pixabay.com/photo/2013/01/29/00/47/google-76517_150.png",
-      "dimensions": {
-        "width": 1392,
-        "height": 870
-      },
-      "creator": "Simon",
-      "licenseId": "Pixabay-Content-License",
-      "licenseUrl": "https://pixabay.com/service/license-summary/",
-      "commercialUse": true,
-      "modificationsAllowed": true,
-      "attributionRequired": false,
-      "attributionText": "Visual by Simon via Pixabay (Pixabay Content License)",
-      "qualityMetrics": {
-        "likes": 329,
-        "views": 278656,
-        "downloads": 132019
-      },
-      "reviewFlags": {
-        "recognizablePerson": false,
-        "trademarkLogo": false,
-        "sensitiveContent": false
-      },
-      "status": "APPROVED",
-      "sha256": "8fa74bcaf1b82fc65435f58c700de7be86ac042aee46b52880a2ab34f585eec1",
-      "cachedPath": "assets/cache/pixabay-76517.png",
-      "absolutePath": "C:\\Users\\USER\\Documents\\AI-Simplified-Lab\\assets\\cache\\pixabay-76517.png",
-      "verifiedAt": "2026-10-21T14:31:21.403Z",
-      "rightsAuditReason": "Approved for unrestricted commercial reuse."
-    }
-  ],
-  "createdAt": "2026-10-21T14:31:23.908Z"
+  "projectAssets": [],
+  "createdAt": "2026-10-21T14:45:04.394Z"
 }

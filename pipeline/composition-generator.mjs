@@ -1,7 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ROOT_DIR } from "./config.mjs";
-import { renderLabGuideSvg, getLabGuideCss } from "./character-director.mjs";
 
 /**
  * Escape HTML characters to prevent XSS and template injection.
@@ -425,10 +424,6 @@ export async function generateComposition(compDir, projectData) {
               <span class="bell-icon">🔔</span>
             </div>
           </div>
-
-          <div class="outro-guide-anchor">
-            ${renderLabGuideSvg("outro-cta", "guide-outro")}
-          </div>
         </div>
       `;
     } else {
@@ -449,19 +444,9 @@ export async function generateComposition(compDir, projectData) {
       `;
     }
 
-    let charHtml = "";
-    const cue = scene.characterCue;
-    if (cue && cue.visible && cardType !== "subscribe-outro") {
-      charHtml = renderLabGuideSvg(cue.pose || "direct", `guide-scene-${idx}`, {
-        position: cue.position || "bottom-left",
-        scale: cue.scale || "compact",
-      });
-    }
-
     return `
       <div id="scene-${idx}" class="scene-layer clip" data-start="${scene.startTime}" data-duration="${scene.duration}" style="opacity: ${isFirst ? 1 : 0};">
         ${cardContent}
-        ${charHtml}
       </div>
     `;
   }).join("\n");
@@ -803,11 +788,6 @@ export async function generateComposition(compDir, projectData) {
         case "animate-subscribe-conversion":
           script += `
           // Action: animate-subscribe-conversion on #${act.target}
-          tl.fromTo("#scene-${idx} .outro-guide-anchor", 
-            { x: 80, opacity: 0 }, 
-            { x: 0, opacity: 1, duration: 0.5, ease: "back.out(1.8)" }, 
-            ${startT + 0.15}
-          );
           tl.to("#scene-${idx} #yt-sub-btn", { 
             scale: 0.92, 
             duration: 0.12, 
@@ -922,58 +902,6 @@ export async function generateComposition(compDir, projectData) {
 
     // Execute Element-Level Motion Choreography
     gsapTimelineScript += buildMotionChoreographyScript(scene, idx);
-
-    // Full-Story Character Choreography for Scene idx
-    if (scene.characterCue && scene.characterCue.visible && scene.cardType !== "subscribe-outro") {
-      const cue = scene.characterCue;
-      const charSelector = `#scene-${idx} #guide-scene-${idx}`;
-      gsapTimelineScript += `
-        // Character Choreography for Scene ${idx} (${cue.role || "guide"})
-        tl.fromTo("${charSelector}",
-          { y: 35, opacity: 0, scale: 0.72 },
-          { y: 0, opacity: 1, scale: 0.82, duration: 0.55, ease: "back.out(1.6)" },
-          ${(startT + 0.12).toFixed(3)}
-        );
-      `;
-
-      if (cue.pose === "react") {
-        gsapTimelineScript += `
-          tl.to("${charSelector} [id$='gesture-arm']", {
-            rotation: -115,
-            duration: 0.35,
-            yoyo: true,
-            repeat: 1,
-            ease: "back.out(2)"
-          }, ${(startT + duration * 0.4).toFixed(3)});
-        `;
-      } else if (cue.pose === "track") {
-        gsapTimelineScript += `
-          tl.to("${charSelector} [id$='head']", {
-            rotation: 20,
-            duration: 1.0,
-            ease: "sine.inOut"
-          }, ${(startT + 0.35).toFixed(3)});
-        `;
-      } else if (cue.pose === "contemplate") {
-        gsapTimelineScript += `
-          tl.to("${charSelector} [id$='head']", {
-            rotation: 14,
-            duration: 0.8,
-            ease: "sine.inOut"
-          }, ${(startT + 0.25).toFixed(3)});
-        `;
-      }
-
-      gsapTimelineScript += `
-        tl.to("${charSelector}", {
-          opacity: 0,
-          y: 20,
-          duration: 0.25,
-          ease: "power2.in"
-        }, ${(startT + duration - 0.25).toFixed(3)});
-        tl.set("${charSelector}", { opacity: 0 }, ${(startT + duration).toFixed(3)});
-      `;
-    }
 
     // Kinetic word-by-word active captioning
     const words = scene.voiceText.trim().split(/\s+/);
@@ -2027,57 +1955,10 @@ export async function generateComposition(compDir, projectData) {
         margin-top: 10px;
         z-index: 10;
       }
-      .outro-guide-anchor {
-        position: absolute;
-        bottom: -25px;
-        right: 15px;
-        z-index: 20;
-        pointer-events: none;
-      }
-      .outro-guide-anchor .lab-guide-figure {
-        position: static;
-        filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.8));
-      }
-      .yt-subscribe-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 14px;
-        padding: 20px 42px;
-        border-radius: 9999px;
-        background: #e11d48;
-        border: 2px solid #fb7185;
-        box-shadow: 0 8px 30px rgba(225, 29, 72, 0.5);
-        cursor: pointer;
-        transition: transform 0.15s ease;
-      }
-      .sub-play-icon {
-        font-size: 24px;
-        color: #ffffff;
-      }
-      .sub-btn-text {
-        font-size: 26px;
-        font-weight: 900;
-        letter-spacing: 0.08em;
-        color: #ffffff;
-      }
-      .yt-bell-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        background: rgba(30, 16, 56, 0.95);
-        border: 2px solid rgba(192, 132, 252, 0.5);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      }
       .bell-icon {
         font-size: 30px;
         color: #cbd5e1;
       }
-
-      /* Lab Guide SVG Styles */
-      ${getLabGuideCss()}
 
       /* Kinetic Active Captions (Safe Zone: Y 1460 to 1580) */
       .captions-wrapper {

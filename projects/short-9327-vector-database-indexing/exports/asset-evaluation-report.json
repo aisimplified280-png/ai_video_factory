@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-21T14:34:11.059Z",
+  "generatedAt": "2026-10-21T14:47:49.716Z",
   "projectId": "short-9327-vector-database-indexing",
   "topic": "Vector Database Indexing",
   "visualStrategy": "technical-explainer",
@@ -19,18 +19,9 @@
       "sceneIndex": 0,
       "beatId": "beat-1-hook",
       "visualMode": "hook-bold-object",
-      "selectedAssetId": "pixabay-76517",
-      "decision": "approved-stock",
-      "decisionReason": "Candidate 'pixabay-76517' selected with multi-criteria score 39.",
-      "characterChoreography": {
-        "visible": true,
-        "role": "problem-presenter",
-        "pose": "contemplate",
-        "position": "bottom-left",
-        "scale": "compact",
-        "action": "enter-and-contemplate",
-        "purpose": "Enters to introduce the dilemma thoughtfully without blocking the central bottleneck title"
-      },
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Candidate rights verification yielded REJECTED; defaulted to bespoke procedural graphic.",
       "rejectedCandidatesCount": 10,
       "rejections": [
         {
@@ -112,15 +103,6 @@
       "selectedAssetId": null,
       "decision": "bespoke-procedural-svg",
       "decisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
-      "characterChoreography": {
-        "visible": true,
-        "role": "motion-tracker",
-        "pose": "track",
-        "position": "bottom-right",
-        "scale": "compact",
-        "action": "track-probe-movement",
-        "purpose": "Turns glowing visor following moving elements across layers"
-      },
       "rejectedCandidatesCount": 0,
       "rejections": []
     },
@@ -131,15 +113,6 @@
       "selectedAssetId": null,
       "decision": "bespoke-procedural-svg",
       "decisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
-      "characterChoreography": {
-        "visible": false,
-        "role": "diagram-focus",
-        "pose": "standby",
-        "position": "offstage",
-        "scale": "compact",
-        "action": "step-offstage",
-        "purpose": "Steps offstage cleanly to maximize visual space and legibility for dense technical topology"
-      },
       "rejectedCandidatesCount": 0,
       "rejections": []
     },
@@ -150,15 +123,6 @@
       "selectedAssetId": null,
       "decision": "bespoke-procedural-svg",
       "decisionReason": "Abstract computational concept requires bespoke interactive SVG geometry; stock media is insufficiently relevant or cannot participate in scene choreography.",
-      "characterChoreography": {
-        "visible": true,
-        "role": "breakthrough-celebrator",
-        "pose": "react",
-        "position": "bottom-left",
-        "scale": "compact",
-        "action": "celebrate-breakthrough",
-        "purpose": "Celebrates breakthrough performance alongside the production rule takeaway"
-      },
       "rejectedCandidatesCount": 10,
       "rejections": [
         {
@@ -240,22 +204,12 @@
       "selectedAssetId": null,
       "decision": "bespoke-procedural-svg",
       "decisionReason": "Scene uses bespoke procedural graphics.",
-      "characterChoreography": {
-        "visible": true,
-        "role": "community-guide",
-        "pose": "outro-cta",
-        "position": "bottom-right",
-        "scale": "compact",
-        "action": "guide-subscribe-cta",
-        "purpose": "Guide viewer attention warmly toward channel subscribe button and notification bell"
-      },
       "rejectedCandidatesCount": 0,
       "rejections": []
     }
   ],
   "subscribeOutro": {
     "hasAnimatedCta": true,
-    "guidePose": "outro-cta",
     "buttonStateChange": "SUBSCRIBE -> ✓ SUBSCRIBED",
     "bellReaction": "wiggle-and-chime"
   }

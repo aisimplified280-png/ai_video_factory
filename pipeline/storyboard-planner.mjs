@@ -2,7 +2,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { RIGHTS_STATUS } from "./rights-gate.mjs";
-import { planSceneCharacterAction } from "./character-director.mjs";
 
 /**
  * Valid visual modes supported by the composition builder.
@@ -55,7 +54,7 @@ export function selectTopicVisualStrategy(topic = "", scriptData = {}) {
   if (/\b(how to|guide|tutorial|setup|install|cli|command|pipeline)\b/i.test(text)) {
     return {
       strategy: VISUAL_STRATEGIES.TUTORIAL_WORKFLOW,
-      rationale: "Topic teaches an operational workflow; employs syntax terminals, sequential checklist badges, and guide character cues.",
+      rationale: "Topic teaches an operational workflow; employs syntax terminals, sequential checklist badges, and step-by-step UI states.",
     };
   }
 
@@ -317,9 +316,6 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       }
     }
 
-    // Plan purposeful character presence and action for this beat
-    const characterCue = planSceneCharacterAction(scene, visualMode, idx, scenes.length);
-
     const beat = {
       beatId: `beat-${idx + 1}-${scene.id || "scene"}`,
       sceneIndex: idx,
@@ -337,7 +333,6 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       assetDecision,
       assetDecisionReason,
       assignedAssetId: assignedAsset ? assignedAsset.assetId : null,
-      characterCue,
       evaluationReport: beatEvaluation ? {
         decision: beatEvaluation.decision,
         reason: beatEvaluation.reason,
@@ -826,14 +821,13 @@ export function planSceneGraph(scene, beat, scriptData) {
   if (mode === "subscribe-outro") {
     return {
       visualMetaphor: "channel-community-outro",
-      metaphorExplanation: "Branded channel outro with faceless guide character directing viewer to interactive subscribe action.",
+      metaphorExplanation: "Branded channel outro with interactive subscribe conversion and notification bell.",
       primarySubject: "yt-sub-btn",
       safeZone: defaultSafeZone,
       elements: [
         { id: "brand-crest", role: "brand-emblem", assetSource: "procedural-html", depth: 1 },
         { id: "yt-sub-btn", role: "focal-subject", assetSource: "procedural-html", depth: 3 },
         { id: "yt-bell-btn", role: "action-trigger", assetSource: "procedural-html", depth: 3 },
-        { id: "guide-outro", role: "audience-guide", assetSource: "procedural-svg", depth: 4 },
       ],
       actions: [
         {
@@ -847,8 +841,8 @@ export function planSceneGraph(scene, beat, scriptData) {
           purpose: "Animate subscribe button transition into subscribed state",
           causeAndEffect: {
             triggerElement: "yt-sub-btn",
-            reactingElements: ["yt-bell-btn", "guide-outro"],
-            reaction: "ring-bell-and-wave"
+            reactingElements: ["yt-bell-btn"],
+            reaction: "ring-bell-notification"
           }
         },
       ],

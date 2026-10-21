@@ -1,5 +1,21 @@
 # Progress Log — AI Simplified Lab
 
+## 2026-10-21 — Checkpoint 9: Character Removal & Topic-Driven Visual Refocus
+
+### Goal
+Execute a deliberate creative-direction change by completely removing the Lab Guide character mascot (SVG, poses, choreography timelines, and character SFX) from all scenes, transitions, and the outro. Refocus 100% of visual attention on topic-specific diagrams, technical metaphors, data structures, and the clean animated subscribe outro.
+
+### Key Changes
+- **Character Removal**: Deleted `pipeline/character-director.mjs`. Removed all character SVG rendering, gesture timelines, positional CSS, and cues from `pipeline/composition-generator.mjs`, `pipeline/storyboard-planner.mjs`, and `pipeline/make-short.mjs`.
+- **Subscribe Outro Preserved**: Maintained the interactive YouTube subscribe card (`▶ SUBSCRIBE` -> `▶ ✓ SUBSCRIBED` transition with bell wiggle and `ui-click` / `bell-chime` SFX), now centered and unobstructed.
+- **Unit Tests Updated**: All 46 tests passing (`node --test tests/*.test.mjs`), validating offline SFX synthesis, SHA-256 manifests, topic strategies, rights governance, and character-free scene graphs.
+- **Deliverable Verified**: Re-rendered `short-9327-vector-database-indexing` ("Vector Database Indexing"):
+  - Visual Critique Score: 100/100 (0 P0, 0 P1, 0 P2)
+  - QA Gate: PASS (0 black frames, exact 1080x1920, H.264, 48kHz audio, -14 LUFS)
+  - Release Eligibility: ELIGIBLE
+
+---
+
 ## 2026-10-21 — Checkpoint 2: Phase 1 Rendering Pipeline Verified
 
 ### Goal
