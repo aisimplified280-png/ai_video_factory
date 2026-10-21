@@ -449,9 +449,19 @@ export async function generateComposition(compDir, projectData) {
       `;
     }
 
+    let charHtml = "";
+    const cue = scene.characterCue;
+    if (cue && cue.visible && cardType !== "subscribe-outro") {
+      charHtml = renderLabGuideSvg(cue.pose || "direct", `guide-scene-${idx}`, {
+        position: cue.position || "bottom-left",
+        scale: cue.scale || "compact",
+      });
+    }
+
     return `
       <div id="scene-${idx}" class="scene-layer clip" data-start="${scene.startTime}" data-duration="${scene.duration}" style="opacity: ${isFirst ? 1 : 0};">
         ${cardContent}
+        ${charHtml}
       </div>
     `;
   }).join("\n");
@@ -913,6 +923,61 @@ export async function generateComposition(compDir, projectData) {
     // Execute Element-Level Motion Choreography
     gsapTimelineScript += buildMotionChoreographyScript(scene, idx);
 
+    // Full-Story Character Choreography for Scene idx
+    if (scene.characterCue && scene.characterCue.visible && scene.cardType !== "subscribe-outro") {
+      const cue = scene.characterCue;
+      const charSelector = `#scene-${idx} #guide-scene-${idx}`;
+      const isLeft = cue.position?.includes("left");
+      const scaleXVal = isLeft ? -0.82 : 0.82;
+      const initialScaleX = isLeft ? -0.72 : 0.72;
+      gsapTimelineScript += `
+        // Character Choreography for Scene ${idx} (${cue.role || "guide"})
+        tl.fromTo("${charSelector}",
+          { y: 35, opacity: 0, scaleX: ${initialScaleX}, scaleY: 0.72 },
+          { y: 0, opacity: 1, scaleX: ${scaleXVal}, scaleY: 0.82, duration: 0.55, ease: "back.out(1.6)" },
+          ${(startT + 0.12).toFixed(3)}
+        );
+      `;
+
+      if (cue.pose === "react") {
+        gsapTimelineScript += `
+          tl.to("${charSelector} [id$='gesture-arm']", {
+            rotation: -115,
+            duration: 0.35,
+            yoyo: true,
+            repeat: 1,
+            ease: "back.out(2)"
+          }, ${(startT + duration * 0.4).toFixed(3)});
+        `;
+      } else if (cue.pose === "track") {
+        gsapTimelineScript += `
+          tl.to("${charSelector} [id$='head']", {
+            rotation: 20,
+            duration: 1.0,
+            ease: "sine.inOut"
+          }, ${(startT + 0.35).toFixed(3)});
+        `;
+      } else if (cue.pose === "contemplate") {
+        gsapTimelineScript += `
+          tl.to("${charSelector} [id$='head']", {
+            rotation: 14,
+            duration: 0.8,
+            ease: "sine.inOut"
+          }, ${(startT + 0.25).toFixed(3)});
+        `;
+      }
+
+      gsapTimelineScript += `
+        tl.to("${charSelector}", {
+          opacity: 0,
+          y: 20,
+          duration: 0.25,
+          ease: "power2.in"
+        }, ${(startT + duration - 0.25).toFixed(3)});
+        tl.set("${charSelector}", { opacity: 0 }, ${(startT + duration).toFixed(3)});
+      `;
+    }
+
     // Kinetic word-by-word active captioning
     const words = scene.voiceText.trim().split(/\s+/);
     const wordDur = Math.max(0.18, duration / words.length);
@@ -1075,10 +1140,14 @@ export async function generateComposition(compDir, projectData) {
       }
       .scene-layer {
         position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: flex-start;
         text-align: center;
       }
 

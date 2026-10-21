@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-21T14:14:19.113Z",
+  "projectId": "short-9327-vector-database-indexing",
+  "topic": "Vector Database Indexing",
+  "visualStrategy": "technical-explainer",
+  "strategyRationale": "Topic explores computational systems or data structures; employs layered topology diagrams, moving search probes, and verified benchmarks.",
+  "scoutingSummary": {
+    "totalSearches": 10,
+    "candidatesByProvider": {
+      "pixabay": 40,
+      "openverse": 17,
+      "pexels": 0
+    },
+    "totalDiscovered": 57
+  },
+  "sceneDecisions": [
+    {
+      "sceneIndex": 0,
+      "beatId": "beat-1-hook",
+      "visualMode": "hook-bold-object",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Candidate rights verification yielded REJECTED; defaulted to bespoke procedural graphic.",
+      "characterChoreography": {
+        "visible": true,
+        "role": "problem-presenter",
+        "pose": "contemplate",
+        "position": "bottom-left",
+        "scale": "compact",
+        "action": "enter-and-contemplate",
+        "purpose": "Enters to introduce the dilemma thoughtfully without blocking the central bottleneck title"
+      },
+      "rejectedCandidatesCount": 10,
+      "rejections": [
+        {
+          "assetId": "pixabay-586422",
+          "provider": "pixabay",
+          "score": 39,
+          "relevanceScore": 9,
+          "reason": "Ranked below top candidate in candidate pool"
+        },
+        {
+          "assetId": "pixabay-2564182",
+          "provider": "pixabay",
+          "score": 39,
+          "relevanceScore": 9,
+          "reason": "Ranked below top candidate in candidate pool"
+        },
+        {
+          "assetId": "pixabay-895567",
+          "provider": "pixabay",
+          "score": 39,
+          "relevanceScore": 9,
+          "reason": "Ranked below top candidate in candidate pool"
+        },
+        {
+          "assetId": "pixabay-1868708",
+          "provider": "pixabay",
+          "score": 36,
+          "relevanceScore": 9,
+          "reason": "Ranked below top candidate in candidate pool"
+        },
+        {
+          "assetId": "openverse-9c2eadab-74fb-44cc-850f-ecf7f9a108ea",
+          "provider": "openverse",
+          "score": 35,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-7c7eb632-c243-4782-9ab0-7b5bb7182bb2",
+          "provider": "openverse",
+          "score": 35,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-3859388",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-283251",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-6867641",
+          "provider": "pixabay",
+          "score": 19,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+          "provider": "openverse",
+          "score": -13,
+          "relevanceScore": -40,
+          "reason": "Insufficient semantic keyword relevance"
+        }
+      ]
+    },
+    {
+      "sceneIndex": 1,
+      "beatId": "beat-2-metaphor",
+      "visualMode": "physical-metaphor",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
+      "characterChoreography": {
+        "visible": true,
+        "role": "motion-tracker",
+        "pose": "track",
+        "position": "bottom-right",
+        "scale": "compact",
+        "action": "track-probe-movement",
+        "purpose": "Turns glowing visor following moving elements across layers"
+      },
+      "rejectedCandidatesCount": 0,
+      "rejections": []
+    },
+    {
+      "sceneIndex": 2,
+      "beatId": "beat-3-architecture",
+      "visualMode": "architecture-diagram",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
+      "characterChoreography": {
+        "visible": false,
+        "role": "diagram-focus",
+        "pose": "standby",
+        "position": "offstage",
+        "scale": "compact",
+        "action": "step-offstage",
+        "purpose": "Steps offstage cleanly to maximize visual space and legibility for dense technical topology"
+      },
+      "rejectedCandidatesCount": 0,
+      "rejections": []
+    },
+    {
+      "sceneIndex": 3,
+      "beatId": "beat-4-payoff",
+      "visualMode": "concept-explainer",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Abstract computational concept requires bespoke interactive SVG geometry; stock media is insufficiently relevant or cannot participate in scene choreography.",
+      "characterChoreography": {
+        "visible": true,
+        "role": "breakthrough-celebrator",
+        "pose": "react",
+        "position": "bottom-left",
+        "scale": "compact",
+        "action": "celebrate-breakthrough",
+        "purpose": "Celebrates breakthrough performance alongside the production rule takeaway"
+      },
+      "rejectedCandidatesCount": 10,
+      "rejections": [
+        {
+          "assetId": "openverse-7c7eb632-c243-4782-9ab0-7b5bb7182bb2",
+          "provider": "openverse",
+          "score": 35,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-2564182",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-895567",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-6945696",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-4390885",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-8635461",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-3859388",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-283251",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+          "provider": "openverse",
+          "score": 27,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-9473483",
+          "provider": "pixabay",
+          "score": 24,
+          "relevanceScore": 9,
+          "reason": "Ranked below top candidate in candidate pool"
+        }
+      ]
+    },
+    {
+      "sceneIndex": 4,
+      "beatId": "beat-5-outro",
+      "visualMode": "subscribe-outro",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Scene uses bespoke procedural graphics.",
+      "characterChoreography": {
+        "visible": true,
+        "role": "community-guide",
+        "pose": "outro-cta",
+        "position": "bottom-right",
+        "scale": "compact",
+        "action": "guide-subscribe-cta",
+        "purpose": "Guide viewer attention warmly toward channel subscribe button and notification bell"
+      },
+      "rejectedCandidatesCount": 0,
+      "rejections": []
+    }
+  ],
+  "subscribeOutro": {
+    "hasAnimatedCta": true,
+    "guidePose": "outro-cta",
+    "buttonStateChange": "SUBSCRIBE -> ✓ SUBSCRIBED",
+    "bellReaction": "wiggle-and-chime"
+  }
+}

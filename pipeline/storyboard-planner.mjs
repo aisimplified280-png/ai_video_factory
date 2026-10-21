@@ -2,6 +2,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { RIGHTS_STATUS } from "./rights-gate.mjs";
+import { planSceneCharacterAction } from "./character-director.mjs";
 
 /**
  * Valid visual modes supported by the composition builder.
@@ -85,7 +86,10 @@ export function scoreCandidateRelevance(candidate, scene, usedAssetIds = new Map
   }
 
   let score = 0;
-  const candText = `${candidate.title || ""} ${candidate.tags || ""} ${candidate.assetId || ""}`.toLowerCase();
+  const candTags = Array.isArray(candidate.tags)
+    ? candidate.tags.join(" ")
+    : (candidate.rawTags || candidate.tags || "");
+  const candText = `${candidate.title || ""} ${candTags} ${candidate.description || ""} ${candidate.assetId || ""}`.toLowerCase();
   const sceneKeywords = Array.isArray(scene.keywords)
     ? scene.keywords
     : (scene.visualIntent || scene.visualTitle || "").toLowerCase().split(/\s+/).filter((w) => w.length > 3);
@@ -96,6 +100,11 @@ export function scoreCandidateRelevance(candidate, scene, usedAssetIds = new Map
     if (cleanKw && candText.includes(cleanKw)) {
       score += 5;
     }
+  }
+
+  // Quality metric bonus from provider
+  if (candidate.qualityMetrics?.likes > 20 || candidate.qualityMetrics?.downloads > 50) {
+    score += 4;
   }
 
   // 2. Visual query match (+10 points)
@@ -149,19 +158,22 @@ export function evaluateAssetChoice(candidates, scene, usedAssetIds = new Map())
     };
   }
 
+  const rejected = [];
   const scored = candidates.map((cand) => {
     const relevanceScore = scoreCandidateRelevance(cand, scene, usedAssetIds);
 
-    // Visual suitability (SVG/vector format preferred for scaling and transparent-background choreography)
+    // Visual suitability (SVG, illustrations, and high-res photos)
     let visualSuitability = 0;
     if (cand.type === "svg" || (cand.downloadUrl && cand.downloadUrl.endsWith(".svg"))) {
       visualSuitability += 20;
     } else if (cand.type === "illustration") {
-      visualSuitability += 10;
+      visualSuitability += 15;
+    } else if (cand.type === "image" || cand.type === "photo") {
+      visualSuitability += 12;
     }
 
-    // Participation score (Can this asset be animated as an interactive element in choreography?)
-    const participation = cand.type === "svg" ? 15 : 5;
+    // Participation score (Asset suitability for scene composition and motion layout)
+    const participation = cand.type === "svg" ? 15 : 10;
 
     // License safety bonus
     const licenseBonus = cand.licenseId === "CC0-1.0" ? 10 : 5;
@@ -173,13 +185,26 @@ export function evaluateAssetChoice(candidates, scene, usedAssetIds = new Map())
   scored.sort((a, b) => b.totalScore - a.totalScore);
   const best = scored[0];
 
-  if (!best || best.totalScore < 25 || best.relevanceScore < 5) {
+  for (const item of scored) {
+    if (item !== best) {
+      rejected.push({
+        assetId: item.candidate.assetId,
+        provider: item.candidate.sourceProvider,
+        score: item.totalScore,
+        relevanceScore: item.relevanceScore,
+        reason: item.relevanceScore < 5 ? "Insufficient semantic keyword relevance" : "Ranked below top candidate in candidate pool",
+      });
+    }
+  }
+
+  if (!best || best.totalScore < 20 || best.relevanceScore < 5) {
     return {
       selectedCandidate: null,
       decision: "bespoke-procedural-svg",
       reason: isTechTopic
         ? "Abstract computational concept requires bespoke interactive SVG geometry; stock media is insufficiently relevant or cannot participate in scene choreography."
         : "Stock candidates failed relevance and scene-participation thresholds; choosing procedural artwork.",
+      rejectedCandidates: rejected,
     };
   }
 
@@ -188,6 +213,7 @@ export function evaluateAssetChoice(candidates, scene, usedAssetIds = new Map())
     decision: "approved-stock",
     score: best.totalScore,
     reason: `Candidate '${best.candidate.assetId}' selected with multi-criteria score ${best.totalScore}.`,
+    rejectedCandidates: rejected,
   };
 }
 
@@ -236,16 +262,38 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       viewerQuestion = "How does the improved methodology differ from legacy practice?";
     }
 
-    // Story-Aware Asset Discovery & Multi-Criteria Evaluation
+    // Story-Aware Asset Discovery & Multi-Criteria Evaluation across broad queries
     let assignedAsset = null;
     let assetDecision = "bespoke-procedural-svg";
     let assetDecisionReason = "Scene uses bespoke procedural graphics.";
-    const allowsAssets = (visualMode === "architecture-diagram" || visualMode === "asset-reveal" || visualMode === "physical-metaphor");
+    const allowsAssets = visualMode !== "subscribe-outro" && visualMode !== "code";
+    let beatEvaluation = null;
 
     if (assetRegistry && allowsAssets) {
-      const searchQuery = scene.assetQuery || scene.visualIntent || scriptData.topic;
-      const candidates = await assetRegistry.searchAssets(searchQuery, { count: 5 });
+      // Formulate multiple topic-specific search queries to gather a diverse candidate pool
+      const rawQueries = Array.isArray(scene.assetQueries) && scene.assetQueries.length
+        ? scene.assetQueries
+        : [
+            scene.assetQuery,
+            Array.isArray(scene.keywords) ? scene.keywords.slice(0, 2).join(" ") : null,
+            scene.visualTitle,
+            scriptData.topic,
+          ];
+      const queries = Array.from(new Set(rawQueries.filter(Boolean)));
+
+      const candidateMap = new Map();
+      for (const q of queries) {
+        const hits = await assetRegistry.searchAssets(q, { count: 4, poolLimit: 12 });
+        for (const h of hits) {
+          if (!candidateMap.has(h.assetId)) {
+            candidateMap.set(h.assetId, h);
+          }
+        }
+      }
+
+      const candidates = Array.from(candidateMap.values());
       const evaluation = evaluateAssetChoice(candidates, scene, usedAssetIds);
+      beatEvaluation = evaluation;
 
       assetDecision = evaluation.decision;
       assetDecisionReason = evaluation.reason;
@@ -269,6 +317,9 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       }
     }
 
+    // Plan purposeful character presence and action for this beat
+    const characterCue = planSceneCharacterAction(scene, visualMode, idx, scenes.length);
+
     const beat = {
       beatId: `beat-${idx + 1}-${scene.id || "scene"}`,
       sceneIndex: idx,
@@ -285,6 +336,15 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       source: scene.source || null,
       assetDecision,
       assetDecisionReason,
+      assignedAssetId: assignedAsset ? assignedAsset.assetId : null,
+      characterCue,
+      evaluationReport: beatEvaluation ? {
+        decision: beatEvaluation.decision,
+        reason: beatEvaluation.reason,
+        score: beatEvaluation.score || 0,
+        rejectedCount: beatEvaluation.rejectedCandidates ? beatEvaluation.rejectedCandidates.length : 0,
+        rejectedCandidates: beatEvaluation.rejectedCandidates || [],
+      } : null,
       assetId: assignedAsset ? assignedAsset.assetId : null,
       assetData: assignedAsset
         ? {

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-10-21T11:38:16.171Z",
+  "lastUpdated": "2026-10-21T13:51:49.585Z",
   "assets": {
     "fix-prompt-caching-diagram-01": {
       "assetId": "fix-prompt-caching-diagram-01",
@@ -53,6 +53,64 @@
       "absolutePath": "C:\\Users\\USER\\Documents\\AI-Simplified-Lab\\assets\\cache\\openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985.jpg",
       "verifiedAt": "2026-10-21T11:38:16.171Z",
       "rightsAuditReason": "Approved with required attribution."
+    },
+    "pixabay-76517": {
+      "assetId": "pixabay-76517",
+      "type": "illustration",
+      "title": "Google",
+      "tags": [
+        "google",
+        "search engine",
+        "browser",
+        "search",
+        "internet",
+        "www",
+        "http",
+        "web",
+        "google chrome",
+        "web browser",
+        "technology",
+        "pc",
+        "computer",
+        "google",
+        "google",
+        "google",
+        "google",
+        "google"
+      ],
+      "rawTags": "google, search engine, browser, search, internet, www, http, web, google chrome, web browser, technology, pc, computer, google, google, google, google, google",
+      "description": "google, search engine, browser, search, internet, www, http, web, google chrome, web browser, technology, pc, computer, google, google, google, google, google",
+      "sourceProvider": "pixabay",
+      "sourcePage": "https://pixabay.com/illustrations/google-search-engine-browser-search-76517/",
+      "downloadUrl": "https://pixabay.com/get/g00b0d6f7f60278c55ecd71ffc2c6a7b21581ed2fe116b53b0d1126fc7fb8cea4aeee339184a64185abe9e3cb1895b586_1280.png",
+      "previewUrl": "https://cdn.pixabay.com/photo/2013/01/29/00/47/google-76517_150.png",
+      "dimensions": {
+        "width": 1392,
+        "height": 870
+      },
+      "creator": "Simon",
+      "licenseId": "Pixabay-Content-License",
+      "licenseUrl": "https://pixabay.com/service/license-summary/",
+      "commercialUse": true,
+      "modificationsAllowed": true,
+      "attributionRequired": false,
+      "attributionText": "Visual by Simon via Pixabay (Pixabay Content License)",
+      "qualityMetrics": {
+        "likes": 329,
+        "views": 278656,
+        "downloads": 132019
+      },
+      "reviewFlags": {
+        "recognizablePerson": false,
+        "trademarkLogo": false,
+        "sensitiveContent": false
+      },
+      "status": "APPROVED",
+      "sha256": "8fa74bcaf1b82fc65435f58c700de7be86ac042aee46b52880a2ab34f585eec1",
+      "cachedPath": "assets/cache/pixabay-76517.png",
+      "absolutePath": "C:\\Users\\USER\\Documents\\AI-Simplified-Lab\\assets\\cache\\pixabay-76517.png",
+      "verifiedAt": "2026-10-21T13:51:49.584Z",
+      "rightsAuditReason": "Approved for unrestricted commercial reuse."
     }
   }
 }

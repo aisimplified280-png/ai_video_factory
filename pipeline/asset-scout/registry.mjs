@@ -14,18 +14,27 @@ export class AssetRegistry {
     this.cacheDir = options.cacheDir || path.join(ROOT_DIR, "assets", "cache");
     this.ledgerPath = options.ledgerPath || path.join(ROOT_DIR, "assets", "rights-ledger.json");
     
-    // Online providers are searched first so online assets are selectable
-    this.onlineProviders = [
+    // Visual providers (images, illustrations, videos)
+    this.visualProviders = [
       new PixabayProvider(),
-      new FreesoundProvider(),
       new OpenverseProvider(),
       new PexelsProvider(),
     ];
+
+    // Audio providers (sound effects, Foley, ambience)
+    this.audioProviders = [
+      new FreesoundProvider(),
+    ];
+
+    // Backward compatibility alias
+    this.onlineProviders = [...this.visualProviders, ...this.audioProviders];
 
     // Offline fixture provider serves as deterministic fallback
     this.fallbackProviders = [
       new FixtureProvider(),
     ];
+
+    this.scoutHistory = [];
   }
 
   async init() {
@@ -39,41 +48,58 @@ export class AssetRegistry {
   }
 
   /**
-   * Search across registered providers. Online providers are searched first;
-   * offline fixtures serve as fallback when online results are empty or offlineOnly is set.
+   * Search across registered providers matching the media type.
+   * Collects a comprehensive candidate pool from all available providers
+   * before ranking and selection rather than truncating sequentially.
    */
-  async searchAssets(query, { type = "image", count = 2, offlineOnly = false } = {}) {
+  async searchAssets(query, { type = "image", count = 3, poolLimit = 20, offlineOnly = false } = {}) {
     const allResults = [];
+    const isAudio = type === "audio" || type === "sfx";
+    const activeProviders = isAudio ? this.audioProviders : this.visualProviders;
 
-    // 1. Search online providers first if not offlineOnly
+    const scoutMetric = {
+      query,
+      type,
+      providerCounts: {},
+      timestamp: new Date().toISOString(),
+    };
+
+    // 1. Query online providers matching the requested media type
     if (!offlineOnly) {
-      for (const provider of this.onlineProviders) {
+      for (const provider of activeProviders) {
         try {
-          const results = await provider.search({ query, type, count });
-          if (Array.isArray(results) && results.length > 0) {
-            allResults.push(...results);
-          }
+          // Request up to max(3, count) from each provider to ensure diversity
+          const fetchCount = Math.max(3, count);
+          const results = await provider.search({ query, type, count: fetchCount });
+          const hits = Array.isArray(results) ? results : [];
+          scoutMetric.providerCounts[provider.name] = hits.length;
+          allResults.push(...hits);
         } catch (err) {
+          scoutMetric.providerCounts[provider.name] = 0;
           console.warn(`[AssetScout] Online provider '${provider.name}' search failed:`, err.message);
         }
       }
     }
 
     // 2. If no online results found (or offlineOnly requested), use fallback fixture provider
-    if (allResults.length === 0) {
+    if (allResults.length === 0 && !isAudio) {
       for (const provider of this.fallbackProviders) {
         try {
-          const results = await provider.search({ query, type, count });
-          if (Array.isArray(results) && results.length > 0) {
-            allResults.push(...results);
-          }
+          const results = await provider.search({ query, type, count: Math.max(2, count) });
+          const hits = Array.isArray(results) ? results : [];
+          scoutMetric.providerCounts[provider.name] = hits.length;
+          allResults.push(...hits);
         } catch (err) {
           console.warn(`[AssetScout] Fallback provider '${provider.name}' failed:`, err.message);
         }
       }
     }
 
-    return allResults.slice(0, count);
+    scoutMetric.totalCandidates = allResults.length;
+    this.scoutHistory.push(scoutMetric);
+
+    // Return the full candidate pool up to poolLimit so relevance scorer can evaluate all options
+    return allResults.slice(0, poolLimit);
   }
 
   /**

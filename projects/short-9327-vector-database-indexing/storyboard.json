@@ -23,7 +23,95 @@
       "badge": "VECTOR SEARCH SCALING",
       "source": "Vector Indexing Technical Papers",
       "assetDecision": "bespoke-procedural-svg",
-      "assetDecisionReason": "Scene uses bespoke procedural graphics.",
+      "assetDecisionReason": "Candidate rights verification yielded REJECTED; defaulted to bespoke procedural graphic.",
+      "assignedAssetId": null,
+      "characterCue": {
+        "visible": true,
+        "role": "problem-presenter",
+        "pose": "contemplate",
+        "position": "bottom-left",
+        "scale": "compact",
+        "action": "enter-and-contemplate",
+        "purpose": "Enters to introduce the dilemma thoughtfully without blocking the central bottleneck title"
+      },
+      "evaluationReport": {
+        "decision": "approved-stock",
+        "reason": "Candidate 'pixabay-76517' selected with multi-criteria score 39.",
+        "score": 39,
+        "rejectedCount": 10,
+        "rejectedCandidates": [
+          {
+            "assetId": "pixabay-586422",
+            "provider": "pixabay",
+            "score": 39,
+            "relevanceScore": 9,
+            "reason": "Ranked below top candidate in candidate pool"
+          },
+          {
+            "assetId": "pixabay-2564182",
+            "provider": "pixabay",
+            "score": 39,
+            "relevanceScore": 9,
+            "reason": "Ranked below top candidate in candidate pool"
+          },
+          {
+            "assetId": "pixabay-895567",
+            "provider": "pixabay",
+            "score": 39,
+            "relevanceScore": 9,
+            "reason": "Ranked below top candidate in candidate pool"
+          },
+          {
+            "assetId": "pixabay-1868708",
+            "provider": "pixabay",
+            "score": 36,
+            "relevanceScore": 9,
+            "reason": "Ranked below top candidate in candidate pool"
+          },
+          {
+            "assetId": "openverse-9c2eadab-74fb-44cc-850f-ecf7f9a108ea",
+            "provider": "openverse",
+            "score": 35,
+            "relevanceScore": 0,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "openverse-7c7eb632-c243-4782-9ab0-7b5bb7182bb2",
+            "provider": "openverse",
+            "score": 35,
+            "relevanceScore": 0,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-3859388",
+            "provider": "pixabay",
+            "score": 31,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-283251",
+            "provider": "pixabay",
+            "score": 31,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-6867641",
+            "provider": "pixabay",
+            "score": 19,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+            "provider": "openverse",
+            "score": -13,
+            "relevanceScore": -40,
+            "reason": "Insufficient semantic keyword relevance"
+          }
+        ]
+      },
       "assetId": null,
       "assetData": null,
       "motion": {
@@ -148,6 +236,23 @@
       "source": null,
       "assetDecision": "bespoke-procedural-svg",
       "assetDecisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
+      "assignedAssetId": null,
+      "characterCue": {
+        "visible": true,
+        "role": "motion-tracker",
+        "pose": "track",
+        "position": "bottom-right",
+        "scale": "compact",
+        "action": "track-probe-movement",
+        "purpose": "Turns glowing visor following moving elements across layers"
+      },
+      "evaluationReport": {
+        "decision": "bespoke-procedural-svg",
+        "reason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
+        "score": 0,
+        "rejectedCount": 0,
+        "rejectedCandidates": []
+      },
       "assetId": null,
       "assetData": null,
       "motion": {
@@ -308,6 +413,23 @@
       "source": null,
       "assetDecision": "bespoke-procedural-svg",
       "assetDecisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
+      "assignedAssetId": null,
+      "characterCue": {
+        "visible": false,
+        "role": "diagram-focus",
+        "pose": "standby",
+        "position": "offstage",
+        "scale": "compact",
+        "action": "step-offstage",
+        "purpose": "Steps offstage cleanly to maximize visual space and legibility for dense technical topology"
+      },
+      "evaluationReport": {
+        "decision": "bespoke-procedural-svg",
+        "reason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
+        "score": 0,
+        "rejectedCount": 0,
+        "rejectedCandidates": []
+      },
       "assetId": null,
       "assetData": null,
       "motion": {
@@ -470,7 +592,95 @@
       "badge": "PRODUCTION RULE",
       "source": "HNSW Algorithm & Vector DB Standards",
       "assetDecision": "bespoke-procedural-svg",
-      "assetDecisionReason": "Scene uses bespoke procedural graphics.",
+      "assetDecisionReason": "Abstract computational concept requires bespoke interactive SVG geometry; stock media is insufficiently relevant or cannot participate in scene choreography.",
+      "assignedAssetId": null,
+      "characterCue": {
+        "visible": true,
+        "role": "breakthrough-celebrator",
+        "pose": "react",
+        "position": "bottom-left",
+        "scale": "compact",
+        "action": "celebrate-breakthrough",
+        "purpose": "Celebrates breakthrough performance alongside the production rule takeaway"
+      },
+      "evaluationReport": {
+        "decision": "bespoke-procedural-svg",
+        "reason": "Abstract computational concept requires bespoke interactive SVG geometry; stock media is insufficiently relevant or cannot participate in scene choreography.",
+        "score": 0,
+        "rejectedCount": 10,
+        "rejectedCandidates": [
+          {
+            "assetId": "openverse-7c7eb632-c243-4782-9ab0-7b5bb7182bb2",
+            "provider": "openverse",
+            "score": 35,
+            "relevanceScore": 0,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-2564182",
+            "provider": "pixabay",
+            "score": 34,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-895567",
+            "provider": "pixabay",
+            "score": 34,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-6945696",
+            "provider": "pixabay",
+            "score": 31,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-4390885",
+            "provider": "pixabay",
+            "score": 31,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-8635461",
+            "provider": "pixabay",
+            "score": 31,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-3859388",
+            "provider": "pixabay",
+            "score": 31,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-283251",
+            "provider": "pixabay",
+            "score": 31,
+            "relevanceScore": 4,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+            "provider": "openverse",
+            "score": 27,
+            "relevanceScore": 0,
+            "reason": "Insufficient semantic keyword relevance"
+          },
+          {
+            "assetId": "pixabay-9473483",
+            "provider": "pixabay",
+            "score": 24,
+            "relevanceScore": 9,
+            "reason": "Ranked below top candidate in candidate pool"
+          }
+        ]
+      },
       "assetId": null,
       "assetData": null,
       "motion": {
@@ -567,6 +777,17 @@
       "source": null,
       "assetDecision": "bespoke-procedural-svg",
       "assetDecisionReason": "Scene uses bespoke procedural graphics.",
+      "assignedAssetId": null,
+      "characterCue": {
+        "visible": true,
+        "role": "community-guide",
+        "pose": "outro-cta",
+        "position": "bottom-right",
+        "scale": "compact",
+        "action": "guide-subscribe-cta",
+        "purpose": "Guide viewer attention warmly toward channel subscribe button and notification bell"
+      },
+      "evaluationReport": null,
       "assetId": null,
       "assetData": null,
       "motion": {
@@ -639,5 +860,5 @@
     }
   ],
   "projectAssets": [],
-  "createdAt": "2026-10-21T13:24:37.877Z"
+  "createdAt": "2026-10-21T14:10:47.402Z"
 }

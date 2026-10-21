@@ -20,7 +20,7 @@ export class PixabayProvider {
    * @param {number} [params.count=3] - Number of results to request
    * @returns {Promise<Array>}
    */
-  async search({ query, type = "image", count = 3 }) {
+  async search({ query, type = "image", count = 3, imageType = "all" } = {}) {
     const key = this.apiKey;
     if (!key) return [];
 
@@ -37,8 +37,11 @@ export class PixabayProvider {
       url.searchParams.set("safesearch", "true");
 
       if (!isVideo) {
-        // Prioritize illustrations and vectors for our faceless editorial/collage look
-        url.searchParams.set("image_type", "illustration");
+        // Allow all image types (photos, vectors, illustrations) or specific imageType if passed
+        const imgType = imageType || "all";
+        if (imgType !== "all") {
+          url.searchParams.set("image_type", imgType);
+        }
       }
 
       const response = await fetch(url.toString(), {
@@ -56,16 +59,22 @@ export class PixabayProvider {
           : hit.largeImageURL || hit.webformatURL;
 
         // Check tags for potential real person / face depiction to uphold faceless policy
-        const tags = (hit.tags || "").toLowerCase();
-        const hasPersonTag = /\b(face|portrait|selfie|model|woman|man|person|girl|boy|businessman|headshot)\b/i.test(tags);
+        const rawTags = (hit.tags || "").toLowerCase();
+        const tagList = rawTags.split(",").map((t) => t.trim()).filter(Boolean);
+        const hasPersonTag = /\b(face|portrait|selfie|model|woman|man|person|girl|boy|businessman|headshot)\b/i.test(rawTags);
 
         return {
           assetId: `pixabay-${hit.id}`,
           type: isVideo ? "video" : (hit.type || "image"),
-          title: hit.tags ? hit.tags.split(",")[0].trim() : "Pixabay Asset",
+          title: tagList[0] ? tagList[0].replace(/^[a-z]/, (c) => c.toUpperCase()) : "Pixabay Asset",
+          tags: tagList,
+          rawTags: hit.tags || "",
+          description: hit.tags || "",
           sourceProvider: "pixabay",
           sourcePage: hit.pageURL,
           downloadUrl,
+          previewUrl: hit.previewURL || hit.webformatURL,
+          dimensions: { width: hit.imageWidth || 0, height: hit.imageHeight || 0 },
           creator: hit.user || "Pixabay Creator",
           licenseId: "Pixabay-Content-License",
           licenseUrl: "https://pixabay.com/service/license-summary/",
@@ -73,6 +82,11 @@ export class PixabayProvider {
           modificationsAllowed: true,
           attributionRequired: false,
           attributionText: `Visual by ${hit.user} via Pixabay (Pixabay Content License)`,
+          qualityMetrics: {
+            likes: hit.likes || 0,
+            views: hit.views || 0,
+            downloads: hit.downloads || 0,
+          },
           reviewFlags: {
             recognizablePerson: hasPersonTag,
             trademarkLogo: false,

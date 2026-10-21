@@ -127,10 +127,14 @@
       }
       .scene-layer {
         position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: flex-start;
         text-align: center;
       }
 
@@ -1068,23 +1072,48 @@
     .lab-guide-character,
     .lab-guide-figure {
       position: absolute;
-      bottom: 240px;
-      right: 40px;
       z-index: 35;
       pointer-events: none;
       filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.75));
       transition: transform 0.3s ease;
     }
+    .lab-guide-character.guide-pos-bottom-left,
     .lab-guide-character.guide-side-left,
     .lab-guide-figure.side-left {
-      left: 40px;
+      bottom: 24px;
+      left: 20px;
       right: auto;
-      transform: scaleX(-1);
+      transform-origin: bottom center;
+      transform: scaleX(-1) scale(0.82);
     }
+    .lab-guide-character.guide-pos-bottom-right,
     .lab-guide-character.guide-side-right,
     .lab-guide-figure.side-bottom {
-      bottom: 240px;
-      right: 60px;
+      bottom: 24px;
+      right: 20px;
+      left: auto;
+      transform-origin: bottom center;
+      transform: scale(0.82);
+    }
+    .lab-guide-character.guide-pos-mid-left {
+      top: 420px;
+      left: 10px;
+      right: auto;
+      transform-origin: center center;
+      transform: scaleX(-1) scale(0.82);
+    }
+    .lab-guide-character.guide-pos-mid-right {
+      top: 420px;
+      right: 10px;
+      left: auto;
+      transform-origin: center center;
+      transform: scale(0.82);
+    }
+    .lab-guide-character.guide-scale-compact {
+      transform-origin: bottom center;
+    }
+    .lab-guide-character.guide-scale-normal {
+      transform-origin: bottom center;
     }
   
 
@@ -1179,6 +1208,52 @@
           </div>
         </div>
       
+        
+  <div id="guide-scene-0" class="lab-guide-character lab-guide-figure pose-contemplate guide-pos-bottom-left guide-scale-compact">
+    <svg viewBox="0 0 200 280" width="160" height="224" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="visor-glow-guide-scene-0" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#a3e635" stop-opacity="0.9" />
+          <stop offset="100%" stop-color="#a3e635" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="coat-grad-guide-scene-0" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2a144e" />
+          <stop offset="100%" stop-color="#120726" />
+        </linearGradient>
+      </defs>
+
+      <!-- Atmospheric Guide Shadow -->
+      <ellipse cx="100" cy="265" rx="55" ry="10" fill="rgba(0,0,0,0.45)" />
+
+      <!-- Body / Minimalist Lab Coat -->
+      <path d="M 65 140 Q 50 200 45 255 L 155 255 Q 150 200 135 140 Z" fill="url(#coat-grad-guide-scene-0)" stroke="#c084fc" stroke-width="2.5" />
+      <!-- Coat Center Lapel Accent -->
+      <line x1="100" y1="140" x2="100" y2="255" stroke="#a3e635" stroke-width="1.8" stroke-dasharray="6,4" />
+
+      <!-- Left Arm (Resting or Gesturing) -->
+      <g transform="rotate(0 68 140)">
+        <path d="M 68 140 Q 52 185 58 220" fill="none" stroke="#c084fc" stroke-width="10" stroke-linecap="round" />
+        <circle cx="58" cy="220" r="7" fill="#ffffff" stroke="#c084fc" stroke-width="2" />
+      </g>
+
+      <!-- Right Arm (Gesturing with Transform) -->
+      <g transform="rotate(-92 100 135)" id="guide-scene-0-gesture-arm">
+        <path d="M 132 140 Q 155 170 175 145" fill="none" stroke="#a3e635" stroke-width="10" stroke-linecap="round" />
+        <circle cx="178" cy="143" r="8" fill="#ffffff" stroke="#a3e635" stroke-width="2.5" />
+      </g>
+
+      <!-- Head / Geometric Visor (Faceless Design) -->
+      <g transform="rotate(10 100 65)" id="guide-scene-0-head">
+        <!-- Helmet Silhouette -->
+        <circle cx="100" cy="75" r="42" fill="#1b0b33" stroke="#c084fc" stroke-width="3" />
+        <!-- Neon Visor Halo -->
+        <ellipse cx="100" cy="74" rx="46" ry="16" fill="url(#visor-glow-guide-scene-0)" />
+        <!-- Neon Visor Lens -->
+        <rect x="86" y="67" width="28" height="14" rx="7" fill="#a3e635" stroke="#ffffff" stroke-width="1.5" />
+      </g>
+    </svg>
+  </div>
+  
       </div>
     
 
@@ -1239,6 +1314,52 @@
           <p class="card-highlight metaphor-caption">Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.</p>
         </div>
       
+        
+  <div id="guide-scene-1" class="lab-guide-character lab-guide-figure pose-track guide-pos-bottom-right guide-scale-compact">
+    <svg viewBox="0 0 200 280" width="160" height="224" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="visor-glow-guide-scene-1" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#a3e635" stop-opacity="0.9" />
+          <stop offset="100%" stop-color="#a3e635" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="coat-grad-guide-scene-1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2a144e" />
+          <stop offset="100%" stop-color="#120726" />
+        </linearGradient>
+      </defs>
+
+      <!-- Atmospheric Guide Shadow -->
+      <ellipse cx="100" cy="265" rx="55" ry="10" fill="rgba(0,0,0,0.45)" />
+
+      <!-- Body / Minimalist Lab Coat -->
+      <path d="M 65 140 Q 50 200 45 255 L 155 255 Q 150 200 135 140 Z" fill="url(#coat-grad-guide-scene-1)" stroke="#c084fc" stroke-width="2.5" />
+      <!-- Coat Center Lapel Accent -->
+      <line x1="100" y1="140" x2="100" y2="255" stroke="#a3e635" stroke-width="1.8" stroke-dasharray="6,4" />
+
+      <!-- Left Arm (Resting or Gesturing) -->
+      <g transform="rotate(0 68 140)">
+        <path d="M 68 140 Q 52 185 58 220" fill="none" stroke="#c084fc" stroke-width="10" stroke-linecap="round" />
+        <circle cx="58" cy="220" r="7" fill="#ffffff" stroke="#c084fc" stroke-width="2" />
+      </g>
+
+      <!-- Right Arm (Gesturing with Transform) -->
+      <g transform="rotate(-30 100 135)" id="guide-scene-1-gesture-arm">
+        <path d="M 132 140 Q 155 170 175 145" fill="none" stroke="#a3e635" stroke-width="10" stroke-linecap="round" />
+        <circle cx="178" cy="143" r="8" fill="#ffffff" stroke="#a3e635" stroke-width="2.5" />
+      </g>
+
+      <!-- Head / Geometric Visor (Faceless Design) -->
+      <g transform="rotate(16 100 65)" id="guide-scene-1-head">
+        <!-- Helmet Silhouette -->
+        <circle cx="100" cy="75" r="42" fill="#1b0b33" stroke="#c084fc" stroke-width="3" />
+        <!-- Neon Visor Halo -->
+        <ellipse cx="100" cy="74" rx="46" ry="16" fill="url(#visor-glow-guide-scene-1)" />
+        <!-- Neon Visor Lens -->
+        <rect x="82" y="67" width="36" height="14" rx="7" fill="#a3e635" stroke="#ffffff" stroke-width="1.5" />
+      </g>
+    </svg>
+  </div>
+  
       </div>
     
 
@@ -1302,6 +1423,7 @@
           <p class="card-highlight metaphor-caption">Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.</p>
         </div>
       
+        
       </div>
     
 
@@ -1337,6 +1459,52 @@
           <div class="source-tag">Reference: HNSW Algorithm &amp; Vector DB Standards</div>
         </div>
       
+        
+  <div id="guide-scene-3" class="lab-guide-character lab-guide-figure pose-react guide-pos-bottom-left guide-scale-compact">
+    <svg viewBox="0 0 200 280" width="160" height="224" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="visor-glow-guide-scene-3" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#a3e635" stop-opacity="0.9" />
+          <stop offset="100%" stop-color="#a3e635" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="coat-grad-guide-scene-3" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2a144e" />
+          <stop offset="100%" stop-color="#120726" />
+        </linearGradient>
+      </defs>
+
+      <!-- Atmospheric Guide Shadow -->
+      <ellipse cx="100" cy="265" rx="55" ry="10" fill="rgba(0,0,0,0.45)" />
+
+      <!-- Body / Minimalist Lab Coat -->
+      <path d="M 65 140 Q 50 200 45 255 L 155 255 Q 150 200 135 140 Z" fill="url(#coat-grad-guide-scene-3)" stroke="#c084fc" stroke-width="2.5" />
+      <!-- Coat Center Lapel Accent -->
+      <line x1="100" y1="140" x2="100" y2="255" stroke="#a3e635" stroke-width="1.8" stroke-dasharray="6,4" />
+
+      <!-- Left Arm (Resting or Gesturing) -->
+      <g transform="rotate(35 68 140)">
+        <path d="M 68 140 Q 52 185 58 220" fill="none" stroke="#c084fc" stroke-width="10" stroke-linecap="round" />
+        <circle cx="58" cy="220" r="7" fill="#ffffff" stroke="#c084fc" stroke-width="2" />
+      </g>
+
+      <!-- Right Arm (Gesturing with Transform) -->
+      <g transform="rotate(-105 100 135)" id="guide-scene-3-gesture-arm">
+        <path d="M 132 140 Q 155 170 175 145" fill="none" stroke="#a3e635" stroke-width="10" stroke-linecap="round" />
+        <circle cx="178" cy="143" r="8" fill="#ffffff" stroke="#a3e635" stroke-width="2.5" />
+      </g>
+
+      <!-- Head / Geometric Visor (Faceless Design) -->
+      <g transform="rotate(-14 100 65)" id="guide-scene-3-head">
+        <!-- Helmet Silhouette -->
+        <circle cx="100" cy="75" r="42" fill="#1b0b33" stroke="#c084fc" stroke-width="3" />
+        <!-- Neon Visor Halo -->
+        <ellipse cx="100" cy="74" rx="46" ry="16" fill="url(#visor-glow-guide-scene-3)" />
+        <!-- Neon Visor Lens -->
+        <rect x="78" y="67" width="44" height="14" rx="7" fill="#a3e635" stroke="#ffffff" stroke-width="1.5" />
+      </g>
+    </svg>
+  </div>
+  
       </div>
     
 
@@ -1362,14 +1530,14 @@
 
           <div class="outro-guide-anchor">
             
-  <div id="guide-outro" class="lab-guide-character lab-guide-figure pose-outro-cta">
+  <div id="guide-outro" class="lab-guide-character lab-guide-figure pose-outro-cta  guide-scale-normal">
     <svg viewBox="0 0 200 280" width="160" height="224" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <radialGradient id="visor-glow" cx="50%" cy="50%" r="50%">
+        <radialGradient id="visor-glow-guide-outro" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stop-color="#a3e635" stop-opacity="0.9" />
           <stop offset="100%" stop-color="#a3e635" stop-opacity="0" />
         </radialGradient>
-        <linearGradient id="coat-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="coat-grad-guide-outro" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="#2a144e" />
           <stop offset="100%" stop-color="#120726" />
         </linearGradient>
@@ -1379,12 +1547,15 @@
       <ellipse cx="100" cy="265" rx="55" ry="10" fill="rgba(0,0,0,0.45)" />
 
       <!-- Body / Minimalist Lab Coat -->
-      <path d="M 65 140 Q 50 200 45 255 L 155 255 Q 150 200 135 140 Z" fill="url(#coat-grad)" stroke="#c084fc" stroke-width="2.5" />
+      <path d="M 65 140 Q 50 200 45 255 L 155 255 Q 150 200 135 140 Z" fill="url(#coat-grad-guide-outro)" stroke="#c084fc" stroke-width="2.5" />
       <!-- Coat Center Lapel Accent -->
       <line x1="100" y1="140" x2="100" y2="255" stroke="#a3e635" stroke-width="1.8" stroke-dasharray="6,4" />
 
-      <!-- Left Arm (Resting) -->
-      <path d="M 68 140 Q 52 185 58 220" fill="none" stroke="#c084fc" stroke-width="10" stroke-linecap="round" />
+      <!-- Left Arm (Resting or Gesturing) -->
+      <g transform="rotate(0 68 140)">
+        <path d="M 68 140 Q 52 185 58 220" fill="none" stroke="#c084fc" stroke-width="10" stroke-linecap="round" />
+        <circle cx="58" cy="220" r="7" fill="#ffffff" stroke="#c084fc" stroke-width="2" />
+      </g>
 
       <!-- Right Arm (Gesturing with Transform) -->
       <g transform="rotate(-65 100 135)" id="guide-outro-gesture-arm">
@@ -1397,7 +1568,7 @@
         <!-- Helmet Silhouette -->
         <circle cx="100" cy="75" r="42" fill="#1b0b33" stroke="#c084fc" stroke-width="3" />
         <!-- Neon Visor Halo -->
-        <ellipse cx="100" cy="74" rx="46" ry="16" fill="url(#visor-glow)" />
+        <ellipse cx="100" cy="74" rx="46" ry="16" fill="url(#visor-glow-guide-outro)" />
         <!-- Neon Visor Lens -->
         <rect x="80" y="67" width="40" height="14" rx="7" fill="#a3e635" stroke="#ffffff" stroke-width="1.5" />
       </g>
@@ -1407,6 +1578,7 @@
           </div>
         </div>
       
+        
       </div>
     
         </main>
@@ -1522,6 +1694,27 @@
             duration: 0.2 
           }, 4.378);
           
+        // Character Choreography for Scene 0 (problem-presenter)
+        tl.fromTo("#scene-0 #guide-scene-0",
+          { y: 35, opacity: 0, scaleX: -0.72, scaleY: 0.72 },
+          { y: 0, opacity: 1, scaleX: -0.82, scaleY: 0.82, duration: 0.55, ease: "back.out(1.6)" },
+          0.120
+        );
+      
+          tl.to("#scene-0 #guide-scene-0 [id$='head']", {
+            rotation: 14,
+            duration: 0.8,
+            ease: "sine.inOut"
+          }, 0.250);
+        
+        tl.to("#scene-0 #guide-scene-0", {
+          opacity: 0,
+          y: 20,
+          duration: 0.25,
+          ease: "power2.in"
+        }, 6.376);
+        tl.set("#scene-0 #guide-scene-0", { opacity: 0 }, 6.626);
+      
         tl.to("#w-0-0", {
           color: "#a3e635",
           backgroundColor: "rgba(163, 230, 53, 0.18)",
@@ -1819,6 +2012,27 @@
             13.047
           );
           
+        // Character Choreography for Scene 1 (motion-tracker)
+        tl.fromTo("#scene-1 #guide-scene-1",
+          { y: 35, opacity: 0, scaleX: 0.72, scaleY: 0.72 },
+          { y: 0, opacity: 1, scaleX: 0.82, scaleY: 0.82, duration: 0.55, ease: "back.out(1.6)" },
+          6.746
+        );
+      
+          tl.to("#scene-1 #guide-scene-1 [id$='head']", {
+            rotation: 20,
+            duration: 1.0,
+            ease: "sine.inOut"
+          }, 6.976);
+        
+        tl.to("#scene-1 #guide-scene-1", {
+          opacity: 0,
+          y: 20,
+          duration: 0.25,
+          ease: "power2.in"
+        }, 13.633);
+        tl.set("#scene-1 #guide-scene-1", { opacity: 0 }, 13.883);
+      
         tl.to("#w-1-0", {
           color: "#a3e635",
           backgroundColor: "rgba(163, 230, 53, 0.18)",
@@ -2489,6 +2703,29 @@
             repeat: 1 
           }, 27.308);
           
+        // Character Choreography for Scene 3 (breakthrough-celebrator)
+        tl.fromTo("#scene-3 #guide-scene-3",
+          { y: 35, opacity: 0, scaleX: -0.72, scaleY: 0.72 },
+          { y: 0, opacity: 1, scaleX: -0.82, scaleY: 0.82, duration: 0.55, ease: "back.out(1.6)" },
+          20.363
+        );
+      
+          tl.to("#scene-3 #guide-scene-3 [id$='gesture-arm']", {
+            rotation: -115,
+            duration: 0.35,
+            yoyo: true,
+            repeat: 1,
+            ease: "back.out(2)"
+          }, 23.092);
+        
+        tl.to("#scene-3 #guide-scene-3", {
+          opacity: 0,
+          y: 20,
+          duration: 0.25,
+          ease: "power2.in"
+        }, 27.116);
+        tl.set("#scene-3 #guide-scene-3", { opacity: 0 }, 27.366);
+      
         tl.to("#w-3-0", {
           color: "#a3e635",
           backgroundColor: "rgba(163, 230, 53, 0.18)",

@@ -321,6 +321,9 @@ async function main() {
       sfx: beat.sfxCue,
       source: beat.source,
       assetData: beat.assetData,
+      assignedAssetId: beat.assignedAssetId,
+      characterCue: beat.characterCue,
+      evaluationReport: beat.evaluationReport,
       diagramNodes: beat.diagramNodes,
       metaphorType: beat.metaphorType,
       codeSnippet: beat.codeSnippet,
@@ -341,6 +344,55 @@ async function main() {
   // Step 4: Render, Mux, Verify & Package
   console.log(`[Step 4/4] Rendering and Packaging Verified Short...`);
   const finalResult = await renderAndMux(projectDir, compositionData);
+
+  // Generate Asset Selection & Character Direction Report
+  const providerTally = {};
+  for (const s of (assetRegistry.scoutHistory || [])) {
+    for (const [p, c] of Object.entries(s.providerCounts || {})) {
+      providerTally[p] = (providerTally[p] || 0) + c;
+    }
+  }
+
+  const assetEvaluationReport = {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    projectId: scriptData.id,
+    topic: scriptData.topic || scriptData.title,
+    visualStrategy: storyboardData.visualStrategy,
+    strategyRationale: storyboardData.strategyRationale,
+    scoutingSummary: {
+      totalSearches: assetRegistry.scoutHistory?.length || 0,
+      candidatesByProvider: providerTally,
+      totalDiscovered: Object.values(providerTally).reduce((a, b) => a + b, 0),
+    },
+    sceneDecisions: storyboardData.beats.map((b) => ({
+      sceneIndex: b.sceneIndex,
+      beatId: b.beatId,
+      visualMode: b.visualMode,
+      selectedAssetId: b.assignedAssetId || null,
+      decision: b.assetDecision,
+      decisionReason: b.assetDecisionReason,
+      characterChoreography: b.characterCue || null,
+      rejectedCandidatesCount: b.evaluationReport?.rejectedCount || 0,
+      rejections: b.evaluationReport?.rejectedCandidates || [],
+    })),
+    subscribeOutro: {
+      hasAnimatedCta: true,
+      guidePose: "outro-cta",
+      buttonStateChange: "SUBSCRIBE -> ✓ SUBSCRIBED",
+      bellReaction: "wiggle-and-chime",
+    },
+  };
+
+  const evalReportPath = path.join(projectDir, "exports", "asset-evaluation-report.json");
+  await fs.writeFile(evalReportPath, JSON.stringify(assetEvaluationReport, null, 2), "utf8");
+
+  console.log(`\n=============================================================`);
+  console.log(`📊 Asset Selection & Director Evaluation Report`);
+  console.log(`   Strategy:       ${storyboardData.visualStrategy}`);
+  console.log(`   Provider Hits:  ${JSON.stringify(providerTally)}`);
+  console.log(`   Report Saved:   ${evalReportPath}`);
+  console.log(`=============================================================`);
 
   console.log(`\n🎉 DELIVERABLE COMPLETED SUCCESSFULLY!`);
   console.log(`   📹 Video:          ${finalResult.finalMp4}`);
