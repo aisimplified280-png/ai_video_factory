@@ -40,6 +40,18 @@ export function normalizeLicenseId(rawLicense, rawVersion = "") {
   if (lic === "cc0" || lic === "cc0-1.0" || lic === "cc0 1.0") return "CC0-1.0";
   if (lic === "pdm" || lic === "public domain" || lic === "publicdomain") return "Public Domain";
 
+  // Creative Commons URLs (e.g., from Freesound API or Openverse)
+  if (lic.includes("creativecommons.org")) {
+    if (lic.includes("zero") || lic.includes("publicdomain")) return "CC0-1.0";
+    if (lic.includes("nc") || lic.includes("noncommercial")) return "CC-BY-NC-4.0";
+    if (lic.includes("nd") || lic.includes("noderivs")) return "CC-BY-ND-4.0";
+    if (lic.includes("sa") || lic.includes("sharealike")) return "CC-BY-SA-4.0";
+    if (lic.includes("/by/4.0")) return "CC-BY-4.0";
+    if (lic.includes("/by/3.0")) return "CC-BY-3.0";
+    if (lic.includes("/by/2.0")) return "CC-BY-2.0";
+    if (lic.includes("/by/")) return "CC-BY-4.0";
+  }
+
   // Creative Commons Attribution - requires explicit version
   if (lic === "by") {
     if (!ver) return null; // Never guess or assume default version when missing

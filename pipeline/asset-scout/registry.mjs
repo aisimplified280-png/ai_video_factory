@@ -7,6 +7,7 @@ import { FixtureProvider } from "./providers/fixture-provider.mjs";
 import { PixabayProvider } from "./providers/pixabay-provider.mjs";
 import { OpenverseProvider } from "./providers/openverse-provider.mjs";
 import { PexelsProvider } from "./providers/pexels-provider.mjs";
+import { FreesoundProvider } from "./providers/freesound-provider.mjs";
 
 export class AssetRegistry {
   constructor(options = {}) {
@@ -16,6 +17,7 @@ export class AssetRegistry {
     // Online providers are searched first so online assets are selectable
     this.onlineProviders = [
       new PixabayProvider(),
+      new FreesoundProvider(),
       new OpenverseProvider(),
       new PexelsProvider(),
     ];

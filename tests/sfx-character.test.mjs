@@ -46,7 +46,7 @@ test("buildSfxManifest verifies and catalogs audio files in assets/sfx with SHA-
   for (const sound of manifest.sounds) {
     assert.ok(sound.file, `Effect ${sound.id} must have file`);
     assert.ok(sound.sha256 && sound.sha256.length === 64, `Effect ${sound.id} must have valid 64-char SHA256`);
-    assert.equal(sound.license, "Apache-2.0", `Effect ${sound.id} must have license`);
+    assert.ok(["Apache-2.0", "CC0-1.0", "CC0"].includes(sound.license), `Effect ${sound.id} must have compatible license`);
   }
 });
 

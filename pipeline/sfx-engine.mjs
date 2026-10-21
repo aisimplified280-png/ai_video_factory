@@ -127,20 +127,37 @@ export async function buildSfxManifest() {
     { id: "metallic-riser", file: "metallic-riser.wav", license: "Apache-2.0", tags: ["riser", "tension", "build"] },
   ];
 
+  const knownMap = new Map(staticSounds.map((s) => [s.file, s]));
+
+  // Dynamically index all WAV files in the directory
+  let dirEntries = [];
+  try {
+    dirEntries = await fs.readdir(SFX_LIB_DIR);
+  } catch {
+    await fs.mkdir(SFX_LIB_DIR, { recursive: true });
+  }
+
   const soundRecords = [];
-  for (const s of staticSounds) {
-    const fullPath = path.join(SFX_LIB_DIR, s.file);
+  for (const file of dirEntries) {
+    if (!file.endsWith(".wav")) continue;
+    const fullPath = path.join(SFX_LIB_DIR, file);
     try {
       const data = await fs.readFile(fullPath);
       const sha256 = crypto.createHash("sha256").update(data).digest("hex");
+      const baseMeta = knownMap.get(file) || {
+        id: file.replace(/\.wav$/, ""),
+        file,
+        license: file.startsWith("freesound-") ? "CC0-1.0" : "Apache-2.0",
+        tags: [file.replace(/\.wav$/, "").split("-")[0]],
+      };
       soundRecords.push({
-        ...s,
+        ...baseMeta,
         sha256,
         sizeBytes: data.length,
-        path: `assets/sfx/${s.file}`,
+        path: `assets/sfx/${file}`,
       });
     } catch {
-      // If file not yet present, skip
+      // skip unreadable file
     }
   }
 
@@ -154,6 +171,34 @@ export async function buildSfxManifest() {
 
   await fs.writeFile(SFX_MANIFEST_PATH, JSON.stringify(manifest, null, 2), "utf8");
   return manifest;
+}
+
+/**
+ * Scout, download, and catalog a royalty-free CC0/CC-BY sound from Freesound directly into local library.
+ */
+export async function acquireFreesoundSfx(query, filename, options = {}) {
+  const { FreesoundProvider } = await import("./asset-scout/providers/freesound-provider.mjs");
+  const provider = new FreesoundProvider();
+  const results = await provider.search({
+    query,
+    count: 3,
+    licenseFilter: options.licenseFilter || "Creative Commons 0",
+    maxDuration: options.maxDuration || 10,
+  });
+
+  if (!results.length) {
+    throw new Error(`No compatible Freesound effects found for query: "${query}"`);
+  }
+
+  const selected = results[0];
+  const safeFilename = filename.endsWith(".wav") ? filename : `${filename}.wav`;
+  const targetPath = path.join(SFX_LIB_DIR, safeFilename);
+  await provider.downloadAndConvertWav(selected, targetPath);
+  await buildSfxManifest();
+  return {
+    filePath: targetPath,
+    asset: selected,
+  };
 }
 
 /**

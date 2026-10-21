@@ -1,9 +1,31 @@
 {
   "schemaVersion": 1,
   "title": "AI Simplified Lab Free Sound Effects Library",
-  "lastUpdated": "2026-10-21T13:24:25.176Z",
-  "count": 13,
+  "lastUpdated": "2026-10-21T13:34:08.338Z",
+  "count": 18,
   "sounds": [
+    {
+      "id": "camera-shutter-light",
+      "file": "camera-shutter-light.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "camera"
+      ],
+      "sha256": "eb8e6782b8523bbe7268330a77acc2fec10091716fc2998c87bcde91e83da3b0",
+      "sizeBytes": 15478,
+      "path": "assets/sfx/camera-shutter-light.wav"
+    },
+    {
+      "id": "camera-shutter",
+      "file": "camera-shutter.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "camera"
+      ],
+      "sha256": "d3a2b6d91af724fedc04b5c39d157873f644300b321c77ea8fb3a8294c275a02",
+      "sizeBytes": 29838,
+      "path": "assets/sfx/camera-shutter.wav"
+    },
     {
       "id": "clean-ding",
       "file": "clean-ding.wav",
@@ -16,6 +38,17 @@
       "sha256": "26f2540b63529cc1dcedfc8037ad314a93dc7d24073c7026f7a6bf101e3d5834",
       "sizeBytes": 52844,
       "path": "assets/sfx/clean-ding.wav"
+    },
+    {
+      "id": "freesound-click",
+      "file": "freesound-click.wav",
+      "license": "CC0-1.0",
+      "tags": [
+        "freesound"
+      ],
+      "sha256": "9e1f1430744987717e5be5f2263f0c43ee26e45b4aba744524f4a565e7a298c6",
+      "sizeBytes": 50110,
+      "path": "assets/sfx/freesound-click.wav"
     },
     {
       "id": "hook-impact",
@@ -31,97 +64,6 @@
       "path": "assets/sfx/hook-impact.wav"
     },
     {
-      "id": "sub-impact",
-      "file": "sub-impact.wav",
-      "license": "Apache-2.0",
-      "tags": [
-        "impact",
-        "reveal",
-        "low"
-      ],
-      "sha256": "c910408bd9f2ca52ceff846cda65207ed218e928ccde1d494694de81c694b157",
-      "sizeBytes": 61484,
-      "path": "assets/sfx/sub-impact.wav"
-    },
-    {
-      "id": "zoom-swish",
-      "file": "zoom-swish.wav",
-      "license": "Apache-2.0",
-      "tags": [
-        "whoosh",
-        "transition",
-        "camera"
-      ],
-      "sha256": "f6abc91c096c49bf6bc3db3a45319fe0bc806d99adea657799ddda553d814453",
-      "sizeBytes": 73038,
-      "path": "assets/sfx/zoom-swish.wav"
-    },
-    {
-      "id": "ui-pop",
-      "file": "ui-pop.wav",
-      "license": "Apache-2.0",
-      "tags": [
-        "ui",
-        "pop",
-        "hop"
-      ],
-      "sha256": "da8d4e9ab3b9e8bac5309243de329002948e57649fd25685f9c2f5d063eb6e76",
-      "sizeBytes": 19278,
-      "path": "assets/sfx/ui-pop.wav"
-    },
-    {
-      "id": "ui-click",
-      "file": "ui-click.wav",
-      "license": "Apache-2.0",
-      "tags": [
-        "ui",
-        "click",
-        "button"
-      ],
-      "sha256": "2f508c0b362d225d791b34e487bfd7d692ffcf9fd1ba53ade810fd4dd4313ef0",
-      "sizeBytes": 28878,
-      "path": "assets/sfx/ui-click.wav"
-    },
-    {
-      "id": "tick",
-      "file": "tick.wav",
-      "license": "Apache-2.0",
-      "tags": [
-        "clock",
-        "scan",
-        "tick"
-      ],
-      "sha256": "2f3d2096c09a999a57a82553a644c34e79d34540b4bd724e7d94ae854c409b47",
-      "sizeBytes": 8684,
-      "path": "assets/sfx/tick.wav"
-    },
-    {
-      "id": "typing-tick",
-      "file": "typing-tick.wav",
-      "license": "Apache-2.0",
-      "tags": [
-        "typing",
-        "terminal",
-        "scan"
-      ],
-      "sha256": "343a4fb37d25eded633c23cdd035c188b5be07c7313224a8ed33728b0ebfe3dc",
-      "sizeBytes": 5324,
-      "path": "assets/sfx/typing-tick.wav"
-    },
-    {
-      "id": "thock",
-      "file": "thock.wav",
-      "license": "Apache-2.0",
-      "tags": [
-        "mechanical",
-        "lock",
-        "snap"
-      ],
-      "sha256": "cb319c3cdb55cf37685fdbfa21a365abfb4698acc8a3128f1ad34b145273acb1",
-      "sizeBytes": 11564,
-      "path": "assets/sfx/thock.wav"
-    },
-    {
       "id": "latch",
       "file": "latch.wav",
       "license": "Apache-2.0",
@@ -133,6 +75,30 @@
       "sha256": "6ec7f81f74a19465d6ab4f1146a546b852bc02a37caedb56b33257149275e2e3",
       "sizeBytes": 19244,
       "path": "assets/sfx/latch.wav"
+    },
+    {
+      "id": "metallic-riser",
+      "file": "metallic-riser.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "riser",
+        "tension",
+        "build"
+      ],
+      "sha256": "6b93fa944a692adf5322a99245a9cc2837377df83e1f87e98103d6e37209e597",
+      "sizeBytes": 157518,
+      "path": "assets/sfx/metallic-riser.wav"
+    },
+    {
+      "id": "ratchet",
+      "file": "ratchet.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "ratchet"
+      ],
+      "sha256": "3de2919ecc696c2094b376c82c1ed618538b36bca236fed941a6d3e08914909f",
+      "sizeBytes": 38444,
+      "path": "assets/sfx/ratchet.wav"
     },
     {
       "id": "shimmer",
@@ -161,17 +127,106 @@
       "path": "assets/sfx/sparkle.wav"
     },
     {
-      "id": "metallic-riser",
-      "file": "metallic-riser.wav",
+      "id": "sub-impact",
+      "file": "sub-impact.wav",
       "license": "Apache-2.0",
       "tags": [
-        "riser",
-        "tension",
-        "build"
+        "impact",
+        "reveal",
+        "low"
       ],
-      "sha256": "6b93fa944a692adf5322a99245a9cc2837377df83e1f87e98103d6e37209e597",
-      "sizeBytes": 157518,
-      "path": "assets/sfx/metallic-riser.wav"
+      "sha256": "c910408bd9f2ca52ceff846cda65207ed218e928ccde1d494694de81c694b157",
+      "sizeBytes": 61484,
+      "path": "assets/sfx/sub-impact.wav"
+    },
+    {
+      "id": "synth-click-tick",
+      "file": "synth-click-tick.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "synth"
+      ],
+      "sha256": "055d12392bb73054797b2c4af34b56862c0290b6f5637e723fe61c7b3feb1554",
+      "sizeBytes": 24044,
+      "path": "assets/sfx/synth-click-tick.wav"
+    },
+    {
+      "id": "thock",
+      "file": "thock.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "mechanical",
+        "lock",
+        "snap"
+      ],
+      "sha256": "cb319c3cdb55cf37685fdbfa21a365abfb4698acc8a3128f1ad34b145273acb1",
+      "sizeBytes": 11564,
+      "path": "assets/sfx/thock.wav"
+    },
+    {
+      "id": "tick",
+      "file": "tick.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "clock",
+        "scan",
+        "tick"
+      ],
+      "sha256": "2f3d2096c09a999a57a82553a644c34e79d34540b4bd724e7d94ae854c409b47",
+      "sizeBytes": 8684,
+      "path": "assets/sfx/tick.wav"
+    },
+    {
+      "id": "typing-tick",
+      "file": "typing-tick.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "typing",
+        "terminal",
+        "scan"
+      ],
+      "sha256": "343a4fb37d25eded633c23cdd035c188b5be07c7313224a8ed33728b0ebfe3dc",
+      "sizeBytes": 5324,
+      "path": "assets/sfx/typing-tick.wav"
+    },
+    {
+      "id": "ui-click",
+      "file": "ui-click.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "ui",
+        "click",
+        "button"
+      ],
+      "sha256": "2f508c0b362d225d791b34e487bfd7d692ffcf9fd1ba53ade810fd4dd4313ef0",
+      "sizeBytes": 28878,
+      "path": "assets/sfx/ui-click.wav"
+    },
+    {
+      "id": "ui-pop",
+      "file": "ui-pop.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "ui",
+        "pop",
+        "hop"
+      ],
+      "sha256": "da8d4e9ab3b9e8bac5309243de329002948e57649fd25685f9c2f5d063eb6e76",
+      "sizeBytes": 19278,
+      "path": "assets/sfx/ui-pop.wav"
+    },
+    {
+      "id": "zoom-swish",
+      "file": "zoom-swish.wav",
+      "license": "Apache-2.0",
+      "tags": [
+        "whoosh",
+        "transition",
+        "camera"
+      ],
+      "sha256": "f6abc91c096c49bf6bc3db3a45319fe0bc806d99adea657799ddda553d814453",
+      "sizeBytes": 73038,
+      "path": "assets/sfx/zoom-swish.wav"
     }
   ]
 }
