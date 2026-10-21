@@ -927,14 +927,11 @@ export async function generateComposition(compDir, projectData) {
     if (scene.characterCue && scene.characterCue.visible && scene.cardType !== "subscribe-outro") {
       const cue = scene.characterCue;
       const charSelector = `#scene-${idx} #guide-scene-${idx}`;
-      const isLeft = cue.position?.includes("left");
-      const scaleXVal = isLeft ? -0.82 : 0.82;
-      const initialScaleX = isLeft ? -0.72 : 0.72;
       gsapTimelineScript += `
         // Character Choreography for Scene ${idx} (${cue.role || "guide"})
         tl.fromTo("${charSelector}",
-          { y: 35, opacity: 0, scaleX: ${initialScaleX}, scaleY: 0.72 },
-          { y: 0, opacity: 1, scaleX: ${scaleXVal}, scaleY: 0.82, duration: 0.55, ease: "back.out(1.6)" },
+          { y: 35, opacity: 0, scale: 0.72 },
+          { y: 0, opacity: 1, scale: 0.82, duration: 0.55, ease: "back.out(1.6)" },
           ${(startT + 0.12).toFixed(3)}
         );
       `;

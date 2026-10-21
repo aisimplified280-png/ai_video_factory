@@ -1080,17 +1080,17 @@
     .lab-guide-character.guide-pos-bottom-left,
     .lab-guide-character.guide-side-left,
     .lab-guide-figure.side-left {
-      bottom: 24px;
-      left: 20px;
+      bottom: 60px;
+      left: 30px;
       right: auto;
       transform-origin: bottom center;
-      transform: scaleX(-1) scale(0.82);
+      transform: scale(0.82);
     }
     .lab-guide-character.guide-pos-bottom-right,
     .lab-guide-character.guide-side-right,
     .lab-guide-figure.side-bottom {
-      bottom: 24px;
-      right: 20px;
+      bottom: 60px;
+      right: 30px;
       left: auto;
       transform-origin: bottom center;
       transform: scale(0.82);
@@ -1100,7 +1100,7 @@
       left: 10px;
       right: auto;
       transform-origin: center center;
-      transform: scaleX(-1) scale(0.82);
+      transform: scale(0.82);
     }
     .lab-guide-character.guide-pos-mid-right {
       top: 420px;
@@ -1210,46 +1210,117 @@
       
         
   <div id="guide-scene-0" class="lab-guide-character lab-guide-figure pose-contemplate guide-pos-bottom-left guide-scale-compact">
-    <svg viewBox="0 0 200 280" width="160" height="224" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 200 300" width="160" height="240" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
+        <!-- AR HUD Glasses Glow -->
         <radialGradient id="visor-glow-guide-scene-0" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stop-color="#a3e635" stop-opacity="0.9" />
+          <stop offset="60%" stop-color="#22c55e" stop-opacity="0.4" />
           <stop offset="100%" stop-color="#a3e635" stop-opacity="0" />
         </radialGradient>
-        <linearGradient id="coat-grad-guide-scene-0" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#2a144e" />
-          <stop offset="100%" stop-color="#120726" />
+        <!-- Dark Techwear Gradient -->
+        <linearGradient id="techwear-grad-guide-scene-0" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#251445" />
+          <stop offset="100%" stop-color="#120624" />
         </linearGradient>
       </defs>
 
-      <!-- Atmospheric Guide Shadow -->
-      <ellipse cx="100" cy="265" rx="55" ry="10" fill="rgba(0,0,0,0.45)" />
+      <g transform="translate(200, 0) scale(-1, 1)">
+        <!-- Atmospheric Ground Shadow -->
+        <ellipse cx="100" cy="292" rx="55" ry="7" fill="rgba(0,0,0,0.55)" />
 
-      <!-- Body / Minimalist Lab Coat -->
-      <path d="M 65 140 Q 50 200 45 255 L 155 255 Q 150 200 135 140 Z" fill="url(#coat-grad-guide-scene-0)" stroke="#c084fc" stroke-width="2.5" />
-      <!-- Coat Center Lapel Accent -->
-      <line x1="100" y1="140" x2="100" y2="255" stroke="#a3e635" stroke-width="1.8" stroke-dasharray="6,4" />
+        <!-- Mint / Electric Lime Low-Top Sneakers -->
+        <!-- Left Sneaker -->
+        <path d="M 60 274 L 84 274 L 88 285 L 54 285 Z" fill="#a3e635" stroke="#120624" stroke-width="1.8" />
+        <rect x="52" y="284" width="38" height="6" rx="2" fill="#ffffff" stroke="#120624" stroke-width="1.5" />
+        <path d="M 52 284 Q 58 279 66 279" stroke="#ffffff" stroke-width="2" fill="none" />
+        <!-- Right Sneaker -->
+        <path d="M 116 274 L 140 274 L 146 285 L 112 285 Z" fill="#a3e635" stroke="#120624" stroke-width="1.8" />
+        <rect x="110" y="284" width="38" height="6" rx="2" fill="#ffffff" stroke="#120624" stroke-width="1.5" />
+        <path d="M 148 284 Q 142 279 134 279" stroke="#ffffff" stroke-width="2" fill="none" />
 
-      <!-- Left Arm (Resting or Gesturing) -->
-      <g transform="rotate(0 68 140)">
-        <path d="M 68 140 Q 52 185 58 220" fill="none" stroke="#c084fc" stroke-width="10" stroke-linecap="round" />
-        <circle cx="58" cy="220" r="7" fill="#ffffff" stroke="#c084fc" stroke-width="2" />
-      </g>
+        <!-- Tapered Camel / Tech Trousers -->
+        <!-- Left Leg -->
+        <polygon points="70,186 64,274 84,274 94,186" fill="#b08354" stroke="#4a3016" stroke-width="2" />
+        <!-- Right Leg -->
+        <polygon points="106,186 116,274 136,274 130,186" fill="#b08354" stroke="#4a3016" stroke-width="2" />
+        <!-- Seam -->
+        <line x1="100" y1="186" x2="100" y2="216" stroke="#4a3016" stroke-width="2" />
 
-      <!-- Right Arm (Gesturing with Transform) -->
-      <g transform="rotate(-92 100 135)" id="guide-scene-0-gesture-arm">
-        <path d="M 132 140 Q 155 170 175 145" fill="none" stroke="#a3e635" stroke-width="10" stroke-linecap="round" />
-        <circle cx="178" cy="143" r="8" fill="#ffffff" stroke="#a3e635" stroke-width="2.5" />
-      </g>
+        <!-- Belt & Electric Lime Buckle -->
+        <rect x="66" y="178" width="68" height="10" rx="1" fill="#24133b" stroke="#120624" stroke-width="1.5" />
+        <rect x="94" y="177" width="12" height="12" rx="2" fill="#a3e635" stroke="#ffffff" stroke-width="1.2" />
 
-      <!-- Head / Geometric Visor (Faceless Design) -->
-      <g transform="rotate(10 100 65)" id="guide-scene-0-head">
-        <!-- Helmet Silhouette -->
-        <circle cx="100" cy="75" r="42" fill="#1b0b33" stroke="#c084fc" stroke-width="3" />
-        <!-- Neon Visor Halo -->
-        <ellipse cx="100" cy="74" rx="46" ry="16" fill="url(#visor-glow-guide-scene-0)" />
-        <!-- Neon Visor Lens -->
-        <rect x="86" y="67" width="28" height="14" rx="7" fill="#a3e635" stroke="#ffffff" stroke-width="1.5" />
+        <!-- Dark Techwear Hoodie / Jacket -->
+        <path d="M 64 126 L 50 180 L 150 180 L 136 126 Z" fill="url(#techwear-grad-guide-scene-0)" stroke="#3b1d6b" stroke-width="2.5" />
+        <!-- White V-neck Inner Tee -->
+        <polygon points="85,126 100,148 115,126" fill="#f8fafc" stroke="#3b1d6b" stroke-width="1.5" />
+        <!-- Neon Lime Drawstrings -->
+        <path d="M 88 138 Q 85 158 88 170" stroke="#a3e635" stroke-width="2.2" stroke-linecap="round" fill="none" />
+        <circle cx="88" cy="172" r="2.2" fill="#a3e635" />
+        <path d="M 112 138 Q 115 158 112 170" stroke="#a3e635" stroke-width="2.2" stroke-linecap="round" fill="none" />
+        <circle cx="112" cy="172" r="2.2" fill="#a3e635" />
+
+        <!-- Left Arm (Casual / Stance) -->
+        <g transform="rotate(0 60 130)">
+          <path d="M 58 130 L 44 172 L 54 180" fill="none" stroke="#251445" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="54" cy="180" r="7" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+        </g>
+
+        <!-- Right Arm (Gesturing & Articulated) -->
+        <g transform="rotate(-88 140 130)" id="guide-scene-0-gesture-arm">
+          <path d="M 142 130 L 160 160 L 176 142" fill="none" stroke="#a3e635" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="178" cy="140" r="8" fill="#f5d6b8" stroke="#120624" stroke-width="2" />
+        </g>
+
+        <!-- Articulated Head & Hipster Face -->
+        <g transform="rotate(10 100 65)" id="guide-scene-0-head">
+          <!-- Ears -->
+          <rect x="62" y="74" width="8" height="16" rx="4" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+          <rect x="130" y="74" width="8" height="16" rx="4" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+
+          <!-- Blocky Rectangular Face -->
+          <rect x="68" y="56" width="64" height="70" rx="10" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="2" />
+
+          <!-- Brown Angular Hair Bangs -->
+          <polygon points="68,56 74,78 86,72 96,82 104,70 120,80 132,56" fill="#6c3b1e" />
+
+          <!-- Dark Fedora / Trilby Hat with Neon Band -->
+          <!-- Hat Crown -->
+          <path d="M 66 56 C 66 22 78 14 100 14 C 122 14 134 22 134 56 Z" fill="#150a26" stroke="#3b1d6b" stroke-width="2" />
+          <!-- Neon Lime Accent Hatband -->
+          <rect x="66" y="48" width="68" height="8" fill="#a3e635" />
+          <!-- Hat Brim -->
+          <ellipse cx="100" cy="56" rx="50" ry="9" fill="#150a26" stroke="#3b1d6b" stroke-width="2" />
+
+          <!-- Eyes -->
+          <circle cx="82" cy="78" r="3.2" fill="#150a26" />
+          <circle cx="118" cy="78" r="3.2" fill="#150a26" />
+          <!-- Subtle Cheek Freckles -->
+          <circle cx="75" cy="88" r="1.2" fill="#c49575" />
+          <circle cx="79" cy="91" r="1.2" fill="#c49575" />
+          <circle cx="121" cy="91" r="1.2" fill="#c49575" />
+          <circle cx="125" cy="88" r="1.2" fill="#c49575" />
+
+          <!-- Signature Vertical Pill Nose from Reference -->
+          <path d="M 94 74 L 93 102 Q 100 108 107 102 L 106 74 Z" fill="#d47963" stroke="#9e4b36" stroke-width="1.5" />
+
+          <!-- Thick-Rimmed Hipster AR Glasses -->
+          <!-- Frames -->
+          <rect x="70" y="70" width="26" height="18" rx="4" fill="none" stroke="#120624" stroke-width="3" />
+          <line x1="96" y1="78" x2="104" y2="78" stroke="#120624" stroke-width="3" />
+          <rect x="104" y="70" width="26" height="18" rx="4" fill="none" stroke="#120624" stroke-width="3" />
+          <!-- AR HUD Visor Glow Lenses -->
+          <rect x="72" y="72" width="22" height="14" rx="2" fill="url(#visor-glow-guide-scene-0)" opacity="0.75" />
+          <rect x="106" y="72" width="22" height="14" rx="2" fill="url(#visor-glow-guide-scene-0)" opacity="0.75" />
+          <!-- Glowing Data Scan Lines -->
+          <line x1="74" y1="78" x2="92" y2="78" stroke="#a3e635" stroke-width="1" stroke-dasharray="3,2" />
+          <line x1="108" y1="78" x2="126" y2="78" stroke="#a3e635" stroke-width="1" stroke-dasharray="3,2" />
+
+          <!-- Stylized Open Smile (Teeth showing) -->
+          <rect x="80" y="110" width="40" height="12" rx="6" fill="#7a2a22" stroke="#4a1510" stroke-width="1.5" />
+          <rect x="86" y="112" width="28" height="4" rx="1.5" fill="#ffffff" />
+        </g>
       </g>
     </svg>
   </div>
@@ -1316,46 +1387,117 @@
       
         
   <div id="guide-scene-1" class="lab-guide-character lab-guide-figure pose-track guide-pos-bottom-right guide-scale-compact">
-    <svg viewBox="0 0 200 280" width="160" height="224" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 200 300" width="160" height="240" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
+        <!-- AR HUD Glasses Glow -->
         <radialGradient id="visor-glow-guide-scene-1" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stop-color="#a3e635" stop-opacity="0.9" />
+          <stop offset="60%" stop-color="#22c55e" stop-opacity="0.4" />
           <stop offset="100%" stop-color="#a3e635" stop-opacity="0" />
         </radialGradient>
-        <linearGradient id="coat-grad-guide-scene-1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#2a144e" />
-          <stop offset="100%" stop-color="#120726" />
+        <!-- Dark Techwear Gradient -->
+        <linearGradient id="techwear-grad-guide-scene-1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#251445" />
+          <stop offset="100%" stop-color="#120624" />
         </linearGradient>
       </defs>
 
-      <!-- Atmospheric Guide Shadow -->
-      <ellipse cx="100" cy="265" rx="55" ry="10" fill="rgba(0,0,0,0.45)" />
+      <g >
+        <!-- Atmospheric Ground Shadow -->
+        <ellipse cx="100" cy="292" rx="55" ry="7" fill="rgba(0,0,0,0.55)" />
 
-      <!-- Body / Minimalist Lab Coat -->
-      <path d="M 65 140 Q 50 200 45 255 L 155 255 Q 150 200 135 140 Z" fill="url(#coat-grad-guide-scene-1)" stroke="#c084fc" stroke-width="2.5" />
-      <!-- Coat Center Lapel Accent -->
-      <line x1="100" y1="140" x2="100" y2="255" stroke="#a3e635" stroke-width="1.8" stroke-dasharray="6,4" />
+        <!-- Mint / Electric Lime Low-Top Sneakers -->
+        <!-- Left Sneaker -->
+        <path d="M 60 274 L 84 274 L 88 285 L 54 285 Z" fill="#a3e635" stroke="#120624" stroke-width="1.8" />
+        <rect x="52" y="284" width="38" height="6" rx="2" fill="#ffffff" stroke="#120624" stroke-width="1.5" />
+        <path d="M 52 284 Q 58 279 66 279" stroke="#ffffff" stroke-width="2" fill="none" />
+        <!-- Right Sneaker -->
+        <path d="M 116 274 L 140 274 L 146 285 L 112 285 Z" fill="#a3e635" stroke="#120624" stroke-width="1.8" />
+        <rect x="110" y="284" width="38" height="6" rx="2" fill="#ffffff" stroke="#120624" stroke-width="1.5" />
+        <path d="M 148 284 Q 142 279 134 279" stroke="#ffffff" stroke-width="2" fill="none" />
 
-      <!-- Left Arm (Resting or Gesturing) -->
-      <g transform="rotate(0 68 140)">
-        <path d="M 68 140 Q 52 185 58 220" fill="none" stroke="#c084fc" stroke-width="10" stroke-linecap="round" />
-        <circle cx="58" cy="220" r="7" fill="#ffffff" stroke="#c084fc" stroke-width="2" />
-      </g>
+        <!-- Tapered Camel / Tech Trousers -->
+        <!-- Left Leg -->
+        <polygon points="70,186 64,274 84,274 94,186" fill="#b08354" stroke="#4a3016" stroke-width="2" />
+        <!-- Right Leg -->
+        <polygon points="106,186 116,274 136,274 130,186" fill="#b08354" stroke="#4a3016" stroke-width="2" />
+        <!-- Seam -->
+        <line x1="100" y1="186" x2="100" y2="216" stroke="#4a3016" stroke-width="2" />
 
-      <!-- Right Arm (Gesturing with Transform) -->
-      <g transform="rotate(-30 100 135)" id="guide-scene-1-gesture-arm">
-        <path d="M 132 140 Q 155 170 175 145" fill="none" stroke="#a3e635" stroke-width="10" stroke-linecap="round" />
-        <circle cx="178" cy="143" r="8" fill="#ffffff" stroke="#a3e635" stroke-width="2.5" />
-      </g>
+        <!-- Belt & Electric Lime Buckle -->
+        <rect x="66" y="178" width="68" height="10" rx="1" fill="#24133b" stroke="#120624" stroke-width="1.5" />
+        <rect x="94" y="177" width="12" height="12" rx="2" fill="#a3e635" stroke="#ffffff" stroke-width="1.2" />
 
-      <!-- Head / Geometric Visor (Faceless Design) -->
-      <g transform="rotate(16 100 65)" id="guide-scene-1-head">
-        <!-- Helmet Silhouette -->
-        <circle cx="100" cy="75" r="42" fill="#1b0b33" stroke="#c084fc" stroke-width="3" />
-        <!-- Neon Visor Halo -->
-        <ellipse cx="100" cy="74" rx="46" ry="16" fill="url(#visor-glow-guide-scene-1)" />
-        <!-- Neon Visor Lens -->
-        <rect x="82" y="67" width="36" height="14" rx="7" fill="#a3e635" stroke="#ffffff" stroke-width="1.5" />
+        <!-- Dark Techwear Hoodie / Jacket -->
+        <path d="M 64 126 L 50 180 L 150 180 L 136 126 Z" fill="url(#techwear-grad-guide-scene-1)" stroke="#3b1d6b" stroke-width="2.5" />
+        <!-- White V-neck Inner Tee -->
+        <polygon points="85,126 100,148 115,126" fill="#f8fafc" stroke="#3b1d6b" stroke-width="1.5" />
+        <!-- Neon Lime Drawstrings -->
+        <path d="M 88 138 Q 85 158 88 170" stroke="#a3e635" stroke-width="2.2" stroke-linecap="round" fill="none" />
+        <circle cx="88" cy="172" r="2.2" fill="#a3e635" />
+        <path d="M 112 138 Q 115 158 112 170" stroke="#a3e635" stroke-width="2.2" stroke-linecap="round" fill="none" />
+        <circle cx="112" cy="172" r="2.2" fill="#a3e635" />
+
+        <!-- Left Arm (Casual / Stance) -->
+        <g transform="rotate(0 60 130)">
+          <path d="M 58 130 L 44 172 L 54 180" fill="none" stroke="#251445" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="54" cy="180" r="7" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+        </g>
+
+        <!-- Right Arm (Gesturing & Articulated) -->
+        <g transform="rotate(-30 140 130)" id="guide-scene-1-gesture-arm">
+          <path d="M 142 130 L 160 160 L 176 142" fill="none" stroke="#a3e635" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="178" cy="140" r="8" fill="#f5d6b8" stroke="#120624" stroke-width="2" />
+        </g>
+
+        <!-- Articulated Head & Hipster Face -->
+        <g transform="rotate(16 100 65)" id="guide-scene-1-head">
+          <!-- Ears -->
+          <rect x="62" y="74" width="8" height="16" rx="4" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+          <rect x="130" y="74" width="8" height="16" rx="4" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+
+          <!-- Blocky Rectangular Face -->
+          <rect x="68" y="56" width="64" height="70" rx="10" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="2" />
+
+          <!-- Brown Angular Hair Bangs -->
+          <polygon points="68,56 74,78 86,72 96,82 104,70 120,80 132,56" fill="#6c3b1e" />
+
+          <!-- Dark Fedora / Trilby Hat with Neon Band -->
+          <!-- Hat Crown -->
+          <path d="M 66 56 C 66 22 78 14 100 14 C 122 14 134 22 134 56 Z" fill="#150a26" stroke="#3b1d6b" stroke-width="2" />
+          <!-- Neon Lime Accent Hatband -->
+          <rect x="66" y="48" width="68" height="8" fill="#a3e635" />
+          <!-- Hat Brim -->
+          <ellipse cx="100" cy="56" rx="50" ry="9" fill="#150a26" stroke="#3b1d6b" stroke-width="2" />
+
+          <!-- Eyes -->
+          <circle cx="82" cy="78" r="3.2" fill="#150a26" />
+          <circle cx="118" cy="78" r="3.2" fill="#150a26" />
+          <!-- Subtle Cheek Freckles -->
+          <circle cx="75" cy="88" r="1.2" fill="#c49575" />
+          <circle cx="79" cy="91" r="1.2" fill="#c49575" />
+          <circle cx="121" cy="91" r="1.2" fill="#c49575" />
+          <circle cx="125" cy="88" r="1.2" fill="#c49575" />
+
+          <!-- Signature Vertical Pill Nose from Reference -->
+          <path d="M 94 74 L 93 102 Q 100 108 107 102 L 106 74 Z" fill="#d47963" stroke="#9e4b36" stroke-width="1.5" />
+
+          <!-- Thick-Rimmed Hipster AR Glasses -->
+          <!-- Frames -->
+          <rect x="70" y="70" width="26" height="18" rx="4" fill="none" stroke="#120624" stroke-width="3" />
+          <line x1="96" y1="78" x2="104" y2="78" stroke="#120624" stroke-width="3" />
+          <rect x="104" y="70" width="26" height="18" rx="4" fill="none" stroke="#120624" stroke-width="3" />
+          <!-- AR HUD Visor Glow Lenses -->
+          <rect x="72" y="72" width="22" height="14" rx="2" fill="url(#visor-glow-guide-scene-1)" opacity="0.75" />
+          <rect x="106" y="72" width="22" height="14" rx="2" fill="url(#visor-glow-guide-scene-1)" opacity="0.75" />
+          <!-- Glowing Data Scan Lines -->
+          <line x1="74" y1="78" x2="92" y2="78" stroke="#a3e635" stroke-width="1" stroke-dasharray="3,2" />
+          <line x1="108" y1="78" x2="126" y2="78" stroke="#a3e635" stroke-width="1" stroke-dasharray="3,2" />
+
+          <!-- Stylized Open Smile (Teeth showing) -->
+          <rect x="80" y="110" width="40" height="12" rx="6" fill="#7a2a22" stroke="#4a1510" stroke-width="1.5" />
+          <rect x="86" y="112" width="28" height="4" rx="1.5" fill="#ffffff" />
+        </g>
       </g>
     </svg>
   </div>
@@ -1461,46 +1603,117 @@
       
         
   <div id="guide-scene-3" class="lab-guide-character lab-guide-figure pose-react guide-pos-bottom-left guide-scale-compact">
-    <svg viewBox="0 0 200 280" width="160" height="224" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 200 300" width="160" height="240" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
+        <!-- AR HUD Glasses Glow -->
         <radialGradient id="visor-glow-guide-scene-3" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stop-color="#a3e635" stop-opacity="0.9" />
+          <stop offset="60%" stop-color="#22c55e" stop-opacity="0.4" />
           <stop offset="100%" stop-color="#a3e635" stop-opacity="0" />
         </radialGradient>
-        <linearGradient id="coat-grad-guide-scene-3" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#2a144e" />
-          <stop offset="100%" stop-color="#120726" />
+        <!-- Dark Techwear Gradient -->
+        <linearGradient id="techwear-grad-guide-scene-3" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#251445" />
+          <stop offset="100%" stop-color="#120624" />
         </linearGradient>
       </defs>
 
-      <!-- Atmospheric Guide Shadow -->
-      <ellipse cx="100" cy="265" rx="55" ry="10" fill="rgba(0,0,0,0.45)" />
+      <g transform="translate(200, 0) scale(-1, 1)">
+        <!-- Atmospheric Ground Shadow -->
+        <ellipse cx="100" cy="292" rx="55" ry="7" fill="rgba(0,0,0,0.55)" />
 
-      <!-- Body / Minimalist Lab Coat -->
-      <path d="M 65 140 Q 50 200 45 255 L 155 255 Q 150 200 135 140 Z" fill="url(#coat-grad-guide-scene-3)" stroke="#c084fc" stroke-width="2.5" />
-      <!-- Coat Center Lapel Accent -->
-      <line x1="100" y1="140" x2="100" y2="255" stroke="#a3e635" stroke-width="1.8" stroke-dasharray="6,4" />
+        <!-- Mint / Electric Lime Low-Top Sneakers -->
+        <!-- Left Sneaker -->
+        <path d="M 60 274 L 84 274 L 88 285 L 54 285 Z" fill="#a3e635" stroke="#120624" stroke-width="1.8" />
+        <rect x="52" y="284" width="38" height="6" rx="2" fill="#ffffff" stroke="#120624" stroke-width="1.5" />
+        <path d="M 52 284 Q 58 279 66 279" stroke="#ffffff" stroke-width="2" fill="none" />
+        <!-- Right Sneaker -->
+        <path d="M 116 274 L 140 274 L 146 285 L 112 285 Z" fill="#a3e635" stroke="#120624" stroke-width="1.8" />
+        <rect x="110" y="284" width="38" height="6" rx="2" fill="#ffffff" stroke="#120624" stroke-width="1.5" />
+        <path d="M 148 284 Q 142 279 134 279" stroke="#ffffff" stroke-width="2" fill="none" />
 
-      <!-- Left Arm (Resting or Gesturing) -->
-      <g transform="rotate(35 68 140)">
-        <path d="M 68 140 Q 52 185 58 220" fill="none" stroke="#c084fc" stroke-width="10" stroke-linecap="round" />
-        <circle cx="58" cy="220" r="7" fill="#ffffff" stroke="#c084fc" stroke-width="2" />
-      </g>
+        <!-- Tapered Camel / Tech Trousers -->
+        <!-- Left Leg -->
+        <polygon points="70,186 64,274 84,274 94,186" fill="#b08354" stroke="#4a3016" stroke-width="2" />
+        <!-- Right Leg -->
+        <polygon points="106,186 116,274 136,274 130,186" fill="#b08354" stroke="#4a3016" stroke-width="2" />
+        <!-- Seam -->
+        <line x1="100" y1="186" x2="100" y2="216" stroke="#4a3016" stroke-width="2" />
 
-      <!-- Right Arm (Gesturing with Transform) -->
-      <g transform="rotate(-105 100 135)" id="guide-scene-3-gesture-arm">
-        <path d="M 132 140 Q 155 170 175 145" fill="none" stroke="#a3e635" stroke-width="10" stroke-linecap="round" />
-        <circle cx="178" cy="143" r="8" fill="#ffffff" stroke="#a3e635" stroke-width="2.5" />
-      </g>
+        <!-- Belt & Electric Lime Buckle -->
+        <rect x="66" y="178" width="68" height="10" rx="1" fill="#24133b" stroke="#120624" stroke-width="1.5" />
+        <rect x="94" y="177" width="12" height="12" rx="2" fill="#a3e635" stroke="#ffffff" stroke-width="1.2" />
 
-      <!-- Head / Geometric Visor (Faceless Design) -->
-      <g transform="rotate(-14 100 65)" id="guide-scene-3-head">
-        <!-- Helmet Silhouette -->
-        <circle cx="100" cy="75" r="42" fill="#1b0b33" stroke="#c084fc" stroke-width="3" />
-        <!-- Neon Visor Halo -->
-        <ellipse cx="100" cy="74" rx="46" ry="16" fill="url(#visor-glow-guide-scene-3)" />
-        <!-- Neon Visor Lens -->
-        <rect x="78" y="67" width="44" height="14" rx="7" fill="#a3e635" stroke="#ffffff" stroke-width="1.5" />
+        <!-- Dark Techwear Hoodie / Jacket -->
+        <path d="M 64 126 L 50 180 L 150 180 L 136 126 Z" fill="url(#techwear-grad-guide-scene-3)" stroke="#3b1d6b" stroke-width="2.5" />
+        <!-- White V-neck Inner Tee -->
+        <polygon points="85,126 100,148 115,126" fill="#f8fafc" stroke="#3b1d6b" stroke-width="1.5" />
+        <!-- Neon Lime Drawstrings -->
+        <path d="M 88 138 Q 85 158 88 170" stroke="#a3e635" stroke-width="2.2" stroke-linecap="round" fill="none" />
+        <circle cx="88" cy="172" r="2.2" fill="#a3e635" />
+        <path d="M 112 138 Q 115 158 112 170" stroke="#a3e635" stroke-width="2.2" stroke-linecap="round" fill="none" />
+        <circle cx="112" cy="172" r="2.2" fill="#a3e635" />
+
+        <!-- Left Arm (Casual / Stance) -->
+        <g transform="rotate(35 60 130)">
+          <path d="M 58 130 L 44 172 L 54 180" fill="none" stroke="#251445" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="54" cy="180" r="7" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+        </g>
+
+        <!-- Right Arm (Gesturing & Articulated) -->
+        <g transform="rotate(-105 140 130)" id="guide-scene-3-gesture-arm">
+          <path d="M 142 130 L 160 160 L 176 142" fill="none" stroke="#a3e635" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="178" cy="140" r="8" fill="#f5d6b8" stroke="#120624" stroke-width="2" />
+        </g>
+
+        <!-- Articulated Head & Hipster Face -->
+        <g transform="rotate(-14 100 65)" id="guide-scene-3-head">
+          <!-- Ears -->
+          <rect x="62" y="74" width="8" height="16" rx="4" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+          <rect x="130" y="74" width="8" height="16" rx="4" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+
+          <!-- Blocky Rectangular Face -->
+          <rect x="68" y="56" width="64" height="70" rx="10" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="2" />
+
+          <!-- Brown Angular Hair Bangs -->
+          <polygon points="68,56 74,78 86,72 96,82 104,70 120,80 132,56" fill="#6c3b1e" />
+
+          <!-- Dark Fedora / Trilby Hat with Neon Band -->
+          <!-- Hat Crown -->
+          <path d="M 66 56 C 66 22 78 14 100 14 C 122 14 134 22 134 56 Z" fill="#150a26" stroke="#3b1d6b" stroke-width="2" />
+          <!-- Neon Lime Accent Hatband -->
+          <rect x="66" y="48" width="68" height="8" fill="#a3e635" />
+          <!-- Hat Brim -->
+          <ellipse cx="100" cy="56" rx="50" ry="9" fill="#150a26" stroke="#3b1d6b" stroke-width="2" />
+
+          <!-- Eyes -->
+          <circle cx="82" cy="78" r="3.2" fill="#150a26" />
+          <circle cx="118" cy="78" r="3.2" fill="#150a26" />
+          <!-- Subtle Cheek Freckles -->
+          <circle cx="75" cy="88" r="1.2" fill="#c49575" />
+          <circle cx="79" cy="91" r="1.2" fill="#c49575" />
+          <circle cx="121" cy="91" r="1.2" fill="#c49575" />
+          <circle cx="125" cy="88" r="1.2" fill="#c49575" />
+
+          <!-- Signature Vertical Pill Nose from Reference -->
+          <path d="M 94 74 L 93 102 Q 100 108 107 102 L 106 74 Z" fill="#d47963" stroke="#9e4b36" stroke-width="1.5" />
+
+          <!-- Thick-Rimmed Hipster AR Glasses -->
+          <!-- Frames -->
+          <rect x="70" y="70" width="26" height="18" rx="4" fill="none" stroke="#120624" stroke-width="3" />
+          <line x1="96" y1="78" x2="104" y2="78" stroke="#120624" stroke-width="3" />
+          <rect x="104" y="70" width="26" height="18" rx="4" fill="none" stroke="#120624" stroke-width="3" />
+          <!-- AR HUD Visor Glow Lenses -->
+          <rect x="72" y="72" width="22" height="14" rx="2" fill="url(#visor-glow-guide-scene-3)" opacity="0.75" />
+          <rect x="106" y="72" width="22" height="14" rx="2" fill="url(#visor-glow-guide-scene-3)" opacity="0.75" />
+          <!-- Glowing Data Scan Lines -->
+          <line x1="74" y1="78" x2="92" y2="78" stroke="#a3e635" stroke-width="1" stroke-dasharray="3,2" />
+          <line x1="108" y1="78" x2="126" y2="78" stroke="#a3e635" stroke-width="1" stroke-dasharray="3,2" />
+
+          <!-- Stylized Open Smile (Teeth showing) -->
+          <rect x="80" y="110" width="40" height="12" rx="6" fill="#7a2a22" stroke="#4a1510" stroke-width="1.5" />
+          <rect x="86" y="112" width="28" height="4" rx="1.5" fill="#ffffff" />
+        </g>
       </g>
     </svg>
   </div>
@@ -1531,46 +1744,117 @@
           <div class="outro-guide-anchor">
             
   <div id="guide-outro" class="lab-guide-character lab-guide-figure pose-outro-cta  guide-scale-normal">
-    <svg viewBox="0 0 200 280" width="160" height="224" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 200 300" width="160" height="240" class="guide-svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
+        <!-- AR HUD Glasses Glow -->
         <radialGradient id="visor-glow-guide-outro" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stop-color="#a3e635" stop-opacity="0.9" />
+          <stop offset="60%" stop-color="#22c55e" stop-opacity="0.4" />
           <stop offset="100%" stop-color="#a3e635" stop-opacity="0" />
         </radialGradient>
-        <linearGradient id="coat-grad-guide-outro" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#2a144e" />
-          <stop offset="100%" stop-color="#120726" />
+        <!-- Dark Techwear Gradient -->
+        <linearGradient id="techwear-grad-guide-outro" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#251445" />
+          <stop offset="100%" stop-color="#120624" />
         </linearGradient>
       </defs>
 
-      <!-- Atmospheric Guide Shadow -->
-      <ellipse cx="100" cy="265" rx="55" ry="10" fill="rgba(0,0,0,0.45)" />
+      <g >
+        <!-- Atmospheric Ground Shadow -->
+        <ellipse cx="100" cy="292" rx="55" ry="7" fill="rgba(0,0,0,0.55)" />
 
-      <!-- Body / Minimalist Lab Coat -->
-      <path d="M 65 140 Q 50 200 45 255 L 155 255 Q 150 200 135 140 Z" fill="url(#coat-grad-guide-outro)" stroke="#c084fc" stroke-width="2.5" />
-      <!-- Coat Center Lapel Accent -->
-      <line x1="100" y1="140" x2="100" y2="255" stroke="#a3e635" stroke-width="1.8" stroke-dasharray="6,4" />
+        <!-- Mint / Electric Lime Low-Top Sneakers -->
+        <!-- Left Sneaker -->
+        <path d="M 60 274 L 84 274 L 88 285 L 54 285 Z" fill="#a3e635" stroke="#120624" stroke-width="1.8" />
+        <rect x="52" y="284" width="38" height="6" rx="2" fill="#ffffff" stroke="#120624" stroke-width="1.5" />
+        <path d="M 52 284 Q 58 279 66 279" stroke="#ffffff" stroke-width="2" fill="none" />
+        <!-- Right Sneaker -->
+        <path d="M 116 274 L 140 274 L 146 285 L 112 285 Z" fill="#a3e635" stroke="#120624" stroke-width="1.8" />
+        <rect x="110" y="284" width="38" height="6" rx="2" fill="#ffffff" stroke="#120624" stroke-width="1.5" />
+        <path d="M 148 284 Q 142 279 134 279" stroke="#ffffff" stroke-width="2" fill="none" />
 
-      <!-- Left Arm (Resting or Gesturing) -->
-      <g transform="rotate(0 68 140)">
-        <path d="M 68 140 Q 52 185 58 220" fill="none" stroke="#c084fc" stroke-width="10" stroke-linecap="round" />
-        <circle cx="58" cy="220" r="7" fill="#ffffff" stroke="#c084fc" stroke-width="2" />
-      </g>
+        <!-- Tapered Camel / Tech Trousers -->
+        <!-- Left Leg -->
+        <polygon points="70,186 64,274 84,274 94,186" fill="#b08354" stroke="#4a3016" stroke-width="2" />
+        <!-- Right Leg -->
+        <polygon points="106,186 116,274 136,274 130,186" fill="#b08354" stroke="#4a3016" stroke-width="2" />
+        <!-- Seam -->
+        <line x1="100" y1="186" x2="100" y2="216" stroke="#4a3016" stroke-width="2" />
 
-      <!-- Right Arm (Gesturing with Transform) -->
-      <g transform="rotate(-65 100 135)" id="guide-outro-gesture-arm">
-        <path d="M 132 140 Q 155 170 175 145" fill="none" stroke="#a3e635" stroke-width="10" stroke-linecap="round" />
-        <circle cx="178" cy="143" r="8" fill="#ffffff" stroke="#a3e635" stroke-width="2.5" />
-      </g>
+        <!-- Belt & Electric Lime Buckle -->
+        <rect x="66" y="178" width="68" height="10" rx="1" fill="#24133b" stroke="#120624" stroke-width="1.5" />
+        <rect x="94" y="177" width="12" height="12" rx="2" fill="#a3e635" stroke="#ffffff" stroke-width="1.2" />
 
-      <!-- Head / Geometric Visor (Faceless Design) -->
-      <g transform="rotate(-8 100 65)" id="guide-outro-head">
-        <!-- Helmet Silhouette -->
-        <circle cx="100" cy="75" r="42" fill="#1b0b33" stroke="#c084fc" stroke-width="3" />
-        <!-- Neon Visor Halo -->
-        <ellipse cx="100" cy="74" rx="46" ry="16" fill="url(#visor-glow-guide-outro)" />
-        <!-- Neon Visor Lens -->
-        <rect x="80" y="67" width="40" height="14" rx="7" fill="#a3e635" stroke="#ffffff" stroke-width="1.5" />
+        <!-- Dark Techwear Hoodie / Jacket -->
+        <path d="M 64 126 L 50 180 L 150 180 L 136 126 Z" fill="url(#techwear-grad-guide-outro)" stroke="#3b1d6b" stroke-width="2.5" />
+        <!-- White V-neck Inner Tee -->
+        <polygon points="85,126 100,148 115,126" fill="#f8fafc" stroke="#3b1d6b" stroke-width="1.5" />
+        <!-- Neon Lime Drawstrings -->
+        <path d="M 88 138 Q 85 158 88 170" stroke="#a3e635" stroke-width="2.2" stroke-linecap="round" fill="none" />
+        <circle cx="88" cy="172" r="2.2" fill="#a3e635" />
+        <path d="M 112 138 Q 115 158 112 170" stroke="#a3e635" stroke-width="2.2" stroke-linecap="round" fill="none" />
+        <circle cx="112" cy="172" r="2.2" fill="#a3e635" />
+
+        <!-- Left Arm (Casual / Stance) -->
+        <g transform="rotate(0 60 130)">
+          <path d="M 58 130 L 44 172 L 54 180" fill="none" stroke="#251445" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="54" cy="180" r="7" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+        </g>
+
+        <!-- Right Arm (Gesturing & Articulated) -->
+        <g transform="rotate(-65 140 130)" id="guide-outro-gesture-arm">
+          <path d="M 142 130 L 160 160 L 176 142" fill="none" stroke="#a3e635" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="178" cy="140" r="8" fill="#f5d6b8" stroke="#120624" stroke-width="2" />
+        </g>
+
+        <!-- Articulated Head & Hipster Face -->
+        <g transform="rotate(-8 100 65)" id="guide-outro-head">
+          <!-- Ears -->
+          <rect x="62" y="74" width="8" height="16" rx="4" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+          <rect x="130" y="74" width="8" height="16" rx="4" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="1.8" />
+
+          <!-- Blocky Rectangular Face -->
+          <rect x="68" y="56" width="64" height="70" rx="10" fill="#f5d6b8" stroke="#3b1d6b" stroke-width="2" />
+
+          <!-- Brown Angular Hair Bangs -->
+          <polygon points="68,56 74,78 86,72 96,82 104,70 120,80 132,56" fill="#6c3b1e" />
+
+          <!-- Dark Fedora / Trilby Hat with Neon Band -->
+          <!-- Hat Crown -->
+          <path d="M 66 56 C 66 22 78 14 100 14 C 122 14 134 22 134 56 Z" fill="#150a26" stroke="#3b1d6b" stroke-width="2" />
+          <!-- Neon Lime Accent Hatband -->
+          <rect x="66" y="48" width="68" height="8" fill="#a3e635" />
+          <!-- Hat Brim -->
+          <ellipse cx="100" cy="56" rx="50" ry="9" fill="#150a26" stroke="#3b1d6b" stroke-width="2" />
+
+          <!-- Eyes -->
+          <circle cx="82" cy="78" r="3.2" fill="#150a26" />
+          <circle cx="118" cy="78" r="3.2" fill="#150a26" />
+          <!-- Subtle Cheek Freckles -->
+          <circle cx="75" cy="88" r="1.2" fill="#c49575" />
+          <circle cx="79" cy="91" r="1.2" fill="#c49575" />
+          <circle cx="121" cy="91" r="1.2" fill="#c49575" />
+          <circle cx="125" cy="88" r="1.2" fill="#c49575" />
+
+          <!-- Signature Vertical Pill Nose from Reference -->
+          <path d="M 94 74 L 93 102 Q 100 108 107 102 L 106 74 Z" fill="#d47963" stroke="#9e4b36" stroke-width="1.5" />
+
+          <!-- Thick-Rimmed Hipster AR Glasses -->
+          <!-- Frames -->
+          <rect x="70" y="70" width="26" height="18" rx="4" fill="none" stroke="#120624" stroke-width="3" />
+          <line x1="96" y1="78" x2="104" y2="78" stroke="#120624" stroke-width="3" />
+          <rect x="104" y="70" width="26" height="18" rx="4" fill="none" stroke="#120624" stroke-width="3" />
+          <!-- AR HUD Visor Glow Lenses -->
+          <rect x="72" y="72" width="22" height="14" rx="2" fill="url(#visor-glow-guide-outro)" opacity="0.75" />
+          <rect x="106" y="72" width="22" height="14" rx="2" fill="url(#visor-glow-guide-outro)" opacity="0.75" />
+          <!-- Glowing Data Scan Lines -->
+          <line x1="74" y1="78" x2="92" y2="78" stroke="#a3e635" stroke-width="1" stroke-dasharray="3,2" />
+          <line x1="108" y1="78" x2="126" y2="78" stroke="#a3e635" stroke-width="1" stroke-dasharray="3,2" />
+
+          <!-- Stylized Open Smile (Teeth showing) -->
+          <rect x="80" y="110" width="40" height="12" rx="6" fill="#7a2a22" stroke="#4a1510" stroke-width="1.5" />
+          <rect x="86" y="112" width="28" height="4" rx="1.5" fill="#ffffff" />
+        </g>
       </g>
     </svg>
   </div>
@@ -1639,6 +1923,14 @@
         tl.from("#scene-0 .collage-hero-card", { opacity: 0, y: 45, scale: 0.94, duration: 0.65, ease: "back.out(1.3)" }, 0.25);
         tl.from("#scene-0 .surreal-icon", { rotation: -20, scale: 0.5, opacity: 0, duration: 0.6, ease: "back.out(1.8)" }, 0.35);
       
+        tl.from("#scene-0 .diagram-hero-frame", {
+          scale: 0.92,
+          opacity: 0,
+          y: 20,
+          duration: 0.5,
+          ease: "back.out(1.4)"
+        }, 0.2);
+      
         // --- Scene 0 Motion Choreography (linear-scan-bottleneck) ---
 
           // Action: step-scan-points on #linear-search-marker
@@ -1696,8 +1988,8 @@
           
         // Character Choreography for Scene 0 (problem-presenter)
         tl.fromTo("#scene-0 #guide-scene-0",
-          { y: 35, opacity: 0, scaleX: -0.72, scaleY: 0.72 },
-          { y: 0, opacity: 1, scaleX: -0.82, scaleY: 0.82, duration: 0.55, ease: "back.out(1.6)" },
+          { y: 35, opacity: 0, scale: 0.72 },
+          { y: 0, opacity: 1, scale: 0.82, duration: 0.55, ease: "back.out(1.6)" },
           0.120
         );
       
@@ -2014,8 +2306,8 @@
           
         // Character Choreography for Scene 1 (motion-tracker)
         tl.fromTo("#scene-1 #guide-scene-1",
-          { y: 35, opacity: 0, scaleX: 0.72, scaleY: 0.72 },
-          { y: 0, opacity: 1, scaleX: 0.82, scaleY: 0.82, duration: 0.55, ease: "back.out(1.6)" },
+          { y: 35, opacity: 0, scale: 0.72 },
+          { y: 0, opacity: 1, scale: 0.82, duration: 0.55, ease: "back.out(1.6)" },
           6.746
         );
       
@@ -2705,8 +2997,8 @@
           
         // Character Choreography for Scene 3 (breakthrough-celebrator)
         tl.fromTo("#scene-3 #guide-scene-3",
-          { y: 35, opacity: 0, scaleX: -0.72, scaleY: 0.72 },
-          { y: 0, opacity: 1, scaleX: -0.82, scaleY: 0.82, duration: 0.55, ease: "back.out(1.6)" },
+          { y: 35, opacity: 0, scale: 0.72 },
+          { y: 0, opacity: 1, scale: 0.82, duration: 0.55, ease: "back.out(1.6)" },
           20.363
         );
       

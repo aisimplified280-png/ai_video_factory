@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-21T14:14:19.113Z",
+  "generatedAt": "2026-10-21T14:34:11.059Z",
   "projectId": "short-9327-vector-database-indexing",
   "topic": "Vector Database Indexing",
   "visualStrategy": "technical-explainer",
@@ -19,9 +19,9 @@
       "sceneIndex": 0,
       "beatId": "beat-1-hook",
       "visualMode": "hook-bold-object",
-      "selectedAssetId": null,
-      "decision": "bespoke-procedural-svg",
-      "decisionReason": "Candidate rights verification yielded REJECTED; defaulted to bespoke procedural graphic.",
+      "selectedAssetId": "pixabay-76517",
+      "decision": "approved-stock",
+      "decisionReason": "Candidate 'pixabay-76517' selected with multi-criteria score 39.",
       "characterChoreography": {
         "visible": true,
         "role": "problem-presenter",

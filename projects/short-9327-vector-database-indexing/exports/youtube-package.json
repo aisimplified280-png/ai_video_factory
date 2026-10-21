@@ -54,8 +54,8 @@
     },
     "rightsProvenance": {
       "status": "PASS",
-      "details": "All scenes use original procedural graphics and vector assets.",
-      "projectAssetsCount": 0,
+      "details": "All external assets referenced by scenes possess verified compatible licenses.",
+      "projectAssetsCount": 1,
       "credits": "No external assets requiring attribution were used."
     },
     "editorialGovernance": {
@@ -74,7 +74,7 @@
     "visualCritiqueReport": "visual-critique-report.json",
     "format": {
       "duration": "33.600000",
-      "size": "10266380"
+      "size": "10466438"
     },
     "streams": [
       {
