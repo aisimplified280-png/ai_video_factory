@@ -295,6 +295,7 @@ async function main() {
       steps: beat.steps,
       oldWay: beat.oldWay,
       newWay: beat.newWay,
+      sceneGraph: beat.sceneGraph,
     })),
     rightsLedger: assetRegistry.ledger,
     storyboard: storyboardData,
@@ -308,10 +309,13 @@ async function main() {
   const finalResult = await renderAndMux(projectDir, compositionData);
 
   console.log(`\n🎉 DELIVERABLE COMPLETED SUCCESSFULLY!`);
-  console.log(`   📹 Video:         ${finalResult.finalMp4}`);
-  console.log(`   🖼️ Cover:         ${finalResult.coverPng}`);
-  console.log(`   🖼️ Contact Sheet: ${finalResult.contactSheetPng}`);
-  console.log(`   📋 Truthful QA:   ${path.join(projectDir, "exports", "youtube-package.json")}\n`);
+  console.log(`   📹 Video:          ${finalResult.finalMp4}`);
+  console.log(`   🖼️ Cover:          ${finalResult.coverPng}`);
+  console.log(`   🖼️ Contact Sheet:  ${finalResult.contactSheetPng}`);
+  if (finalResult.motionContactSheetPng) {
+    console.log(`   🎬 Motion Sheet:   ${finalResult.motionContactSheetPng}`);
+  }
+  console.log(`   📋 Truthful QA:    ${path.join(projectDir, "exports", "youtube-package.json")}\n`);
 }
 
 main().catch((err) => {

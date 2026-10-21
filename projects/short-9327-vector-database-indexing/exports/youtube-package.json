@@ -61,9 +61,10 @@
     "file": "final.mp4",
     "coverThumbnail": "cover-frame.png",
     "contactSheet": "contact-sheet.png",
+    "motionContactSheet": "motion-contact-sheet.png",
     "format": {
       "duration": "27.833333",
-      "size": "8384557"
+      "size": "8611289"
     },
     "streams": [
       {

@@ -143,28 +143,38 @@ export async function renderAndMux(projectDir, projectData) {
     (url) => !url.includes("schema") && !url.includes("w3.org")
   );
 
-  // Extract Contact Sheet frames (Midpoint of each scene)
-  console.log(`[QA] Extracting contact sheet across ${projectData.scenes.length} scenes...`);
+  // Extract Multi-Moment Diagnostic Frames (Entrance, Action, Payoff)
+  console.log(`[QA] Extracting multi-moment diagnostic frames across ${projectData.scenes.length} scenes...`);
   const sceneFrameFiles = [];
+  const motionFrameFiles = []; // [s0_ent, s0_act, s0_pay, s1_ent, ...]
   const framesSubDir = path.join(exportsDir, "frames");
+  const motionContactSheetPng = path.join(exportsDir, "motion-contact-sheet.png");
   await fs.mkdir(framesSubDir, { recursive: true });
 
   for (let idx = 0; idx < projectData.scenes.length; idx++) {
     const sc = projectData.scenes[idx];
-    const midSec = Math.min(totalDuration - 0.1, (sc.startTime + (sc.duration / 2))).toFixed(3);
-    const sceneFramePath = path.join(framesSubDir, `scene-${idx + 1}.png`);
-    await runCmd("ffmpeg", [
-      "-v", "error",
-      "-y",
-      "-ss", String(midSec),
-      "-i", finalMp4,
-      "-vframes", "1",
-      sceneFramePath,
-    ]);
-    sceneFrameFiles.push(sceneFramePath);
+    const entSec = Math.max(0, sc.startTime + 0.35).toFixed(3);
+    const midSec = Math.min(totalDuration - 0.1, sc.startTime + sc.duration * 0.5).toFixed(3);
+    const paySec = Math.min(totalDuration - 0.1, sc.startTime + sc.duration - 0.25).toFixed(3);
+
+    const entPath = path.join(framesSubDir, `scene-${idx + 1}-entrance.png`);
+    const midPath = path.join(framesSubDir, `scene-${idx + 1}-action.png`);
+    const legacyPath = path.join(framesSubDir, `scene-${idx + 1}.png`);
+    const payPath = path.join(framesSubDir, `scene-${idx + 1}-payoff.png`);
+
+    // 1. Entrance frame
+    await runCmd("ffmpeg", ["-v", "error", "-y", "-ss", String(entSec), "-i", finalMp4, "-vframes", "1", entPath]);
+    // 2. Action / Midpoint frame
+    await runCmd("ffmpeg", ["-v", "error", "-y", "-ss", String(midSec), "-i", finalMp4, "-vframes", "1", midPath]);
+    await fs.copyFile(midPath, legacyPath);
+    // 3. Payoff frame
+    await runCmd("ffmpeg", ["-v", "error", "-y", "-ss", String(paySec), "-i", finalMp4, "-vframes", "1", payPath]);
+
+    sceneFrameFiles.push(midPath);
+    motionFrameFiles.push(entPath, midPath, payPath);
   }
 
-  // Combine into contact sheet
+  // Combine into traditional 2x2 midpoint contact sheet
   if (sceneFrameFiles.length >= 4) {
     await runCmd("ffmpeg", [
       "-v", "error",
@@ -184,6 +194,23 @@ export async function renderAndMux(projectDir, projectData) {
       "-i", sceneFrameFiles[1],
       "-filter_complex", "[0:v][1:v]vstack,scale=1080:1920",
       contactSheetPng,
+    ]);
+  }
+
+  // Combine into 3-column x N-row Motion Choreography Diagnostic Sheet
+  if (motionFrameFiles.length === 12) {
+    // 4 scenes x 3 moments (Entrance | Action | Payoff)
+    const ffmpegInputs = [];
+    for (const f of motionFrameFiles) {
+      ffmpegInputs.push("-i", f);
+    }
+    await runCmd("ffmpeg", [
+      "-v", "error",
+      "-y",
+      ...ffmpegInputs,
+      "-filter_complex",
+      "[0:v][1:v][2:v]hstack=3[r0];[3:v][4:v][5:v]hstack=3[r1];[6:v][7:v][8:v]hstack=3[r2];[9:v][10:v][11:v]hstack=3[r3];[r0][r1][r2][r3]vstack=4,scale=1080:1920",
+      motionContactSheetPng,
     ]);
   }
 
@@ -304,6 +331,7 @@ export async function renderAndMux(projectDir, projectData) {
       file: "final.mp4",
       coverThumbnail: "cover-frame.png",
       contactSheet: "contact-sheet.png",
+      motionContactSheet: "motion-contact-sheet.png",
       format: probeData.format,
       streams: probeData.streams,
     },
@@ -325,6 +353,7 @@ export async function renderAndMux(projectDir, projectData) {
     finalMp4,
     coverPng,
     contactSheetPng,
+    motionContactSheetPng,
     ytMetadata,
   };
 }

@@ -76,8 +76,185 @@ export async function generateComposition(compDir, projectData) {
     const cardType = scene.cardType || "concept-explainer";
 
     let cardContent = "";
+    const metaphor = scene.sceneGraph?.visualMetaphor || "";
 
-    if (cardType === "hook" || cardType === "hook-bold-object") {
+    if (metaphor === "linear-scan-bottleneck") {
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          ${escapeHtml(scene.badge || "VECTOR SEARCH SCALING")}
+        </div>
+        <h1 class="hero-headline">${escapeHtml(scene.visualTitle)}</h1>
+        <div class="linear-scan-stage" id="linear-stage">
+          <div class="dense-vector-cloud" id="vector-dense-field">
+            ${Array.from({ length: 48 }).map((_, i) => `<span class="vec-point pt-${i}"></span>`).join("")}
+            <div class="linear-search-marker" id="linear-search-marker">
+              <span class="marker-pulse"></span>
+              <span class="marker-icon">🔍</span>
+            </div>
+          </div>
+          <div class="scan-status-panel">
+            <div class="search-counter" id="search-counter">
+              <span class="counter-label">COMPARISON COUNT</span>
+              <span class="counter-num">1,420,891 / 10,000,000</span>
+            </div>
+            <div class="bottleneck-indicator" id="bottleneck-indicator">
+              <span class="stall-badge">⚠️ O(N) LINEAR BOTTLENECK</span>
+              <p class="stall-msg">Throughput collapsed: Unscalable for live inference</p>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (metaphor === "hnsw-express-highway") {
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          ${escapeHtml(scene.badge || "EXPRESS HIGHWAY METAPHOR")}
+        </div>
+        <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
+        <div class="metaphor-collage-stage">
+          <div class="hnsw-highway-stage" id="highway-tiers">
+            <div class="highway-tier tier-express">
+              <div class="tier-label">TOP LAYER 2 • EXPRESS HIGHWAY</div>
+              <div class="highway-track express-track">
+                <div class="highway-node active-node" id="node-a">Node A</div>
+                <div class="express-arc" id="express-arc">
+                  <svg class="express-svg" width="360" height="36" viewBox="0 0 360 36">
+                    <path id="express-bridge-path" d="M 10 18 Q 180 -2 350 18" stroke="#a3e635" stroke-width="4" fill="none" stroke-dasharray="8 6"/>
+                  </svg>
+                  <span class="express-text">═════ 99% Express Skip ═════➔</span>
+                </div>
+                <div class="highway-node active-node" id="node-b">Node B</div>
+                <div class="search-probe" id="search-probe">
+                  <span class="probe-core"></span>
+                  <span class="probe-glow"></span>
+                </div>
+              </div>
+              <div class="tier-sub">Skips dense local clusters via sparse upper shortcuts</div>
+            </div>
+
+            <div class="highway-tier tier-mid">
+              <div class="tier-label">LAYER 1 • CLUSTER ROUTING</div>
+              <div class="highway-track">
+                <div class="highway-node">A₁</div>
+                <div class="local-arc">───➔</div>
+                <div class="highway-node active-node" id="mid-node-active">A₂</div>
+                <div class="local-arc">───➔</div>
+                <div class="highway-node">A₃</div>
+              </div>
+            </div>
+
+            <div class="highway-tier tier-base">
+              <div class="tier-label">BASE LAYER 0 • EXACT NEAREST NEIGHBORS</div>
+              <div class="highway-track base-grid">
+                <span class="base-dot"></span>
+                <span class="base-dot"></span>
+                <span class="base-dot target-hit">🎯 Target Nearest Vector</span>
+                <span class="base-dot"></span>
+                <span class="base-dot"></span>
+              </div>
+            </div>
+
+            <div class="skip-counter-badge" id="skip-counter">
+              ⚡ 99.4% Irrelevant Vectors Skipped in 0.4ms
+            </div>
+          </div>
+          <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
+        </div>
+      `;
+    } else if (metaphor === "coarse-to-fine-graph-descent") {
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-violet"></span>
+          ${escapeHtml(scene.badge || "GRAPH NAVIGATION")}
+        </div>
+        <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
+        <div class="metaphor-collage-stage">
+          <div class="descent-navigation-stage" id="descent-stage">
+            <div class="nav-tier tier-top">
+              <div class="nav-tier-header">LAYER 2 • ENTRY HOP</div>
+              <div class="nav-nodes-row">
+                <div class="graph-node entry-node" id="entry-node-l2">
+                  <span class="node-icon-dot"></span>
+                  Entry Point (Top Layer)
+                </div>
+              </div>
+            </div>
+
+            <div class="descent-beam-container">
+              <svg class="beam-svg" width="100%" height="60" viewBox="0 0 400 60">
+                <line id="descent-beam" x1="200" y1="0" x2="200" y2="60" stroke="#c084fc" stroke-width="4" stroke-dasharray="6 4"/>
+              </svg>
+              <div class="query-descent-probe" id="query-descent-probe">
+                <span class="probe-light"></span>
+              </div>
+            </div>
+
+            <div class="nav-tier tier-mid">
+              <div class="nav-tier-header">LAYER 1 • LOCAL CLUSTER HOPS</div>
+              <div class="nav-nodes-row">
+                <div class="graph-node" id="intermediate-node-l1">Intermediate Hop A₂</div>
+                <div class="local-arc">➔</div>
+                <div class="graph-node">Cluster Hub</div>
+              </div>
+            </div>
+
+            <div class="descent-beam-container">
+              <svg class="beam-svg" width="100%" height="50" viewBox="0 0 400 50">
+                <line x1="200" y1="0" x2="200" y2="50" stroke="#a3e635" stroke-width="4" stroke-dasharray="6 4"/>
+              </svg>
+            </div>
+
+            <div class="nav-tier tier-base">
+              <div class="nav-tier-header">BASE LAYER 0 • EXACT CONVERGENCE</div>
+              <div class="base-vector-cluster" id="base-cluster">
+                <span class="dim-dot"></span>
+                <span class="dim-dot"></span>
+                <div class="target-beacon" id="target-beacon-l0">
+                  <span class="convergence-ring" id="convergence-ring"></span>
+                  🎯 Exact Nearest Vector
+                </div>
+                <span class="dim-dot"></span>
+                <span class="dim-dot"></span>
+              </div>
+            </div>
+          </div>
+          <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
+        </div>
+      `;
+    } else if (metaphor === "architectural-production-rule") {
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          ${escapeHtml(scene.badge || "PRODUCTION STANDARD")}
+        </div>
+        <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
+        <div class="takeaway-collage-card" id="rule-stamp">
+          <div class="takeaway-header">
+            <span class="takeaway-stamp">ARCHITECTURAL RULE</span>
+          </div>
+          <div class="param-metrics-grid" id="param-metrics">
+            <div class="metric-card">
+              <span class="metric-key">M (Max Edges)</span>
+              <span class="metric-val">16 – 64</span>
+              <span class="metric-desc">Controls recall &amp; RAM</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-key">efConstruction</span>
+              <span class="metric-val">100 – 200</span>
+              <span class="metric-desc">Index build precision</span>
+            </div>
+          </div>
+          <div class="latency-gauge-box" id="latency-gauge">
+            <div class="gauge-label">QUERY RETRIEVAL SPEED</div>
+            <div class="gauge-value" id="gauge-val">0.42 ms</div>
+            <div class="gauge-sub">⚡ 100x Faster than Brute-Force O(N)</div>
+          </div>
+          <p class="card-highlight">${escapeHtml(scene.visualBody)}</p>
+          ${scene.source ? `<div class="source-tag">Reference: ${escapeHtml(scene.source)}</div>` : ""}
+        </div>
+      `;
+    } else if (cardType === "hook" || cardType === "hook-bold-object") {
       // Full-frame hook with surreal dimensional object & oversized typography
       const isVector = (scene.visualTitle || "").toLowerCase().includes("vector") || (title || "").toLowerCase().includes("vector");
       const iconSymbol = isVector ? "🧭" : "⚡";
@@ -145,82 +322,33 @@ export async function generateComposition(compDir, projectData) {
         `;
       }
     } else if (cardType === "physical-metaphor") {
-      if (scene.metaphorType === "hnsw-highway" || (scene.visualTitle && scene.visualTitle.toLowerCase().includes("highway"))) {
-        // Multi-Layer Graph Highway Metaphor for Vector DB
-        cardContent = `
-          <div class="purple-badge">
-            <span class="badge-dot pulse-lime"></span>
-            ${escapeHtml(scene.badge || "EXPRESS HIGHWAY METAPHOR")}
-          </div>
-          <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
-          <div class="metaphor-collage-stage">
-            <div class="hnsw-highway-stage">
-              <div class="highway-tier tier-express">
-                <div class="tier-label">TOP LAYER 2 • EXPRESS HIGHWAY</div>
-                <div class="highway-track">
-                  <div class="highway-node active-node">Node A</div>
-                  <div class="express-arc">═════════ Express Skip ═════════➔</div>
-                  <div class="highway-node active-node">Node B</div>
-                </div>
-                <div class="tier-sub">Skips 99% of irrelevant points in high-dimensional space</div>
+      // Pinned memory / Token conveyor metaphor
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          ${escapeHtml(scene.badge || "PHYSICAL METAPHOR")}
+        </div>
+        <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
+        <div class="metaphor-collage-stage">
+          <div class="metaphor-block conveyor-block">
+            <div class="conveyor-track">
+              <div class="conveyor-item item-static">
+                <span class="item-tag">STATIC PREFIX</span>
+                <span class="item-desc">System Prompt &amp; Context</span>
+                <span class="item-status">📌 Pinned in RAM</span>
               </div>
-
-              <div class="highway-tier tier-mid">
-                <div class="tier-label">LAYER 1 • CLUSTER ROUTING</div>
-                <div class="highway-track">
-                  <div class="highway-node">A₁</div>
-                  <div class="local-arc">───➔</div>
-                  <div class="highway-node active-node">A₂</div>
-                  <div class="local-arc">───➔</div>
-                  <div class="highway-node">A₃</div>
-                </div>
+              <div class="conveyor-arrow">⬇ Instant Match</div>
+              <div class="conveyor-item item-dynamic">
+                <span class="item-tag">DYNAMIC QUERY</span>
+                <span class="item-desc">User Message</span>
+                <span class="item-status">⚡ Instant Hit</span>
               </div>
-
-              <div class="highway-tier tier-base">
-                <div class="tier-label">BASE LAYER 0 • EXACT NEAREST NEIGHBORS</div>
-                <div class="highway-track base-grid">
-                  <span class="base-dot"></span>
-                  <span class="base-dot"></span>
-                  <span class="base-dot target-hit">🎯 Target Nearest Vector</span>
-                  <span class="base-dot"></span>
-                  <span class="base-dot"></span>
-                </div>
-              </div>
-
-              <div class="ttl-badge">⚡ Sub-Millisecond Nearest Neighbor Convergence</div>
             </div>
-            <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
+            <div class="ttl-badge">⏳ 5-Min Default • 1-Hour Extended TTL</div>
           </div>
-        `;
-      } else {
-        // Pinned memory / Token conveyor metaphor
-        cardContent = `
-          <div class="purple-badge">
-            <span class="badge-dot pulse-lime"></span>
-            ${escapeHtml(scene.badge || "PHYSICAL METAPHOR")}
-          </div>
-          <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
-          <div class="metaphor-collage-stage">
-            <div class="metaphor-block conveyor-block">
-              <div class="conveyor-track">
-                <div class="conveyor-item item-static">
-                  <span class="item-tag">STATIC PREFIX</span>
-                  <span class="item-desc">System Prompt &amp; Context</span>
-                  <span class="item-status">📌 Pinned in RAM</span>
-                </div>
-                <div class="conveyor-arrow">⬇ Instant Match</div>
-                <div class="conveyor-item item-dynamic">
-                  <span class="item-tag">DYNAMIC QUERY</span>
-                  <span class="item-desc">User Message</span>
-                  <span class="item-status">⚡ Instant Hit</span>
-                </div>
-              </div>
-              <div class="ttl-badge">⏳ 5-Min Default • 1-Hour Extended TTL</div>
-            </div>
-            <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
-          </div>
-        `;
-      }
+          <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
+        </div>
+      `;
     } else if (cardType === "code" || cardType === "terminal") {
       // Authentic syntax terminal with glowing highlighted lines
       cardContent = `
@@ -336,6 +464,324 @@ export async function generateComposition(compDir, projectData) {
     tl.to(".typing-cursor", { opacity: 0, duration: 0.45, repeat: ${cursorRepeats}, yoyo: true, ease: "steps(1)" }, 0);
   `;
 
+  // Helper: Build element-level GSAP motion choreography from sceneGraph.actions
+  function buildMotionChoreographyScript(scene, idx) {
+    if (!scene.sceneGraph || !Array.isArray(scene.sceneGraph.actions)) return "";
+    let script = `\n        // --- Scene ${idx} Motion Choreography (${scene.sceneGraph.visualMetaphor}) ---\n`;
+    const words = scene.voiceText.trim().split(/\s+/);
+    const totalWords = Math.max(1, words.length);
+    const startT = scene.startTime;
+    const dur = scene.duration;
+
+    scene.sceneGraph.actions.forEach((act) => {
+      // 1. Calculate precise trigger timestamp
+      let actionTime = startT + (dur * 0.25);
+      if (act.trigger === "spoken-phrase" && act.phrase) {
+        const phraseWords = act.phrase.trim().toLowerCase().split(/\s+/);
+        const firstWord = phraseWords[0].replace(/[^a-z0-9]/g, "");
+        let foundWordIdx = -1;
+        for (let w = 0; w < words.length; w++) {
+          const cleanW = words[w].toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (cleanW === firstWord) {
+            foundWordIdx = w;
+            break;
+          }
+        }
+        if (foundWordIdx >= 0) {
+          actionTime = startT + (foundWordIdx / totalWords) * dur;
+        }
+      } else if (act.trigger === "timestamp" && typeof act.timestamp === "number") {
+        actionTime = act.timestamp;
+      }
+      actionTime = Math.max(startT + 0.1, Math.min(startT + dur - 0.35, actionTime));
+      const actionDur = Math.min(act.duration || 1.0, dur - (actionTime - startT) - 0.1);
+
+      switch (act.action) {
+        case "step-scan-points":
+          script += `
+          // Action: step-scan-points on #${act.target}
+          tl.fromTo("#scene-${idx} #${act.target}", 
+            { x: -260, opacity: 0, scale: 0.8 }, 
+            { x: -90, opacity: 1, scale: 1, duration: ${Math.min(0.5, actionDur * 0.3).toFixed(2)}, ease: "power2.out" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #${act.target}", { 
+            x: 80, 
+            duration: ${Math.min(0.6, actionDur * 0.35).toFixed(2)}, 
+            ease: "steps(4)" 
+          }, ${(actionTime + Math.min(0.5, actionDur * 0.3)).toFixed(3)});
+          tl.to("#scene-${idx} #${act.target}", { 
+            x: 240, 
+            duration: ${Math.min(0.6, actionDur * 0.35).toFixed(2)}, 
+            ease: "power1.inOut" 
+          }, ${(actionTime + Math.min(0.5, actionDur * 0.3) + Math.min(0.6, actionDur * 0.35)).toFixed(3)});
+          tl.to("#scene-${idx} .vec-point:nth-child(-n+24)", { 
+            backgroundColor: "#c084fc", 
+            scale: 1.25, 
+            duration: 0.3, 
+            stagger: 0.02 
+          }, ${(actionTime + 0.15).toFixed(3)});
+          tl.to("#scene-${idx} .counter-num", { 
+            color: "#facc15", 
+            duration: 0.6 
+          }, ${actionTime.toFixed(3)});
+          `;
+          break;
+
+        case "stall-and-flash-bottleneck":
+          script += `
+          // Action: stall-and-flash-bottleneck on #${act.target}
+          tl.to("#scene-${idx} #linear-search-marker", { 
+            x: "+=8", 
+            yoyo: true, 
+            repeat: 7, 
+            duration: 0.07, 
+            ease: "sine.inOut" 
+          }, ${actionTime.toFixed(3)});
+          tl.fromTo("#scene-${idx} #${act.target}", 
+            { y: 25, opacity: 0, scale: 0.92 }, 
+            { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #${act.target}", { 
+            backgroundColor: "rgba(239, 68, 68, 0.28)", 
+            borderColor: "#ef4444", 
+            boxShadow: "0 0 24px rgba(239, 68, 68, 0.7)", 
+            duration: 0.25, 
+            yoyo: true, 
+            repeat: 3 
+          }, ${(actionTime + 0.35).toFixed(3)});
+          tl.to("#scene-${idx} .counter-num", { 
+            color: "#ef4444", 
+            duration: 0.2 
+          }, ${(actionTime + 0.3).toFixed(3)});
+          `;
+          break;
+
+        case "enter-probe-and-lock-node-a":
+          script += `
+          // Action: enter-probe-and-lock-node-a on #${act.target}
+          tl.fromTo("#scene-${idx} #${act.target}", 
+            { scale: 0, opacity: 0, x: -20 }, 
+            { scale: 1, opacity: 1, x: 0, duration: ${Math.min(0.5, actionDur).toFixed(2)}, ease: "back.out(2)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #node-a", { 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 22px rgba(163, 230, 53, 0.85)", 
+            scale: 1.12, 
+            duration: 0.35 
+          }, ${(actionTime + 0.15).toFixed(3)});
+          `;
+          break;
+
+        case "traverse-express-bridge":
+          script += `
+          // Action: traverse-express-bridge on #${act.target}
+          tl.fromTo("#scene-${idx} #express-bridge-path", 
+            { strokeDashoffset: 120 }, 
+            { strokeDashoffset: 0, duration: ${Math.min(1.2, actionDur).toFixed(2)}, ease: "power2.inOut" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #${act.target}", { 
+            x: 380, 
+            duration: ${Math.min(1.4, actionDur).toFixed(2)}, 
+            ease: "power2.inOut" 
+          }, ${(actionTime + 0.15).toFixed(3)});
+          tl.to("#scene-${idx} #${act.target} .probe-glow", { 
+            scale: 2.4, 
+            opacity: 0.9, 
+            duration: 0.6, 
+            yoyo: true, 
+            repeat: 1 
+          }, ${(actionTime + 0.2).toFixed(3)});
+          `;
+          break;
+
+        case "illuminate-express-nodes":
+          script += `
+          // Action: illuminate-express-nodes on #${act.target}
+          tl.to("#scene-${idx} #${act.target}", { 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 26px rgba(163, 230, 53, 0.9)", 
+            scale: 1.15, 
+            duration: 0.35, 
+            ease: "back.out(2)" 
+          }, ${actionTime.toFixed(3)});
+          tl.fromTo("#scene-${idx} #skip-counter", 
+            { y: 20, opacity: 0, scale: 0.9 }, 
+            { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, 
+            ${(actionTime + 0.2).toFixed(3)}
+          );
+          `;
+          break;
+
+        case "activate-entry-hop":
+          script += `
+          // Action: activate-entry-hop on #${act.target}
+          tl.fromTo("#scene-${idx} #query-descent-probe", 
+            { y: -35, opacity: 0, scale: 0.5 }, 
+            { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #${act.target}", { 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 20px rgba(163, 230, 53, 0.8)", 
+            scale: 1.1, 
+            duration: 0.35 
+          }, ${(actionTime + 0.15).toFixed(3)});
+          `;
+          break;
+
+        case "descend-to-base":
+          script += `
+          // Action: descend-to-base on #${act.target}
+          tl.to("#scene-${idx} #${act.target}", { 
+            y: 155, 
+            duration: ${(actionDur * 0.48).toFixed(2)}, 
+            ease: "power2.inOut" 
+          }, ${actionTime.toFixed(3)});
+          tl.to("#scene-${idx} #intermediate-node-l1", { 
+            borderColor: "#c084fc", 
+            boxShadow: "0 0 16px rgba(192, 132, 252, 0.8)", 
+            scale: 1.08, 
+            duration: 0.3 
+          }, ${(actionTime + actionDur * 0.4).toFixed(3)});
+          tl.to("#scene-${idx} #${act.target}", { 
+            y: 310, 
+            duration: ${(actionDur * 0.48).toFixed(2)}, 
+            ease: "power2.inOut" 
+          }, ${(actionTime + actionDur * 0.52).toFixed(3)});
+          `;
+          break;
+
+        case "lock-target-nearest-vector":
+          script += `
+          // Action: lock-target-nearest-vector on #${act.target}
+          tl.to("#scene-${idx} #${act.target}", { 
+            scale: 1.25, 
+            color: "#a3e635", 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 35px rgba(163, 230, 53, 0.95)", 
+            duration: 0.5, 
+            ease: "back.out(2.2)" 
+          }, ${actionTime.toFixed(3)});
+          tl.fromTo("#scene-${idx} #convergence-ring", 
+            { scale: 0.6, opacity: 1 }, 
+            { scale: 2.6, opacity: 0, duration: 0.75, ease: "power2.out" }, 
+            ${(actionTime + 0.1).toFixed(3)}
+          );
+          tl.to("#scene-${idx} .dim-dot", { 
+            opacity: 0.2, 
+            scale: 0.7, 
+            duration: 0.4 
+          }, ${(actionTime + 0.2).toFixed(3)});
+          `;
+          break;
+
+        case "stamp-rule-entrance":
+          script += `
+          // Action: stamp-rule-entrance on #${act.target}
+          tl.fromTo("#scene-${idx} #${act.target}", 
+            { y: 50, opacity: 0, scale: 0.92 }, 
+            { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.8)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.fromTo("#scene-${idx} .takeaway-stamp", 
+            { scale: 1.5, opacity: 0 }, 
+            { scale: 1, opacity: 1, duration: 0.4, ease: "bounce.out" }, 
+            ${(actionTime + 0.2).toFixed(3)}
+          );
+          `;
+          break;
+
+        case "lock-latency-meter":
+          script += `
+          // Action: lock-latency-meter on #${act.target}
+          tl.fromTo("#scene-${idx} #param-metrics .metric-card", 
+            { x: -20, opacity: 0 }, 
+            { x: 0, opacity: 1, duration: 0.4, stagger: 0.12, ease: "power2.out" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.fromTo("#scene-${idx} #${act.target}", 
+            { scale: 0.88, opacity: 0 }, 
+            { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.6)" }, 
+            ${(actionTime + 0.2).toFixed(3)}
+          );
+          tl.to("#scene-${idx} #gauge-val", { 
+            color: "#a3e635", 
+            textShadow: "0 0 24px rgba(163, 230, 53, 0.95)", 
+            scale: 1.15, 
+            duration: 0.35, 
+            yoyo: true, 
+            repeat: 1 
+          }, ${(actionTime + 0.45).toFixed(3)});
+          `;
+          break;
+
+        case "pin-cache-ram":
+          script += `
+          // Action: pin-cache-ram on #${act.target}
+          tl.fromTo("#scene-${idx} #${act.target}", 
+            { scale: 0.9, opacity: 0, x: -30 }, 
+            { scale: 1, opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #${act.target}", { 
+            borderColor: "#c084fc", 
+            boxShadow: "0 0 20px rgba(192, 132, 252, 0.6)", 
+            duration: 0.3 
+          }, ${(actionTime + 0.4).toFixed(3)});
+          `;
+          break;
+
+        case "instant-query-hit":
+          script += `
+          // Action: instant-query-hit on #${act.target}
+          tl.fromTo("#scene-${idx} #${act.target}", 
+            { y: 30, opacity: 0 }, 
+            { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.6)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #${act.target}", { 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 24px rgba(163, 230, 53, 0.8)", 
+            scale: 1.05, 
+            duration: 0.3, 
+            yoyo: true, 
+            repeat: 1 
+          }, ${(actionTime + 0.35).toFixed(3)});
+          `;
+          break;
+
+        case "advance-flow-packet":
+          script += `
+          // Action: advance-flow-packet on #${act.target}
+          tl.fromTo("#scene-${idx} .purple-flow-node", 
+            { scale: 0.92, opacity: 0.4 }, 
+            { scale: 1.05, opacity: 1, duration: 0.4, stagger: 0.25, ease: "back.out(1.4)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          `;
+          break;
+
+        case "burst-emblem":
+        default:
+          script += `
+          // Action: ${act.action} on #${act.target || "focal"}
+          tl.fromTo("#scene-${idx} ${act.target ? "#" + act.target : ".surreal-icon"}", 
+            { scale: 0.7, opacity: 0, rotation: -15 }, 
+            { scale: 1, opacity: 1, rotation: 0, duration: ${actionDur.toFixed(2)}, ease: "back.out(1.8)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          `;
+          break;
+      }
+    });
+
+    return script;
+  }
+
   // Animate scenes and kinetic word highlights
   scenes.forEach((scene, idx) => {
     const isFirst = idx === 0;
@@ -380,6 +826,9 @@ export async function generateComposition(compDir, projectData) {
         }, ${startT + 0.2});
       `;
     }
+
+    // Execute Element-Level Motion Choreography
+    gsapTimelineScript += buildMotionChoreographyScript(scene, idx);
 
     // Kinetic word-by-word active captioning
     const words = scene.voiceText.trim().split(/\s+/);
@@ -825,7 +1274,114 @@ export async function generateComposition(compDir, projectData) {
         letter-spacing: 0.04em;
       }
 
-      /* HNSW Multi-Layer Highway Stage */
+      /* Linear Scan Dense Vector Field Stage (Beat 1) */
+      .linear-scan-stage {
+        width: 100%;
+        padding: 26px;
+        border-radius: 26px;
+        background: rgba(20, 10, 42, 0.92);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      .dense-vector-cloud {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 14px 18px;
+        padding: 24px 18px;
+        background: rgba(10, 4, 22, 0.85);
+        border-radius: 20px;
+        border: 1px dashed rgba(192, 132, 252, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+      .vec-point {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(192, 132, 252, 0.35);
+        margin: 0 auto;
+        transition: transform 0.2s, background-color 0.2s;
+      }
+      .linear-search-marker {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .marker-pulse {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #a3e635;
+        box-shadow: 0 0 20px #a3e635;
+        animation: pulseRing 1.5s ease-out infinite;
+      }
+      @keyframes pulseRing {
+        0% { transform: scale(0.6); opacity: 1; }
+        100% { transform: scale(1.6); opacity: 0; }
+      }
+      .marker-icon {
+        position: absolute;
+        font-size: 24px;
+        filter: drop-shadow(0 0 10px rgba(163, 230, 53, 0.8));
+      }
+      .scan-status-panel {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .search-counter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 22px;
+        border-radius: 14px;
+        background: rgba(32, 16, 62, 0.85);
+        border: 1px solid rgba(192, 132, 252, 0.3);
+      }
+      .counter-label {
+        font-size: 18px;
+        font-weight: 800;
+        color: #c084fc;
+        letter-spacing: 0.08em;
+      }
+      .counter-num {
+        font-size: 22px;
+        font-weight: 800;
+        color: #e2e8f0;
+        font-family: monospace;
+      }
+      .bottleneck-indicator {
+        padding: 16px 20px;
+        border-radius: 16px;
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        text-align: center;
+      }
+      .stall-badge {
+        font-size: 20px;
+        font-weight: 800;
+        color: #ef4444;
+        letter-spacing: 0.08em;
+      }
+      .stall-msg {
+        font-size: 17px;
+        color: #fca5a5;
+        margin-top: 6px;
+      }
+
+      /* HNSW Multi-Layer Highway Stage (Beat 2) */
       .hnsw-highway-stage {
         width: 100%;
         padding: 28px;
@@ -845,6 +1401,7 @@ export async function generateComposition(compDir, projectData) {
       .tier-express {
         background: rgba(163, 230, 53, 0.12);
         border: 1px solid rgba(163, 230, 53, 0.45);
+        position: relative;
       }
       .tier-mid {
         background: rgba(192, 132, 252, 0.12);
@@ -871,6 +1428,11 @@ export async function generateComposition(compDir, projectData) {
         align-items: center;
         justify-content: space-between;
         gap: 10px;
+        position: relative;
+      }
+      .express-track {
+        position: relative;
+        padding: 6px 0;
       }
       .highway-node {
         padding: 8px 18px;
@@ -880,16 +1442,66 @@ export async function generateComposition(compDir, projectData) {
         font-size: 18px;
         font-weight: 700;
         color: #ffffff;
+        position: relative;
+        z-index: 5;
       }
       .highway-node.active-node {
         border-color: #a3e635;
         box-shadow: 0 0 14px rgba(163, 230, 53, 0.5);
       }
       .express-arc {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 380px;
+      }
+      .express-svg {
+        position: absolute;
+        top: -6px;
+        left: 0;
+        width: 100%;
+        height: 36px;
+        pointer-events: none;
+      }
+      .express-text {
         font-size: 15px;
         font-weight: 800;
         color: #a3e635;
         letter-spacing: 0.05em;
+        position: relative;
+        z-index: 2;
+      }
+      .search-probe {
+        position: absolute;
+        left: 20px;
+        top: 8px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #a3e635;
+        box-shadow: 0 0 18px #a3e635;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .probe-glow {
+        position: absolute;
+        inset: -6px;
+        border-radius: 50%;
+        background: rgba(163, 230, 53, 0.35);
+        filter: blur(5px);
+      }
+      .skip-counter-badge {
+        padding: 12px 20px;
+        border-radius: 14px;
+        background: rgba(163, 230, 53, 0.15);
+        border: 1px solid rgba(163, 230, 53, 0.5);
+        color: #a3e635;
+        font-size: 19px;
+        font-weight: 800;
+        text-align: center;
       }
       .local-arc {
         font-size: 20px;
@@ -921,6 +1533,184 @@ export async function generateComposition(compDir, projectData) {
       .metaphor-caption {
         text-align: left;
         margin-bottom: 0;
+      }
+
+      /* Coarse to Fine Graph Descent Stage (Beat 3) */
+      .descent-navigation-stage {
+        width: 100%;
+        padding: 24px;
+        border-radius: 26px;
+        background: rgba(20, 10, 42, 0.92);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .nav-tier {
+        padding: 14px 18px;
+        border-radius: 16px;
+        text-align: left;
+      }
+      .tier-top {
+        background: rgba(163, 230, 53, 0.1);
+        border: 1px solid rgba(163, 230, 53, 0.4);
+      }
+      .tier-mid {
+        background: rgba(192, 132, 252, 0.1);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+      }
+      .tier-base {
+        background: rgba(147, 51, 234, 0.12);
+        border: 1px dashed rgba(192, 132, 252, 0.4);
+      }
+      .nav-tier-header {
+        font-size: 15px;
+        font-weight: 800;
+        color: #a3e635;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .nav-nodes-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        gap: 12px;
+      }
+      .graph-node {
+        padding: 8px 18px;
+        border-radius: 12px;
+        background: rgba(36, 18, 66, 0.9);
+        border: 1px solid rgba(192, 132, 252, 0.4);
+        font-size: 18px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .graph-node.entry-node {
+        border-color: #a3e635;
+        box-shadow: 0 0 16px rgba(163, 230, 53, 0.5);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .descent-beam-container {
+        height: 54px;
+        display: flex;
+        justify-content: center;
+        position: relative;
+      }
+      .beam-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .query-descent-probe {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #a3e635;
+        box-shadow: 0 0 18px #a3e635;
+        z-index: 10;
+      }
+      .base-vector-cluster {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 8px 0;
+      }
+      .target-beacon {
+        position: relative;
+        padding: 8px 20px;
+        border-radius: 14px;
+        background: rgba(36, 18, 66, 0.95);
+        border: 2px solid #a3e635;
+        color: #a3e635;
+        font-size: 19px;
+        font-weight: 800;
+        box-shadow: 0 0 16px rgba(163, 230, 53, 0.6);
+      }
+      .convergence-ring {
+        position: absolute;
+        inset: -6px;
+        border-radius: 16px;
+        border: 2px solid #a3e635;
+        pointer-events: none;
+      }
+      .dim-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(192, 132, 252, 0.4);
+      }
+
+      /* Parameter Metrics & Latency Speedometer (Beat 4) */
+      .param-metrics-grid {
+        display: flex;
+        gap: 16px;
+        width: 100%;
+        margin-bottom: 18px;
+      }
+      .metric-card {
+        flex: 1;
+        padding: 18px 16px;
+        border-radius: 18px;
+        background: rgba(32, 16, 62, 0.85);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+        text-align: center;
+      }
+      .metric-key {
+        font-size: 17px;
+        font-weight: 800;
+        color: #c084fc;
+        letter-spacing: 0.06em;
+        display: block;
+      }
+      .metric-val {
+        font-size: 26px;
+        font-weight: 900;
+        color: #a3e635;
+        margin: 4px 0;
+        display: block;
+      }
+      .metric-desc {
+        font-size: 15px;
+        color: #cbd5e1;
+      }
+      .latency-gauge-box {
+        padding: 20px;
+        border-radius: 20px;
+        background: rgba(16, 8, 34, 0.9);
+        border: 2px solid rgba(163, 230, 53, 0.5);
+        text-align: center;
+        box-shadow: 0 0 24px rgba(163, 230, 53, 0.25);
+        margin-bottom: 20px;
+      }
+      .gauge-label {
+        font-size: 16px;
+        font-weight: 800;
+        color: #e9d5ff;
+        letter-spacing: 0.1em;
+      }
+      .gauge-value {
+        font-size: 48px;
+        font-weight: 900;
+        color: #a3e635;
+        font-family: monospace;
+        text-shadow: 0 0 20px rgba(163, 230, 53, 0.8);
+        margin: 4px 0;
+      }
+      .gauge-sub {
+        font-size: 17px;
+        font-weight: 700;
+        color: #cbd5e1;
       }
 
       /* Purple Terminal Card */

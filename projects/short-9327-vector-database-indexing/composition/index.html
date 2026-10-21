@@ -409,7 +409,114 @@
         letter-spacing: 0.04em;
       }
 
-      /* HNSW Multi-Layer Highway Stage */
+      /* Linear Scan Dense Vector Field Stage (Beat 1) */
+      .linear-scan-stage {
+        width: 100%;
+        padding: 26px;
+        border-radius: 26px;
+        background: rgba(20, 10, 42, 0.92);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      .dense-vector-cloud {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 14px 18px;
+        padding: 24px 18px;
+        background: rgba(10, 4, 22, 0.85);
+        border-radius: 20px;
+        border: 1px dashed rgba(192, 132, 252, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+      .vec-point {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(192, 132, 252, 0.35);
+        margin: 0 auto;
+        transition: transform 0.2s, background-color 0.2s;
+      }
+      .linear-search-marker {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .marker-pulse {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #a3e635;
+        box-shadow: 0 0 20px #a3e635;
+        animation: pulseRing 1.5s ease-out infinite;
+      }
+      @keyframes pulseRing {
+        0% { transform: scale(0.6); opacity: 1; }
+        100% { transform: scale(1.6); opacity: 0; }
+      }
+      .marker-icon {
+        position: absolute;
+        font-size: 24px;
+        filter: drop-shadow(0 0 10px rgba(163, 230, 53, 0.8));
+      }
+      .scan-status-panel {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .search-counter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 22px;
+        border-radius: 14px;
+        background: rgba(32, 16, 62, 0.85);
+        border: 1px solid rgba(192, 132, 252, 0.3);
+      }
+      .counter-label {
+        font-size: 18px;
+        font-weight: 800;
+        color: #c084fc;
+        letter-spacing: 0.08em;
+      }
+      .counter-num {
+        font-size: 22px;
+        font-weight: 800;
+        color: #e2e8f0;
+        font-family: monospace;
+      }
+      .bottleneck-indicator {
+        padding: 16px 20px;
+        border-radius: 16px;
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        text-align: center;
+      }
+      .stall-badge {
+        font-size: 20px;
+        font-weight: 800;
+        color: #ef4444;
+        letter-spacing: 0.08em;
+      }
+      .stall-msg {
+        font-size: 17px;
+        color: #fca5a5;
+        margin-top: 6px;
+      }
+
+      /* HNSW Multi-Layer Highway Stage (Beat 2) */
       .hnsw-highway-stage {
         width: 100%;
         padding: 28px;
@@ -429,6 +536,7 @@
       .tier-express {
         background: rgba(163, 230, 53, 0.12);
         border: 1px solid rgba(163, 230, 53, 0.45);
+        position: relative;
       }
       .tier-mid {
         background: rgba(192, 132, 252, 0.12);
@@ -455,6 +563,11 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
+        position: relative;
+      }
+      .express-track {
+        position: relative;
+        padding: 6px 0;
       }
       .highway-node {
         padding: 8px 18px;
@@ -464,16 +577,66 @@
         font-size: 18px;
         font-weight: 700;
         color: #ffffff;
+        position: relative;
+        z-index: 5;
       }
       .highway-node.active-node {
         border-color: #a3e635;
         box-shadow: 0 0 14px rgba(163, 230, 53, 0.5);
       }
       .express-arc {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 380px;
+      }
+      .express-svg {
+        position: absolute;
+        top: -6px;
+        left: 0;
+        width: 100%;
+        height: 36px;
+        pointer-events: none;
+      }
+      .express-text {
         font-size: 15px;
         font-weight: 800;
         color: #a3e635;
         letter-spacing: 0.05em;
+        position: relative;
+        z-index: 2;
+      }
+      .search-probe {
+        position: absolute;
+        left: 20px;
+        top: 8px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #a3e635;
+        box-shadow: 0 0 18px #a3e635;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .probe-glow {
+        position: absolute;
+        inset: -6px;
+        border-radius: 50%;
+        background: rgba(163, 230, 53, 0.35);
+        filter: blur(5px);
+      }
+      .skip-counter-badge {
+        padding: 12px 20px;
+        border-radius: 14px;
+        background: rgba(163, 230, 53, 0.15);
+        border: 1px solid rgba(163, 230, 53, 0.5);
+        color: #a3e635;
+        font-size: 19px;
+        font-weight: 800;
+        text-align: center;
       }
       .local-arc {
         font-size: 20px;
@@ -505,6 +668,184 @@
       .metaphor-caption {
         text-align: left;
         margin-bottom: 0;
+      }
+
+      /* Coarse to Fine Graph Descent Stage (Beat 3) */
+      .descent-navigation-stage {
+        width: 100%;
+        padding: 24px;
+        border-radius: 26px;
+        background: rgba(20, 10, 42, 0.92);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .nav-tier {
+        padding: 14px 18px;
+        border-radius: 16px;
+        text-align: left;
+      }
+      .tier-top {
+        background: rgba(163, 230, 53, 0.1);
+        border: 1px solid rgba(163, 230, 53, 0.4);
+      }
+      .tier-mid {
+        background: rgba(192, 132, 252, 0.1);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+      }
+      .tier-base {
+        background: rgba(147, 51, 234, 0.12);
+        border: 1px dashed rgba(192, 132, 252, 0.4);
+      }
+      .nav-tier-header {
+        font-size: 15px;
+        font-weight: 800;
+        color: #a3e635;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .nav-nodes-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        gap: 12px;
+      }
+      .graph-node {
+        padding: 8px 18px;
+        border-radius: 12px;
+        background: rgba(36, 18, 66, 0.9);
+        border: 1px solid rgba(192, 132, 252, 0.4);
+        font-size: 18px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .graph-node.entry-node {
+        border-color: #a3e635;
+        box-shadow: 0 0 16px rgba(163, 230, 53, 0.5);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .descent-beam-container {
+        height: 54px;
+        display: flex;
+        justify-content: center;
+        position: relative;
+      }
+      .beam-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .query-descent-probe {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #a3e635;
+        box-shadow: 0 0 18px #a3e635;
+        z-index: 10;
+      }
+      .base-vector-cluster {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 8px 0;
+      }
+      .target-beacon {
+        position: relative;
+        padding: 8px 20px;
+        border-radius: 14px;
+        background: rgba(36, 18, 66, 0.95);
+        border: 2px solid #a3e635;
+        color: #a3e635;
+        font-size: 19px;
+        font-weight: 800;
+        box-shadow: 0 0 16px rgba(163, 230, 53, 0.6);
+      }
+      .convergence-ring {
+        position: absolute;
+        inset: -6px;
+        border-radius: 16px;
+        border: 2px solid #a3e635;
+        pointer-events: none;
+      }
+      .dim-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(192, 132, 252, 0.4);
+      }
+
+      /* Parameter Metrics & Latency Speedometer (Beat 4) */
+      .param-metrics-grid {
+        display: flex;
+        gap: 16px;
+        width: 100%;
+        margin-bottom: 18px;
+      }
+      .metric-card {
+        flex: 1;
+        padding: 18px 16px;
+        border-radius: 18px;
+        background: rgba(32, 16, 62, 0.85);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+        text-align: center;
+      }
+      .metric-key {
+        font-size: 17px;
+        font-weight: 800;
+        color: #c084fc;
+        letter-spacing: 0.06em;
+        display: block;
+      }
+      .metric-val {
+        font-size: 26px;
+        font-weight: 900;
+        color: #a3e635;
+        margin: 4px 0;
+        display: block;
+      }
+      .metric-desc {
+        font-size: 15px;
+        color: #cbd5e1;
+      }
+      .latency-gauge-box {
+        padding: 20px;
+        border-radius: 20px;
+        background: rgba(16, 8, 34, 0.9);
+        border: 2px solid rgba(163, 230, 53, 0.5);
+        text-align: center;
+        box-shadow: 0 0 24px rgba(163, 230, 53, 0.25);
+        margin-bottom: 20px;
+      }
+      .gauge-label {
+        font-size: 16px;
+        font-weight: 800;
+        color: #e9d5ff;
+        letter-spacing: 0.1em;
+      }
+      .gauge-value {
+        font-size: 48px;
+        font-weight: 900;
+        color: #a3e635;
+        font-family: monospace;
+        text-shadow: 0 0 20px rgba(163, 230, 53, 0.8);
+        margin: 4px 0;
+      }
+      .gauge-sub {
+        font-size: 17px;
+        font-weight: 700;
+        color: #cbd5e1;
       }
 
       /* Purple Terminal Card */
@@ -696,15 +1037,23 @@
           VECTOR SEARCH SCALING
         </div>
         <h1 class="hero-headline">The Vector Search Dilemma</h1>
-        <div class="collage-hero-card">
-          <div class="surreal-object-container">
-            <div class="surreal-glow-ring"></div>
-            <div class="surreal-icon">🧭</div>
+        <div class="linear-scan-stage" id="linear-stage">
+          <div class="dense-vector-cloud" id="vector-dense-field">
+            <span class="vec-point pt-0"></span><span class="vec-point pt-1"></span><span class="vec-point pt-2"></span><span class="vec-point pt-3"></span><span class="vec-point pt-4"></span><span class="vec-point pt-5"></span><span class="vec-point pt-6"></span><span class="vec-point pt-7"></span><span class="vec-point pt-8"></span><span class="vec-point pt-9"></span><span class="vec-point pt-10"></span><span class="vec-point pt-11"></span><span class="vec-point pt-12"></span><span class="vec-point pt-13"></span><span class="vec-point pt-14"></span><span class="vec-point pt-15"></span><span class="vec-point pt-16"></span><span class="vec-point pt-17"></span><span class="vec-point pt-18"></span><span class="vec-point pt-19"></span><span class="vec-point pt-20"></span><span class="vec-point pt-21"></span><span class="vec-point pt-22"></span><span class="vec-point pt-23"></span><span class="vec-point pt-24"></span><span class="vec-point pt-25"></span><span class="vec-point pt-26"></span><span class="vec-point pt-27"></span><span class="vec-point pt-28"></span><span class="vec-point pt-29"></span><span class="vec-point pt-30"></span><span class="vec-point pt-31"></span><span class="vec-point pt-32"></span><span class="vec-point pt-33"></span><span class="vec-point pt-34"></span><span class="vec-point pt-35"></span><span class="vec-point pt-36"></span><span class="vec-point pt-37"></span><span class="vec-point pt-38"></span><span class="vec-point pt-39"></span><span class="vec-point pt-40"></span><span class="vec-point pt-41"></span><span class="vec-point pt-42"></span><span class="vec-point pt-43"></span><span class="vec-point pt-44"></span><span class="vec-point pt-45"></span><span class="vec-point pt-46"></span><span class="vec-point pt-47"></span>
+            <div class="linear-search-marker" id="linear-search-marker">
+              <span class="marker-pulse"></span>
+              <span class="marker-icon">🔍</span>
+            </div>
           </div>
-          <div class="hero-statement-box">
-            <div class="card-tag">OBSERVATION</div>
-            <p class="card-highlight">Brute force cosine distance compares against millions of points linearly, collapsing search throughput.</p>
-            <div class="source-tag">Source: Vector Indexing Technical Papers</div>
+          <div class="scan-status-panel">
+            <div class="search-counter" id="search-counter">
+              <span class="counter-label">COMPARISON COUNT</span>
+              <span class="counter-num">1,420,891 / 10,000,000</span>
+            </div>
+            <div class="bottleneck-indicator" id="bottleneck-indicator">
+              <span class="stall-badge">⚠️ O(N) LINEAR BOTTLENECK</span>
+              <p class="stall-msg">Throughput collapsed: Unscalable for live inference</p>
+            </div>
           </div>
         </div>
       
@@ -713,88 +1062,124 @@
 
       <div id="scene-1" class="scene-layer clip" data-start="6.6262" data-duration="7.2573" style="opacity: 0;">
         
-          <div class="purple-badge">
-            <span class="badge-dot pulse-lime"></span>
-            HIERARCHICAL HIGHWAY
-          </div>
-          <h2 class="scene-title">The Multi-Layer Graph Highway</h2>
-          <div class="metaphor-collage-stage">
-            <div class="hnsw-highway-stage">
-              <div class="highway-tier tier-express">
-                <div class="tier-label">TOP LAYER 2 • EXPRESS HIGHWAY</div>
-                <div class="highway-track">
-                  <div class="highway-node active-node">Node A</div>
-                  <div class="express-arc">═════════ Express Skip ═════════➔</div>
-                  <div class="highway-node active-node">Node B</div>
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          HIERARCHICAL HIGHWAY
+        </div>
+        <h2 class="scene-title">The Multi-Layer Graph Highway</h2>
+        <div class="metaphor-collage-stage">
+          <div class="hnsw-highway-stage" id="highway-tiers">
+            <div class="highway-tier tier-express">
+              <div class="tier-label">TOP LAYER 2 • EXPRESS HIGHWAY</div>
+              <div class="highway-track express-track">
+                <div class="highway-node active-node" id="node-a">Node A</div>
+                <div class="express-arc" id="express-arc">
+                  <svg class="express-svg" width="360" height="36" viewBox="0 0 360 36">
+                    <path id="express-bridge-path" d="M 10 18 Q 180 -2 350 18" stroke="#a3e635" stroke-width="4" fill="none" stroke-dasharray="8 6"/>
+                  </svg>
+                  <span class="express-text">═════ 99% Express Skip ═════➔</span>
                 </div>
-                <div class="tier-sub">Skips 99% of irrelevant points in high-dimensional space</div>
-              </div>
-
-              <div class="highway-tier tier-mid">
-                <div class="tier-label">LAYER 1 • CLUSTER ROUTING</div>
-                <div class="highway-track">
-                  <div class="highway-node">A₁</div>
-                  <div class="local-arc">───➔</div>
-                  <div class="highway-node active-node">A₂</div>
-                  <div class="local-arc">───➔</div>
-                  <div class="highway-node">A₃</div>
+                <div class="highway-node active-node" id="node-b">Node B</div>
+                <div class="search-probe" id="search-probe">
+                  <span class="probe-core"></span>
+                  <span class="probe-glow"></span>
                 </div>
               </div>
-
-              <div class="highway-tier tier-base">
-                <div class="tier-label">BASE LAYER 0 • EXACT NEAREST NEIGHBORS</div>
-                <div class="highway-track base-grid">
-                  <span class="base-dot"></span>
-                  <span class="base-dot"></span>
-                  <span class="base-dot target-hit">🎯 Target Nearest Vector</span>
-                  <span class="base-dot"></span>
-                  <span class="base-dot"></span>
-                </div>
-              </div>
-
-              <div class="ttl-badge">⚡ Sub-Millisecond Nearest Neighbor Convergence</div>
+              <div class="tier-sub">Skips dense local clusters via sparse upper shortcuts</div>
             </div>
-            <p class="card-highlight metaphor-caption">Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.</p>
+
+            <div class="highway-tier tier-mid">
+              <div class="tier-label">LAYER 1 • CLUSTER ROUTING</div>
+              <div class="highway-track">
+                <div class="highway-node">A₁</div>
+                <div class="local-arc">───➔</div>
+                <div class="highway-node active-node" id="mid-node-active">A₂</div>
+                <div class="local-arc">───➔</div>
+                <div class="highway-node">A₃</div>
+              </div>
+            </div>
+
+            <div class="highway-tier tier-base">
+              <div class="tier-label">BASE LAYER 0 • EXACT NEAREST NEIGHBORS</div>
+              <div class="highway-track base-grid">
+                <span class="base-dot"></span>
+                <span class="base-dot"></span>
+                <span class="base-dot target-hit">🎯 Target Nearest Vector</span>
+                <span class="base-dot"></span>
+                <span class="base-dot"></span>
+              </div>
+            </div>
+
+            <div class="skip-counter-badge" id="skip-counter">
+              ⚡ 99.4% Irrelevant Vectors Skipped in 0.4ms
+            </div>
           </div>
-        
+          <p class="card-highlight metaphor-caption">Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.</p>
+        </div>
+      
       </div>
     
 
       <div id="scene-2" class="scene-layer clip" data-start="13.8835" data-duration="6.3591999999999995" style="opacity: 0;">
         
-          <div class="purple-badge">
-            <span class="badge-dot pulse-violet"></span>
-            GRAPH TOPOLOGY
-          </div>
-          <h2 class="scene-title">HNSW Layered Navigation</h2>
-          <div class="purple-flow-container">
-            
-              <div class="purple-flow-node node-0">
-                <div class="node-icon-dot"></div>
-                <div class="node-title">Entry Point</div>
-                <div class="node-sub">Top Layer 2</div>
+        <div class="purple-badge">
+          <span class="badge-dot pulse-violet"></span>
+          GRAPH TOPOLOGY
+        </div>
+        <h2 class="scene-title">HNSW Layered Navigation</h2>
+        <div class="metaphor-collage-stage">
+          <div class="descent-navigation-stage" id="descent-stage">
+            <div class="nav-tier tier-top">
+              <div class="nav-tier-header">LAYER 2 • ENTRY HOP</div>
+              <div class="nav-nodes-row">
+                <div class="graph-node entry-node" id="entry-node-l2">
+                  <span class="node-icon-dot"></span>
+                  Entry Point (Top Layer)
+                </div>
               </div>
-              <div class="purple-flow-arrow">➔</div>
-            
-              <div class="purple-flow-node node-1">
-                <div class="node-icon-dot"></div>
-                <div class="node-title">Intermediate Leap</div>
-                <div class="node-sub">Layer 1 Hops</div>
+            </div>
+
+            <div class="descent-beam-container">
+              <svg class="beam-svg" width="100%" height="60" viewBox="0 0 400 60">
+                <line id="descent-beam" x1="200" y1="0" x2="200" y2="60" stroke="#c084fc" stroke-width="4" stroke-dasharray="6 4"/>
+              </svg>
+              <div class="query-descent-probe" id="query-descent-probe">
+                <span class="probe-light"></span>
               </div>
-              <div class="purple-flow-arrow">➔</div>
-            
-              <div class="purple-flow-node node-2">
-                <div class="node-icon-dot"></div>
-                <div class="node-title">Exact Nearest Point</div>
-                <div class="node-sub">Base Layer 0</div>
+            </div>
+
+            <div class="nav-tier tier-mid">
+              <div class="nav-tier-header">LAYER 1 • LOCAL CLUSTER HOPS</div>
+              <div class="nav-nodes-row">
+                <div class="graph-node" id="intermediate-node-l1">Intermediate Hop A₂</div>
+                <div class="local-arc">➔</div>
+                <div class="graph-node">Cluster Hub</div>
               </div>
-              
-            
+            </div>
+
+            <div class="descent-beam-container">
+              <svg class="beam-svg" width="100%" height="50" viewBox="0 0 400 50">
+                <line x1="200" y1="0" x2="200" y2="50" stroke="#a3e635" stroke-width="4" stroke-dasharray="6 4"/>
+              </svg>
+            </div>
+
+            <div class="nav-tier tier-base">
+              <div class="nav-tier-header">BASE LAYER 0 • EXACT CONVERGENCE</div>
+              <div class="base-vector-cluster" id="base-cluster">
+                <span class="dim-dot"></span>
+                <span class="dim-dot"></span>
+                <div class="target-beacon" id="target-beacon-l0">
+                  <span class="convergence-ring" id="convergence-ring"></span>
+                  🎯 Exact Nearest Vector
+                </div>
+                <span class="dim-dot"></span>
+                <span class="dim-dot"></span>
+              </div>
+            </div>
           </div>
-          <div class="collage-note-box">
-            <p class="card-highlight">Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.</p>
-          </div>
-        
+          <p class="card-highlight metaphor-caption">Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.</p>
+        </div>
+      
       </div>
     
 
@@ -805,9 +1190,26 @@
           PRODUCTION RULE
         </div>
         <h2 class="scene-title">Sub-Millisecond Retrieval</h2>
-        <div class="takeaway-collage-card">
+        <div class="takeaway-collage-card" id="rule-stamp">
           <div class="takeaway-header">
             <span class="takeaway-stamp">ARCHITECTURAL RULE</span>
+          </div>
+          <div class="param-metrics-grid" id="param-metrics">
+            <div class="metric-card">
+              <span class="metric-key">M (Max Edges)</span>
+              <span class="metric-val">16 – 64</span>
+              <span class="metric-desc">Controls recall &amp; RAM</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-key">efConstruction</span>
+              <span class="metric-val">100 – 200</span>
+              <span class="metric-desc">Index build precision</span>
+            </div>
+          </div>
+          <div class="latency-gauge-box" id="latency-gauge">
+            <div class="gauge-label">QUERY RETRIEVAL SPEED</div>
+            <div class="gauge-value" id="gauge-val">0.42 ms</div>
+            <div class="gauge-sub">⚡ 100x Faster than Brute-Force O(N)</div>
           </div>
           <p class="card-highlight">Tune graph connectivity M and construction breadth efSearch to balance recall against memory footprint.</p>
           <div class="source-tag">Reference: HNSW Algorithm &amp; Vector DB Standards</div>
@@ -868,6 +1270,61 @@
         tl.from("#scene-0 .collage-hero-card", { opacity: 0, y: 45, scale: 0.94, duration: 0.65, ease: "back.out(1.3)" }, 0.25);
         tl.from("#scene-0 .surreal-icon", { rotation: -20, scale: 0.5, opacity: 0, duration: 0.6, ease: "back.out(1.8)" }, 0.35);
       
+        // --- Scene 0 Motion Choreography (linear-scan-bottleneck) ---
+
+          // Action: step-scan-points on #linear-search-marker
+          tl.fromTo("#scene-0 #linear-search-marker", 
+            { x: -260, opacity: 0, scale: 0.8 }, 
+            { x: -90, opacity: 1, scale: 1, duration: 0.50, ease: "power2.out" }, 
+            0.100
+          );
+          tl.to("#scene-0 #linear-search-marker", { 
+            x: 80, 
+            duration: 0.60, 
+            ease: "steps(4)" 
+          }, 0.600);
+          tl.to("#scene-0 #linear-search-marker", { 
+            x: 240, 
+            duration: 0.60, 
+            ease: "power1.inOut" 
+          }, 1.200);
+          tl.to("#scene-0 .vec-point:nth-child(-n+24)", { 
+            backgroundColor: "#c084fc", 
+            scale: 1.25, 
+            duration: 0.3, 
+            stagger: 0.02 
+          }, 0.250);
+          tl.to("#scene-0 .counter-num", { 
+            color: "#facc15", 
+            duration: 0.6 
+          }, 0.100);
+          
+          // Action: stall-and-flash-bottleneck on #bottleneck-indicator
+          tl.to("#scene-0 #linear-search-marker", { 
+            x: "+=8", 
+            yoyo: true, 
+            repeat: 7, 
+            duration: 0.07, 
+            ease: "sine.inOut" 
+          }, 4.078);
+          tl.fromTo("#scene-0 #bottleneck-indicator", 
+            { y: 25, opacity: 0, scale: 0.92 }, 
+            { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, 
+            4.078
+          );
+          tl.to("#scene-0 #bottleneck-indicator", { 
+            backgroundColor: "rgba(239, 68, 68, 0.28)", 
+            borderColor: "#ef4444", 
+            boxShadow: "0 0 24px rgba(239, 68, 68, 0.7)", 
+            duration: 0.25, 
+            yoyo: true, 
+            repeat: 3 
+          }, 4.428);
+          tl.to("#scene-0 .counter-num", { 
+            color: "#ef4444", 
+            duration: 0.2 
+          }, 4.378);
+          
         tl.to("#w-0-0", {
           color: "#a3e635",
           backgroundColor: "rgba(163, 230, 53, 0.18)",
@@ -1104,6 +1561,54 @@
           if (target) target.classList.add('active');
         }, null, 6.6262);
       
+        // --- Scene 1 Motion Choreography (hnsw-express-highway) ---
+
+          // Action: enter-probe-and-lock-node-a on #search-probe
+          tl.fromTo("#scene-1 #search-probe", 
+            { scale: 0, opacity: 0, x: -20 }, 
+            { scale: 1, opacity: 1, x: 0, duration: 0.50, ease: "back.out(2)" }, 
+            11.292
+          );
+          tl.to("#scene-1 #node-a", { 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 22px rgba(163, 230, 53, 0.85)", 
+            scale: 1.12, 
+            duration: 0.35 
+          }, 11.442);
+          
+          // Action: traverse-express-bridge on #search-probe
+          tl.fromTo("#scene-1 #express-bridge-path", 
+            { strokeDashoffset: 120 }, 
+            { strokeDashoffset: 0, duration: 1.20, ease: "power2.inOut" }, 
+            9.218
+          );
+          tl.to("#scene-1 #search-probe", { 
+            x: 380, 
+            duration: 1.40, 
+            ease: "power2.inOut" 
+          }, 9.368);
+          tl.to("#scene-1 #search-probe .probe-glow", { 
+            scale: 2.4, 
+            opacity: 0.9, 
+            duration: 0.6, 
+            yoyo: true, 
+            repeat: 1 
+          }, 9.418);
+          
+          // Action: illuminate-express-nodes on #node-b
+          tl.to("#scene-1 #node-b", { 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 26px rgba(163, 230, 53, 0.9)", 
+            scale: 1.15, 
+            duration: 0.35, 
+            ease: "back.out(2)" 
+          }, 12.847);
+          tl.fromTo("#scene-1 #skip-counter", 
+            { y: 20, opacity: 0, scale: 0.9 }, 
+            { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, 
+            13.047
+          );
+          
         tl.to("#w-1-0", {
           color: "#a3e635",
           backgroundColor: "rgba(163, 230, 53, 0.18)",
@@ -1357,6 +1862,59 @@
           if (target) target.classList.add('active');
         }, null, 13.8835);
       
+        // --- Scene 2 Motion Choreography (coarse-to-fine-graph-descent) ---
+
+          // Action: activate-entry-hop on #entry-node-l2
+          tl.fromTo("#scene-2 #query-descent-probe", 
+            { y: -35, opacity: 0, scale: 0.5 }, 
+            { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 
+            14.632
+          );
+          tl.to("#scene-2 #entry-node-l2", { 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 20px rgba(163, 230, 53, 0.8)", 
+            scale: 1.1, 
+            duration: 0.35 
+          }, 14.782);
+          
+          // Action: descend-to-base on #query-descent-probe
+          tl.to("#scene-2 #query-descent-probe", { 
+            y: 155, 
+            duration: 0.67, 
+            ease: "power2.inOut" 
+          }, 16.876);
+          tl.to("#scene-2 #intermediate-node-l1", { 
+            borderColor: "#c084fc", 
+            boxShadow: "0 0 16px rgba(192, 132, 252, 0.8)", 
+            scale: 1.08, 
+            duration: 0.3 
+          }, 17.436);
+          tl.to("#scene-2 #query-descent-probe", { 
+            y: 310, 
+            duration: 0.67, 
+            ease: "power2.inOut" 
+          }, 17.604);
+          
+          // Action: lock-target-nearest-vector on #target-beacon-l0
+          tl.to("#scene-2 #target-beacon-l0", { 
+            scale: 1.25, 
+            color: "#a3e635", 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 35px rgba(163, 230, 53, 0.95)", 
+            duration: 0.5, 
+            ease: "back.out(2.2)" 
+          }, 19.120);
+          tl.fromTo("#scene-2 #convergence-ring", 
+            { scale: 0.6, opacity: 1 }, 
+            { scale: 2.6, opacity: 0, duration: 0.75, ease: "power2.out" }, 
+            19.220
+          );
+          tl.to("#scene-2 .dim-dot", { 
+            opacity: 0.2, 
+            scale: 0.7, 
+            duration: 0.4 
+          }, 19.320);
+          
         tl.to("#w-2-0", {
           color: "#a3e635",
           backgroundColor: "rgba(163, 230, 53, 0.18)",
@@ -1661,6 +2219,40 @@
           if (target) target.classList.add('active');
         }, null, 20.2427);
       
+        // --- Scene 3 Motion Choreography (architectural-production-rule) ---
+
+          // Action: stamp-rule-entrance on #rule-stamp
+          tl.fromTo("#scene-3 #rule-stamp", 
+            { y: 50, opacity: 0, scale: 0.92 }, 
+            { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.8)" }, 
+            20.343
+          );
+          tl.fromTo("#scene-3 .takeaway-stamp", 
+            { scale: 1.5, opacity: 0 }, 
+            { scale: 1, opacity: 1, duration: 0.4, ease: "bounce.out" }, 
+            20.543
+          );
+          
+          // Action: lock-latency-meter on #latency-gauge
+          tl.fromTo("#scene-3 #param-metrics .metric-card", 
+            { x: -20, opacity: 0 }, 
+            { x: 0, opacity: 1, duration: 0.4, stagger: 0.12, ease: "power2.out" }, 
+            27.291
+          );
+          tl.fromTo("#scene-3 #latency-gauge", 
+            { scale: 0.88, opacity: 0 }, 
+            { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.6)" }, 
+            27.491
+          );
+          tl.to("#scene-3 #gauge-val", { 
+            color: "#a3e635", 
+            textShadow: "0 0 24px rgba(163, 230, 53, 0.95)", 
+            scale: 1.15, 
+            duration: 0.35, 
+            yoyo: true, 
+            repeat: 1 
+          }, 27.741);
+          
         tl.to("#w-3-0", {
           color: "#a3e635",
           backgroundColor: "rgba(163, 230, 53, 0.18)",

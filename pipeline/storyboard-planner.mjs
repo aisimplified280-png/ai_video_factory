@@ -198,6 +198,9 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
     if (scene.oldWay) beat.oldWay = scene.oldWay;
     if (scene.newWay) beat.newWay = scene.newWay;
 
+    // Attach structured scene graph and motion actions
+    beat.sceneGraph = planSceneGraph(scene, beat, scriptData);
+
     beats.push(beat);
   }
 
@@ -218,4 +221,397 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
   console.log(`[Storyboard] Plan generated with ${beats.length} beats: ${storyboardPath}`);
 
   return storyboard;
+}
+
+/**
+ * Validate a scene-graph structure.
+ * Returns { valid: boolean, errors: string[] }
+ */
+export function validateSceneGraph(sceneGraph) {
+  const errors = [];
+  if (!sceneGraph || typeof sceneGraph !== "object") {
+    return { valid: false, errors: ["Missing sceneGraph object."] };
+  }
+  if (!sceneGraph.visualMetaphor || typeof sceneGraph.visualMetaphor !== "string") {
+    errors.push("sceneGraph missing valid visualMetaphor string.");
+  }
+  if (sceneGraph.safeZone) {
+    const { top, bottom, left, right } = sceneGraph.safeZone;
+    if (typeof top !== "number" || typeof bottom !== "number" || top >= bottom) {
+      errors.push("sceneGraph safeZone vertical bounds invalid (top must be < bottom).");
+    }
+    if (typeof left !== "number" || typeof right !== "number" || left >= right) {
+      errors.push("sceneGraph safeZone horizontal bounds invalid (left must be < right).");
+    }
+  }
+  if (!Array.isArray(sceneGraph.elements) || sceneGraph.elements.length === 0) {
+    errors.push("sceneGraph elements must be a non-empty array.");
+  } else {
+    sceneGraph.elements.forEach((el, elIdx) => {
+      if (!el.id) errors.push(`Element [${elIdx}] missing id.`);
+      if (!el.role) errors.push(`Element '${el.id || elIdx}' missing role.`);
+    });
+  }
+  if (!Array.isArray(sceneGraph.actions) || sceneGraph.actions.length === 0) {
+    errors.push("sceneGraph actions must be a non-empty array.");
+  } else {
+    const elementIds = new Set((sceneGraph.elements || []).map((e) => e.id));
+    sceneGraph.actions.forEach((act, actIdx) => {
+      if (!act.action) errors.push(`Action [${actIdx}] missing action type.`);
+      if (!act.trigger) errors.push(`Action '${act.action || actIdx}' missing trigger.`);
+      if (act.trigger === "spoken-phrase" && (!act.phrase || !act.phrase.trim())) {
+        errors.push(`Action '${act.action || actIdx}' with spoken-phrase trigger missing valid phrase anchor.`);
+      }
+      if (typeof act.duration !== "number" || act.duration <= 0) {
+        errors.push(`Action '${act.action || actIdx}' missing valid duration.`);
+      }
+      if (!act.purpose) errors.push(`Action '${act.action || actIdx}' missing narrative purpose.`);
+      if (act.target && !elementIds.has(act.target)) {
+        errors.push(`Action '${act.action}' references undeclared target element '${act.target}'.`);
+      }
+    });
+  }
+  if (sceneGraph.primarySubject) {
+    const elementIds = new Set((sceneGraph.elements || []).map((e) => e.id));
+    if (!elementIds.has(sceneGraph.primarySubject)) {
+      errors.push(`sceneGraph primarySubject '${sceneGraph.primarySubject}' not found in elements.`);
+    }
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Plan a structured scene graph with objects, roles, and choreographed actions.
+ */
+export function planSceneGraph(scene, beat, scriptData) {
+  // If scene already defines an explicit valid sceneGraph, preserve it
+  if (scene.sceneGraph) {
+    const val = validateSceneGraph(scene.sceneGraph);
+    if (val.valid) return scene.sceneGraph;
+  }
+
+  const titleLower = `${scene.visualTitle || ""} ${scriptData.topic || ""}`.toLowerCase();
+  const isVector = titleLower.includes("vector") || titleLower.includes("hnsw");
+  const mode = beat.visualMode;
+
+  const defaultSafeZone = { top: 250, bottom: 1400, left: 90, right: 990 };
+
+  if (mode === "hook" || mode === "hook-bold-object") {
+    if (isVector) {
+      return {
+        visualMetaphor: "linear-scan-bottleneck",
+        metaphorExplanation: "Dense coordinate point cloud inspected one by one causes scanning stall and bottleneck collapse.",
+        primarySubject: "linear-search-marker",
+        safeZone: defaultSafeZone,
+        elements: [
+          { id: "vector-dense-field", role: "environment", assetSource: "procedural-svg", depth: 1 },
+          {
+            id: "linear-search-marker",
+            role: "moving-focal-subject",
+            assetSource: "procedural-svg",
+            depth: 3,
+            initialState: { x: -280, y: 0, scale: 0.8, opacity: 0 },
+            finalState: { x: 260, y: 0, scale: 1.1, opacity: 1 }
+          },
+          { id: "bottleneck-indicator", role: "status-overlay", assetSource: "procedural-html", depth: 4 },
+          { id: "search-counter", role: "parameter-metrics", assetSource: "procedural-html", depth: 2 },
+        ],
+        actions: [
+          {
+            trigger: "spoken-phrase",
+            phrase: "Searching millions",
+            audioAnchor: "Searching millions",
+            action: "step-scan-points",
+            target: "linear-search-marker",
+            duration: 1.8,
+            purpose: "Demonstrate marker checking vector points one-by-one linearly",
+            causeAndEffect: {
+              triggerElement: "linear-search-marker",
+              reactingElements: ["vector-dense-field", "search-counter"],
+              reaction: "advance-scanned-points"
+            }
+          },
+          {
+            trigger: "spoken-phrase",
+            phrase: "unscalable bottleneck",
+            audioAnchor: "unscalable bottleneck",
+            action: "stall-and-flash-bottleneck",
+            target: "bottleneck-indicator",
+            duration: 1.4,
+            purpose: "Visually emphasize search stalling and bottleneck collapse",
+            causeAndEffect: {
+              triggerElement: "bottleneck-indicator",
+              reactingElements: ["linear-search-marker", "search-counter"],
+              reaction: "halt-and-alarm"
+            }
+          },
+        ],
+        transition: { type: "match-cut-compress", persistingElements: ["linear-search-marker"], duration: 0.4 }
+      };
+    }
+
+    return {
+      visualMetaphor: "attention-hook",
+      metaphorExplanation: "Radial burst focal object establishes architectural problem context.",
+      primarySubject: "hero-emblem",
+      safeZone: defaultSafeZone,
+      elements: [
+        { id: "hero-emblem", role: "focal-subject", assetSource: "procedural-svg", depth: 3 },
+        { id: "glow-ring", role: "atmosphere", assetSource: "procedural-svg", depth: 1 },
+        { id: "statement-box", role: "supporting-card", assetSource: "procedural-html", depth: 2 },
+      ],
+      actions: [
+        {
+          trigger: "spoken-phrase",
+          phrase: scene.voiceText ? scene.voiceText.split(" ").slice(0, 3).join(" ") : "Attention",
+          audioAnchor: "Attention",
+          action: "burst-emblem",
+          target: "hero-emblem",
+          duration: 0.8,
+          purpose: "Capture viewer visual focus with radial burst",
+        },
+      ],
+    };
+  }
+
+  if (mode === "physical-metaphor") {
+    if (scene.metaphorType === "hnsw-highway" || isVector) {
+      return {
+        visualMetaphor: "hnsw-express-highway",
+        metaphorExplanation: "Multi-tier hierarchical graph skips dense clusters like express lanes on a highway.",
+        primarySubject: "search-probe",
+        safeZone: defaultSafeZone,
+        elements: [
+          { id: "highway-tiers", role: "environment-layers", assetSource: "procedural-html", depth: 1 },
+          { id: "express-bridge-path", role: "navigation-path", assetSource: "procedural-svg", depth: 2 },
+          { id: "node-a", role: "network-node", assetSource: "procedural-svg", depth: 3 },
+          { id: "node-b", role: "network-node", assetSource: "procedural-svg", depth: 3 },
+          {
+            id: "search-probe",
+            role: "moving-focal-subject",
+            assetSource: "procedural-svg",
+            depth: 5,
+            initialState: { x: 0, y: 0, scale: 0.8, opacity: 0 },
+            finalState: { x: 380, y: 0, scale: 1.1, opacity: 1 }
+          },
+          { id: "express-arc", role: "navigation-path", assetSource: "procedural-svg", depth: 2 },
+          { id: "skip-counter", role: "performance-meter", assetSource: "procedural-html", depth: 4 },
+        ],
+        actions: [
+          {
+            trigger: "spoken-phrase",
+            phrase: "multi-tier highways",
+            audioAnchor: "multi-tier highways",
+            action: "enter-probe-and-lock-node-a",
+            target: "search-probe",
+            duration: 0.8,
+            purpose: "Probe enters upper express tier and locks onto Node A",
+            causeAndEffect: {
+              triggerElement: "search-probe",
+              reactingElements: ["node-a"],
+              reaction: "pulse-node-green"
+            }
+          },
+          {
+            trigger: "spoken-phrase",
+            phrase: "skip dense clusters",
+            audioAnchor: "skip dense clusters",
+            action: "traverse-express-bridge",
+            target: "search-probe",
+            duration: 1.6,
+            purpose: "Animate query probe leaping across upper express bridge from Node A to Node B",
+            causeAndEffect: {
+              triggerElement: "search-probe",
+              reactingElements: ["express-bridge-path", "express-arc", "node-b"],
+              reaction: "illuminate-path-and-settle"
+            }
+          },
+          {
+            trigger: "spoken-phrase",
+            phrase: "high-dimensional space",
+            audioAnchor: "high-dimensional space",
+            action: "illuminate-express-nodes",
+            target: "node-b",
+            duration: 1.2,
+            purpose: "Illuminate express tier nodes to highlight highway shortcut efficiency",
+            causeAndEffect: {
+              triggerElement: "node-b",
+              reactingElements: ["skip-counter"],
+              reaction: "stamp-skip-metric"
+            }
+          },
+        ],
+        transition: { type: "layer-descent-prep", persistingElements: ["search-probe"], duration: 0.3 }
+      };
+    }
+
+    return {
+      visualMetaphor: "token-conveyor",
+      metaphorExplanation: "Memory conveyor shows static prefix pinned in warm RAM while dynamic query hits instantly.",
+      primarySubject: "dynamic-query-item",
+      safeZone: defaultSafeZone,
+      elements: [
+        { id: "conveyor-track", role: "motion-path", assetSource: "procedural-svg", depth: 1 },
+        { id: "static-pinned-item", role: "fixed-focal-subject", assetSource: "procedural-html", depth: 2 },
+        { id: "dynamic-query-item", role: "moving-focal-subject", assetSource: "procedural-html", depth: 3 },
+      ],
+      actions: [
+        {
+          trigger: "spoken-phrase",
+          phrase: "stores your system instructions",
+          audioAnchor: "stores your system instructions",
+          action: "pin-cache-ram",
+          target: "static-pinned-item",
+          duration: 1.0,
+          purpose: "Lock static system prompt into warm ephemeral RAM",
+        },
+        {
+          trigger: "spoken-phrase",
+          phrase: "read directly from cache",
+          audioAnchor: "read directly from cache",
+          action: "instant-query-hit",
+          target: "dynamic-query-item",
+          duration: 1.2,
+          purpose: "Slide query into match position with instant latency hit",
+        },
+      ],
+    };
+  }
+
+  if (mode === "architecture-diagram") {
+    if (isVector) {
+      return {
+        visualMetaphor: "coarse-to-fine-graph-descent",
+        metaphorExplanation: "Search hops across sparse upper tiers before descending to dense base layer to lock nearest vector.",
+        primarySubject: "query-descent-probe",
+        safeZone: defaultSafeZone,
+        elements: [
+          {
+            id: "query-descent-probe",
+            role: "moving-focal-subject",
+            assetSource: "procedural-svg",
+            depth: 5,
+            initialState: { x: 0, y: -30, scale: 0.5, opacity: 0 },
+            finalState: { x: 0, y: 310, scale: 1.2, opacity: 1 }
+          },
+          { id: "entry-node-l2", role: "network-node", assetSource: "procedural-svg", depth: 3 },
+          { id: "intermediate-node-l1", role: "network-node", assetSource: "procedural-svg", depth: 3 },
+          { id: "target-beacon-l0", role: "nearest-target", assetSource: "procedural-svg", depth: 4 },
+          { id: "descent-beam", role: "descent-path", assetSource: "procedural-svg", depth: 2 },
+          { id: "convergence-ring", role: "status-overlay", assetSource: "procedural-svg", depth: 4 },
+        ],
+        actions: [
+          {
+            trigger: "spoken-phrase",
+            phrase: "hops across sparse upper layers",
+            audioAnchor: "hops across sparse upper layers",
+            action: "activate-entry-hop",
+            target: "entry-node-l2",
+            duration: 0.9,
+            purpose: "Hit entry point in sparse top layer",
+            causeAndEffect: {
+              triggerElement: "query-descent-probe",
+              reactingElements: ["entry-node-l2"],
+              reaction: "ripple-entry-node"
+            }
+          },
+          {
+            trigger: "spoken-phrase",
+            phrase: "descending to the base",
+            audioAnchor: "descending to the base",
+            action: "descend-to-base",
+            target: "query-descent-probe",
+            duration: 1.4,
+            purpose: "Animate probe sliding down vertical descent beam to intermediate and base tiers",
+            causeAndEffect: {
+              triggerElement: "query-descent-probe",
+              reactingElements: ["descent-beam", "intermediate-node-l1"],
+              reaction: "illuminate-descent-track"
+            }
+          },
+          {
+            trigger: "spoken-phrase",
+            phrase: "nearest neighbor convergence",
+            audioAnchor: "nearest neighbor convergence",
+            action: "lock-target-nearest-vector",
+            target: "target-beacon-l0",
+            duration: 1.2,
+            purpose: "Target beacon pulses with neon flare while surrounding points dim down",
+            causeAndEffect: {
+              triggerElement: "target-beacon-l0",
+              reactingElements: ["convergence-ring"],
+              reaction: "expand-target-shockwave"
+            }
+          },
+        ],
+        transition: { type: "converged-focus", duration: 0.4 }
+      };
+    }
+
+    return {
+      visualMetaphor: "pipeline-data-flow",
+      metaphorExplanation: "Node topology animates data flow through modular components.",
+      primarySubject: "flow-packet",
+      safeZone: defaultSafeZone,
+      elements: [
+        { id: "flow-packet", role: "moving-focal-subject", assetSource: "procedural-svg", depth: 3 },
+        { id: "flow-nodes", role: "network-node", assetSource: "procedural-html", depth: 2 },
+      ],
+      actions: [
+        {
+          trigger: "spoken-phrase",
+          phrase: "flow",
+          audioAnchor: "flow",
+          action: "advance-flow-packet",
+          target: "flow-packet",
+          duration: 1.5,
+          purpose: "Trace data movement through topology nodes",
+        },
+      ],
+    };
+  }
+
+  // Default: concept explainer / payoff
+  return {
+    visualMetaphor: "architectural-production-rule",
+    metaphorExplanation: "Definitive architectural rule stamp establishes concrete engineering parameters and latency limits.",
+    primarySubject: "rule-stamp",
+    safeZone: defaultSafeZone,
+    elements: [
+      { id: "rule-stamp", role: "focal-subject", assetSource: "procedural-html", depth: 3 },
+      { id: "param-metrics", role: "parameter-metrics", assetSource: "procedural-html", depth: 2 },
+      { id: "latency-gauge", role: "performance-meter", assetSource: "procedural-html", depth: 4 },
+    ],
+    actions: [
+      {
+        trigger: "spoken-phrase",
+        phrase: scene.voiceText ? scene.voiceText.split(" ").slice(0, 3).join(" ") : "Balancing",
+        audioAnchor: "Balancing",
+        action: "stamp-rule-entrance",
+        target: "rule-stamp",
+        duration: 0.7,
+        purpose: "Drop definitive production rule stamp with physical bounce",
+        causeAndEffect: {
+          triggerElement: "rule-stamp",
+          reactingElements: ["param-metrics"],
+          reaction: "settle-and-reveal"
+        }
+      },
+      {
+        trigger: "spoken-phrase",
+        phrase: "latency",
+        audioAnchor: "latency",
+        action: "lock-latency-meter",
+        target: "latency-gauge",
+        duration: 1.0,
+        purpose: "Lock metric to sub-millisecond status",
+        causeAndEffect: {
+          triggerElement: "latency-gauge",
+          reactingElements: ["rule-stamp"],
+          reaction: "glow-pass-confirmation"
+        }
+      },
+    ],
+    transition: { type: "final-hold", duration: 0.5 }
+  };
 }

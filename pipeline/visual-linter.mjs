@@ -93,6 +93,78 @@ export function lintVisualDiversity(storyboard) {
     }
   });
 
+  // 6. Scene Graph & Motion Choreography Integrity (Critical Checks for v2)
+  const isV2 = storyboard.version >= 2;
+  const actionCounts = {};
+  beats.forEach((b, idx) => {
+    if (!b.sceneGraph) {
+      if (isV2) {
+        criticalIssues.push(`Beat ${idx + 1} is missing required sceneGraph structure.`);
+      }
+      return;
+    }
+
+    const sg = b.sceneGraph;
+    if (!sg.visualMetaphor) {
+      criticalIssues.push(`Beat ${idx + 1} sceneGraph is missing visualMetaphor.`);
+    }
+
+    if (!Array.isArray(sg.elements) || sg.elements.length === 0) {
+      criticalIssues.push(`Beat ${idx + 1} sceneGraph elements must be a non-empty array.`);
+    } else {
+      const elementIds = new Set(sg.elements.map((el) => el.id));
+      if (sg.primarySubject && !elementIds.has(sg.primarySubject)) {
+        criticalIssues.push(
+          `Beat ${idx + 1} sceneGraph primarySubject '${sg.primarySubject}' is not declared in elements.`
+        );
+      }
+
+      if (Array.isArray(sg.actions)) {
+        sg.actions.forEach((act, aIdx) => {
+          if (!act.action) {
+            criticalIssues.push(`Beat ${idx + 1} action [${aIdx}] is missing an action type.`);
+          } else {
+            actionCounts[act.action] = (actionCounts[act.action] || 0) + 1;
+          }
+
+          if (!act.trigger) {
+            criticalIssues.push(`Beat ${idx + 1} action '${act.action || aIdx}' is missing a trigger.`);
+          } else if (act.trigger === "spoken-phrase" && (!act.phrase || !act.phrase.trim())) {
+            criticalIssues.push(
+              `Beat ${idx + 1} action '${act.action}' has spoken-phrase trigger but missing phrase anchor.`
+            );
+          }
+
+          if (typeof act.duration !== "number" || act.duration <= 0) {
+            criticalIssues.push(`Beat ${idx + 1} action '${act.action}' duration must be > 0.`);
+          }
+
+          if (!act.purpose || !act.purpose.trim()) {
+            criticalIssues.push(`Beat ${idx + 1} action '${act.action}' is missing narrative purpose.`);
+          }
+
+          if (act.target && !elementIds.has(act.target)) {
+            criticalIssues.push(
+              `Beat ${idx + 1} action '${act.action}' references undeclared target element '${act.target}'.`
+            );
+          }
+        });
+      } else {
+        criticalIssues.push(`Beat ${idx + 1} sceneGraph actions must be a non-empty array.`);
+      }
+    }
+  });
+
+  // Warn if a single specific motion action is overused across > 50% of beats
+  const maxAllowedActionReuse = Math.max(2, Math.floor(beats.length * 0.5));
+  Object.entries(actionCounts).forEach(([actionName, count]) => {
+    if (count > maxAllowedActionReuse && actionName !== "burst-emblem") {
+      warnings.push(
+        `Motion action '${actionName}' repeated across ${count} beats (> 50%). Diversify motion choreography.`
+      );
+    }
+  });
+
   // Combined issues list
   const allIssues = [...criticalIssues, ...warnings];
   const diversityScore = Math.max(0, 100 - criticalIssues.length * 30 - warnings.length * 15);
