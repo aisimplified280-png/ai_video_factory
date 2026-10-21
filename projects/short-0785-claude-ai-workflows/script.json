@@ -1,0 +1,55 @@
+{
+  "id": "short-0785-claude-ai-workflows",
+  "title": "Claude AI Workflows",
+  "youtubeTitle": "Stop Doing This With Claude AI Workflows! 🤯 #Shorts",
+  "youtubeDescription": "Here is the fastest zero-cost way to master Claude AI Workflows without wasting hours.",
+  "voice": "en-US-ChristopherNeural",
+  "rate": "+4%",
+  "fps": 30,
+  "scenes": [
+    {
+      "id": "hook",
+      "badge": "CRITICAL WORKFLOW",
+      "cardType": "hook",
+      "tag": "ATTENTION",
+      "visualTitle": "The Secret to <span style=\"background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;\">Claude AI Workflows</span>",
+      "visualBody": "Most creators and developers waste 80% of their time on this.",
+      "stat": "10x",
+      "statLabel": "Faster Execution",
+      "voiceText": "If you are trying to master Claude AI Workflows, stop doing it the traditional way.",
+      "sfx": "hook-impact"
+    },
+    {
+      "id": "problem",
+      "badge": "THE BOTTLENECK",
+      "cardType": "comparison",
+      "visualTitle": "The Common Mistake",
+      "oldWay": "Hours of manual configuration and paid subscriptions.",
+      "newWay": "Automated, zero-cost code-driven generation.",
+      "voiceText": "Most people get stuck paying monthly subscriptions and wrestling with slow tools.",
+      "sfx": "zoom-swish"
+    },
+    {
+      "id": "solution",
+      "badge": "THE MODERN STACK",
+      "cardType": "code",
+      "visualTitle": "The Code-Driven Solution",
+      "terminalTitle": "workflow.config.ts",
+      "codeSnippet": "const pipeline = new Studio();\nawait pipeline.execute({\n  model: \"HyperFrames\",\n  cost: 0,\n  speed: \"Instant\"\n});",
+      "voiceText": "Instead, combine lightweight headless engines with zero-cost neural audio for instant results.",
+      "sfx": "ui-pop"
+    },
+    {
+      "id": "loop",
+      "badge": "VERIFIED RESULT",
+      "cardType": "feature",
+      "tag": "PAYOFF",
+      "visualTitle": "Ready in Seconds",
+      "visualBody": "Full HD 1080p, mastered at -14 LUFS, and 100% policy-compliant.",
+      "stat": "100%",
+      "statLabel": "Free & Local",
+      "voiceText": "And that's why you should start streamlining your entire creation loop today.",
+      "sfx": "clean-ding"
+    }
+  ]
+}

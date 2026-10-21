@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.favstash-studio/runtime/node_modules/
+.favstash-studio/runtime/package-lock.json
+
+# Git Submodules / Nested Git
+.favstash-studio/skills-source/.git/
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+
+# Temporary HyperFrames transactions and audio stems
+.silent.hf-transaction*
+*.hf-transaction*
+projects/**/.silent.hf-transaction*
+projects/**/silent.mp4
+projects/**/audio-mix.sfx.wav
+projects/**/audio-mix.plan.json
+projects/**/audio-mix.premix.wav
+
+# Setup check test renders
+.favstash-studio/setup-check/smoke-test.mp4
+.favstash-studio/setup-check/test-script.*
+.favstash-studio/setup-check/test-voice.*

@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "skills": {
+    "edit-video": {
+      "source": ".\\.favstash-studio\\skills-source",
+      "sourceUrl": ".\\.favstash-studio\\skills-source",
+      "sourceType": "git",
+      "skillPath": "skills/3-editing/edit-video/SKILL.md",
+      "computedHash": "28f3875e2ab69b5f894cbe400186e266d4a6e9137b42020f79cf2b96433ab1d8"
+    },
+    "find-ideas": {
+      "source": ".\\.favstash-studio\\skills-source",
+      "sourceUrl": ".\\.favstash-studio\\skills-source",
+      "sourceType": "git",
+      "skillPath": "skills/1-research/find-ideas/SKILL.md",
+      "computedHash": "6c1c4ff550b628bcff8e7517e3af5b236f938742632583130cd8fb44f14e9e52"
+    },
+    "product-motion-ads": {
+      "source": ".\\.favstash-studio\\skills-source",
+      "sourceUrl": ".\\.favstash-studio\\skills-source",
+      "sourceType": "git",
+      "skillPath": "skills/3-editing-styles/product-motion-ads/SKILL.md",
+      "computedHash": "b14352187059da1c8f4255912a1f671098de9f3cd285a92b11f56cd7d1bca5c1"
+    },
+    "text-over-footage": {
+      "source": ".\\.favstash-studio\\skills-source",
+      "sourceUrl": ".\\.favstash-studio\\skills-source",
+      "sourceType": "git",
+      "skillPath": "skills/3-editing-styles/text-over-footage/SKILL.md",
+      "computedHash": "9a61b1f9bceac15aa67b9d6e16daa3d94034de3687655d62149173c97bb60f36"
+    },
+    "write-script": {
+      "source": ".\\.favstash-studio\\skills-source",
+      "sourceUrl": ".\\.favstash-studio\\skills-source",
+      "sourceType": "git",
+      "skillPath": "skills/2-scripting/write-script/SKILL.md",
+      "computedHash": "64c2342a38e5ad7ac2b35ac684c592714d0ac4ee26f406080ee337793b9debe9"
+    }
+  }
+}

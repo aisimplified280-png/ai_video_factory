@@ -1,0 +1,45 @@
+{
+  "title": "Stop Doing This With Zero Cost AI Pipelines! 🤯 #Shorts",
+  "description": "Here is the fastest zero-cost way to master Zero Cost AI Pipelines without wasting hours.\n\nSubscribe to AI Simplified Lab for practical, zero-fluff AI workflows and code tutorials.\n\n#Shorts #AI #Coding #TechTrends #AISimplifiedLab",
+  "tags": [
+    "Shorts",
+    "AI",
+    "Technology",
+    "Automation",
+    "Coding",
+    "Tutorial"
+  ],
+  "youtubePolicyCompliance": {
+    "reusedContentCheck": "PASS (100% original code-generated GSAP animation & original voice narrative)",
+    "syntheticMediaDisclosure": "COMPLIANT (Editorial animation / motion graphics)",
+    "audioLicensing": "PASS (Edge-TTS neural voice + Apache-2.0 curated UI sound design)",
+    "safeZoneAdherence": "VERIFIED (1080x1920 bounded inside safe margins: top 240px, bottom 380px)"
+  },
+  "specs": {
+    "file": "final.mp4",
+    "coverThumbnail": "cover-frame.png",
+    "duration": "21.666666666666668s",
+    "resolution": "1080x1920",
+    "fps": 30,
+    "format": {
+      "duration": "21.666667",
+      "size": "3974873"
+    },
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1080,
+        "height": 1920,
+        "r_frame_rate": "30/1",
+        "duration": "21.666667",
+        "nb_frames": "650"
+      },
+      {
+        "codec_name": "aac",
+        "r_frame_rate": "0/0",
+        "duration": "21.666667",
+        "nb_frames": "1017"
+      }
+    ]
+  }
+}

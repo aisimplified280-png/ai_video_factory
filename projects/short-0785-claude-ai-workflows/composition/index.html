@@ -1,0 +1,1581 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Claude AI Workflows</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #fbfaf7;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #1c1917;
+      }
+      .composition-root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: radial-gradient(circle at 50% 15%, #f7f3ec 0%, #faf8f5 55%, #f3ede2 100%);
+        overflow: hidden;
+      }
+
+      /* Subtle Paper Grid & Warm Ambient Glows */
+      .grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-image: 
+          linear-gradient(to right, rgba(140, 120, 100, 0.08) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(140, 120, 100, 0.08) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+      }
+      .glow-orb {
+        position: absolute;
+        width: 650px;
+        height: 650px;
+        border-radius: 50%;
+        filter: blur(90px);
+        pointer-events: none;
+      }
+      .orb-terracotta {
+        background: radial-gradient(circle, rgba(217, 119, 87, 0.16) 0%, rgba(217, 119, 87, 0) 70%);
+        top: 10%;
+        left: -120px;
+      }
+      .orb-amber {
+        background: radial-gradient(circle, rgba(224, 159, 62, 0.14) 0%, rgba(224, 159, 62, 0) 70%);
+        top: 48%;
+        right: -140px;
+      }
+
+      /* Virtual Camera Wrapper */
+      .camera-viewport {
+        position: absolute;
+        inset: 0;
+        transform-origin: center center;
+      }
+
+      /* Top Progress Bar & Header (Claude Aesthetic) */
+      .top-progress-track {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background: rgba(140, 120, 100, 0.12);
+        z-index: 50;
+      }
+      .top-progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #d97757, #e09f3e, #d97757);
+        box-shadow: 0 0 10px rgba(217, 119, 87, 0.5);
+      }
+      .top-bar {
+        position: absolute;
+        top: 80px;
+        left: 90px;
+        right: 90px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 20;
+      }
+      .brand-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #44403c;
+      }
+      .brand-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #d97757;
+        box-shadow: 0 0 12px rgba(217, 119, 87, 0.8);
+      }
+
+      /* Scene Stage (Inside Safe-Zone: Y 260 to 1390) */
+      .scene-stage {
+        position: absolute;
+        top: 250px;
+        left: 90px;
+        width: 900px;
+        height: 1130px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+      .scene-layer {
+        position: absolute;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      /* Claude Terracotta Badges & Editorial Headlines */
+      .hook-badge, .scene-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 24px;
+        border-radius: 9999px;
+        background: #f4ede6;
+        border: 1px solid #e7d8cc;
+        color: #a45338;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 12px rgba(60, 45, 30, 0.04);
+      }
+      .pulse-coral {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #d97757;
+        box-shadow: 0 0 10px #d97757;
+      }
+      .hero-headline {
+        font-size: 72px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        color: #1c1917;
+        margin-bottom: 38px;
+        max-width: 860px;
+      }
+      .scene-title {
+        font-size: 56px;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        color: #1c1917;
+        margin-bottom: 36px;
+      }
+
+      /* Laser Border Shimmer Card */
+      .laser-card-wrapper {
+        position: relative;
+        width: 100%;
+        border-radius: 32px;
+        padding: 3px;
+        background: linear-gradient(135deg, rgba(217, 119, 87, 0.4), rgba(224, 159, 62, 0.4), rgba(60, 45, 30, 0.08));
+        box-shadow: 0 24px 48px -12px rgba(60, 45, 30, 0.12), 0 4px 16px rgba(0, 0, 0, 0.03);
+      }
+      .feature-card {
+        width: 100%;
+        padding: 48px 44px;
+        border-radius: 30px;
+        background: #ffffff;
+        border: 1px solid rgba(60, 45, 30, 0.06);
+        text-align: left;
+      }
+      .card-tag {
+        font-size: 20px;
+        font-weight: 700;
+        color: #d97757;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+      .card-highlight {
+        font-size: 38px;
+        font-weight: 600;
+        line-height: 1.35;
+        color: #292524;
+        margin-bottom: 24px;
+      }
+      .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 26px;
+        border-radius: 16px;
+        background: #fbf3ee;
+        border: 1px solid #ebd5c7;
+        color: #a45338;
+      }
+      .stat-number {
+        font-size: 36px;
+        font-weight: 800;
+        color: #d97757;
+      }
+      .stat-label {
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      /* Claude Terminal Card */
+      .terminal-card {
+        width: 100%;
+        border-radius: 28px;
+        background: #1e1e1e;
+        border: 1px solid rgba(60, 45, 30, 0.15);
+        box-shadow: 0 24px 48px rgba(30, 20, 10, 0.25);
+        overflow: hidden;
+        text-align: left;
+      }
+      .terminal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 24px;
+        background: #2a2a2a;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .term-controls {
+        display: flex;
+        gap: 10px;
+      }
+      .term-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+      }
+      .dot-red { background: #e06c75; }
+      .dot-yellow { background: #e5c07b; }
+      .dot-green { background: #98c379; }
+      .term-title {
+        font-size: 20px;
+        color: #d4d4d4;
+        font-family: Consolas, monospace;
+      }
+      .term-lang {
+        font-size: 18px;
+        color: #8c8c8c;
+        font-family: Consolas, monospace;
+      }
+      .terminal-body {
+        padding: 36px;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 30px;
+        line-height: 1.5;
+        color: #98c379;
+        white-space: pre-wrap;
+      }
+      .typing-cursor {
+        color: #d97757;
+        font-weight: 800;
+      }
+
+      /* Claude Comparison Cards */
+      .compare-grid {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .compare-box {
+        padding: 34px;
+        border-radius: 26px;
+        text-align: left;
+        background: #ffffff;
+        box-shadow: 0 16px 36px -10px rgba(60, 45, 30, 0.08);
+      }
+      .old-box {
+        border: 1px solid #fed7aa;
+        background: #fffaf5;
+      }
+      .new-box {
+        border: 2px solid #d97757;
+        background: #ffffff;
+      }
+      .compare-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .compare-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 18px;
+      }
+      .cross-icon {
+        background: #fef2f2;
+        color: #ef4444;
+      }
+      .check-icon {
+        background: #fbf3ee;
+        color: #d97757;
+      }
+      .compare-label {
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #78716c;
+      }
+      .new-box .compare-label {
+        color: #d97757;
+      }
+      .compare-text {
+        font-size: 32px;
+        font-weight: 600;
+        color: #292524;
+        line-height: 1.35;
+      }
+
+      /* Payoff Scene with Circular Gauge */
+      .payoff-flex {
+        display: flex;
+        align-items: center;
+        gap: 36px;
+      }
+      .gauge-container {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        flex-shrink: 0;
+      }
+      .gauge-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+      .gauge-bg {
+        fill: none;
+        stroke: #f3ede6;
+        stroke-width: 12;
+      }
+      .gauge-bar {
+        fill: none;
+        stroke: #d97757;
+        stroke-width: 12;
+        stroke-linecap: round;
+        stroke-dasharray: 301.6;
+        stroke-dashoffset: 0;
+      }
+      .gauge-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .gauge-val {
+        font-size: 28px;
+        font-weight: 800;
+        color: #d97757;
+      }
+      .green-badge {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #166534;
+      }
+      .green-badge .stat-number {
+        color: #16a34a;
+      }
+
+      /* Kinetic Word-by-Word Subtitle Ribbon (Safe Zone: Y 1410 - 1540) */
+      .subtitle-ribbon {
+        position: absolute;
+        top: 1410px;
+        left: 90px;
+        right: 90px;
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px 36px;
+        border-radius: 28px;
+        background: #ffffff;
+        border: 1px solid rgba(60, 45, 30, 0.12);
+        box-shadow: 0 20px 40px -10px rgba(60, 45, 30, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04);
+        z-index: 30;
+      }
+      .sub-scene {
+        display: none;
+        width: 100%;
+        text-align: center;
+        font-size: 38px;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+      .sub-scene.active {
+        display: block;
+      }
+      .cap-word {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 6px;
+        color: #78716c;
+        opacity: 0.65;
+        transition: color 0.1s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="composition-root"
+      data-composition-id="short-0785-claude-ai-workflows"
+      data-width="1080"
+      data-height="1920"
+      data-duration="21.3"
+    >
+      <div class="top-progress-track">
+        <div id="top-progress" class="top-progress-bar"></div>
+      </div>
+      <div class="grid-pattern"></div>
+      <div id="orb-1" class="glow-orb orb-terracotta"></div>
+      <div id="orb-2" class="glow-orb orb-amber"></div>
+
+      <div class="camera-viewport" id="stage-camera">
+        <div class="top-bar">
+          <div class="brand-badge">
+            <span class="brand-dot"></span>
+            AI Simplified Lab
+          </div>
+        </div>
+
+        <div class="scene-stage">
+          
+      <div id="scene-0" class="scene-layer clip" data-start="0" data-duration="5.396" style="opacity: 1;">
+        
+        <div class="hook-badge">
+          <span class="badge-dot pulse-coral"></span>
+          CRITICAL WORKFLOW
+        </div>
+        <h1 class="hero-headline">The Secret to <span style="background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Claude AI Workflows</span></h1>
+        <div class="laser-card-wrapper">
+          <div class="laser-border"></div>
+          <div class="feature-card">
+            <div class="card-tag">ATTENTION</div>
+            <p class="card-highlight">Most creators and developers waste 80% of their time on this.</p>
+            
+              <div class="stat-badge">
+                <span class="stat-number">10x</span>
+                <span class="stat-label">Faster Execution</span>
+              </div>
+            
+          </div>
+        </div>
+      
+      </div>
+    
+
+      <div id="scene-1" class="scene-layer clip" data-start="5.396" data-duration="4.94" style="opacity: 0;">
+        
+        <div class="scene-badge">THE BOTTLENECK</div>
+        <h2 class="scene-title">The Common Mistake</h2>
+        <div class="compare-grid">
+          <div class="compare-box old-box">
+            <div class="compare-header">
+              <span class="compare-icon cross-icon">✕</span>
+              <span class="compare-label">TRADITIONAL WAY</span>
+            </div>
+            <p class="compare-text">Hours of manual configuration and paid subscriptions.</p>
+          </div>
+          <div class="compare-box new-box">
+            <div class="compare-header">
+              <span class="compare-icon check-icon">✓</span>
+              <span class="compare-label">AI SIMPLIFIED WAY</span>
+            </div>
+            <p class="compare-text">Automated, zero-cost code-driven generation.</p>
+          </div>
+        </div>
+      
+      </div>
+    
+
+      <div id="scene-2" class="scene-layer clip" data-start="10.336" data-duration="5.973999999999998" style="opacity: 0;">
+        
+        <div class="scene-badge">THE MODERN STACK</div>
+        <h2 class="scene-title">The Code-Driven Solution</h2>
+        <div class="terminal-card">
+          <div class="terminal-header">
+            <div class="term-controls">
+              <span class="term-dot dot-red"></span>
+              <span class="term-dot dot-yellow"></span>
+              <span class="term-dot dot-green"></span>
+            </div>
+            <span class="term-title">workflow.config.ts</span>
+            <span class="term-lang">TypeScript</span>
+          </div>
+          <div class="terminal-body">
+            <pre><code>const pipeline = new Studio();
+await pipeline.execute({
+  model: "HyperFrames",
+  cost: 0,
+  speed: "Instant"
+});</code><span class="typing-cursor">|</span></pre>
+          </div>
+        </div>
+      
+      </div>
+    
+
+      <div id="scene-3" class="scene-layer clip" data-start="16.31" data-duration="4.990000000000002" style="opacity: 0;">
+        
+        <div class="scene-badge">VERIFIED RESULT</div>
+        <h2 class="scene-title">Ready in Seconds</h2>
+        <div class="feature-card payoff-card">
+          <div class="payoff-flex">
+            <div class="gauge-container">
+              <svg class="gauge-svg" viewBox="0 0 120 120">
+                <circle class="gauge-bg" cx="60" cy="60" r="48" />
+                <circle id="gauge-ring-3" class="gauge-bar" cx="60" cy="60" r="48" />
+              </svg>
+              <div class="gauge-center">
+                <span class="gauge-val">100%</span>
+              </div>
+            </div>
+            <div class="payoff-info">
+              <div class="card-tag">PAYOFF</div>
+              <p class="card-highlight">Full HD 1080p, mastered at -14 LUFS, and 100% policy-compliant.</p>
+              
+                <div class="stat-badge green-badge">
+                  <span class="stat-number">100%</span>
+                  <span class="stat-label">Free & Local</span>
+                </div>
+              
+            </div>
+          </div>
+        </div>
+      
+      </div>
+    
+        </div>
+      </div>
+
+      <div class="subtitle-ribbon">
+        
+      <div id="sub-scene-0" class="sub-scene active">
+        <span class="cap-word" id="w-0-0">If</span> <span class="cap-word" id="w-0-1">you</span> <span class="cap-word" id="w-0-2">are</span> <span class="cap-word" id="w-0-3">trying</span> <span class="cap-word" id="w-0-4">to</span> <span class="cap-word" id="w-0-5">master</span> <span class="cap-word" id="w-0-6">Claude</span> <span class="cap-word" id="w-0-7">AI</span> <span class="cap-word" id="w-0-8">Workflows,</span> <span class="cap-word" id="w-0-9">stop</span> <span class="cap-word" id="w-0-10">doing</span> <span class="cap-word" id="w-0-11">it</span> <span class="cap-word" id="w-0-12">the</span> <span class="cap-word" id="w-0-13">traditional</span> <span class="cap-word" id="w-0-14">way.</span>
+      </div>
+    
+
+      <div id="sub-scene-1" class="sub-scene ">
+        <span class="cap-word" id="w-1-0">Most</span> <span class="cap-word" id="w-1-1">people</span> <span class="cap-word" id="w-1-2">get</span> <span class="cap-word" id="w-1-3">stuck</span> <span class="cap-word" id="w-1-4">paying</span> <span class="cap-word" id="w-1-5">monthly</span> <span class="cap-word" id="w-1-6">subscriptions</span> <span class="cap-word" id="w-1-7">and</span> <span class="cap-word" id="w-1-8">wrestling</span> <span class="cap-word" id="w-1-9">with</span> <span class="cap-word" id="w-1-10">slow</span> <span class="cap-word" id="w-1-11">tools.</span>
+      </div>
+    
+
+      <div id="sub-scene-2" class="sub-scene ">
+        <span class="cap-word" id="w-2-0">Instead,</span> <span class="cap-word" id="w-2-1">combine</span> <span class="cap-word" id="w-2-2">lightweight</span> <span class="cap-word" id="w-2-3">headless</span> <span class="cap-word" id="w-2-4">engines</span> <span class="cap-word" id="w-2-5">with</span> <span class="cap-word" id="w-2-6">zero-cost</span> <span class="cap-word" id="w-2-7">neural</span> <span class="cap-word" id="w-2-8">audio</span> <span class="cap-word" id="w-2-9">for</span> <span class="cap-word" id="w-2-10">instant</span> <span class="cap-word" id="w-2-11">results.</span>
+      </div>
+    
+
+      <div id="sub-scene-3" class="sub-scene ">
+        <span class="cap-word" id="w-3-0">And</span> <span class="cap-word" id="w-3-1">that's</span> <span class="cap-word" id="w-3-2">why</span> <span class="cap-word" id="w-3-3">you</span> <span class="cap-word" id="w-3-4">should</span> <span class="cap-word" id="w-3-5">start</span> <span class="cap-word" id="w-3-6">streamlining</span> <span class="cap-word" id="w-3-7">your</span> <span class="cap-word" id="w-3-8">entire</span> <span class="cap-word" id="w-3-9">creation</span> <span class="cap-word" id="w-3-10">loop</span> <span class="cap-word" id="w-3-11">today.</span>
+      </div>
+    
+      </div>
+    </div>
+
+    <script>
+      
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // Subtle Continuous Virtual Camera push-in
+    tl.to("#stage-camera", { scale: 1.04, duration: 21.3, ease: "none" }, 0);
+
+    // Ambient floating orbs & top progress bar
+    tl.to("#orb-1", { scale: 1.25, x: 20, y: -20, opacity: 0.85, duration: 2.8, yoyo: true, repeat: 9, ease: "sine.inOut" }, 0);
+    tl.to("#orb-2", { scale: 1.2, x: -20, y: 30, opacity: 0.75, duration: 3.2, yoyo: true, repeat: 9, ease: "sine.inOut" }, 0);
+    tl.to("#top-progress", { width: "100%", duration: 21.3, ease: "none" }, 0);
+
+    // Cursor blink
+    tl.to(".typing-cursor", { opacity: 0, duration: 0.45, repeat: -1, yoyo: true, ease: "steps(1)" }, 0);
+  
+        // Scene 0 Entrance (Hook)
+        tl.from("#scene-0 .hook-badge", { scale: 0.85, opacity: 0, y: -25, duration: 0.5, ease: "back.out(1.6)" }, 0);
+        tl.from("#scene-0 .hero-headline", { opacity: 0, y: 35, duration: 0.6, ease: "power3.out" }, 0.12);
+        tl.from("#scene-0 .laser-card-wrapper", { opacity: 0, y: 45, scale: 0.94, duration: 0.65, ease: "back.out(1.3)" }, 0.25);
+      
+        // Word: "If"
+        tl.to("#w-0-0", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 0);
+
+        tl.to("#w-0-0", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 0.32376000000000005);
+      
+        // Word: "you"
+        tl.to("#w-0-1", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 0.35973333333333335);
+
+        tl.to("#w-0-1", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 0.6834933333333334);
+      
+        // Word: "are"
+        tl.to("#w-0-2", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 0.7194666666666667);
+
+        tl.to("#w-0-2", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 1.0432266666666667);
+      
+        // Word: "trying"
+        tl.to("#w-0-3", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 1.0792000000000002);
+
+        tl.to("#w-0-3", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 1.4029600000000002);
+      
+        // Word: "to"
+        tl.to("#w-0-4", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 1.4389333333333334);
+
+        tl.to("#w-0-4", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 1.7626933333333334);
+      
+        // Word: "master"
+        tl.to("#w-0-5", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 1.7986666666666666);
+
+        tl.to("#w-0-5", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 2.1224266666666667);
+      
+        // Word: "Claude"
+        tl.to("#w-0-6", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 2.1584000000000003);
+
+        tl.to("#w-0-6", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 2.4821600000000004);
+      
+        // Word: "AI"
+        tl.to("#w-0-7", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 2.5181333333333336);
+
+        tl.to("#w-0-7", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 2.8418933333333336);
+      
+        // Word: "Workflows,"
+        tl.to("#w-0-8", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 2.877866666666667);
+
+        tl.to("#w-0-8", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 3.201626666666667);
+      
+        // Word: "stop"
+        tl.to("#w-0-9", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 3.2376);
+
+        tl.to("#w-0-9", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 3.56136);
+      
+        // Word: "doing"
+        tl.to("#w-0-10", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 3.5973333333333333);
+
+        tl.to("#w-0-10", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 3.9210933333333333);
+      
+        // Word: "it"
+        tl.to("#w-0-11", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 3.957066666666667);
+
+        tl.to("#w-0-11", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 4.280826666666667);
+      
+        // Word: "the"
+        tl.to("#w-0-12", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 4.316800000000001);
+
+        tl.to("#w-0-12", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 4.640560000000001);
+      
+        // Word: "traditional"
+        tl.to("#w-0-13", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 4.676533333333333);
+
+        tl.to("#w-0-13", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 5.0002933333333335);
+      
+        // Word: "way."
+        tl.to("#w-0-14", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 5.036266666666667);
+
+        tl.to("#w-0-14", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 5.360026666666667);
+      
+        // Transition Scene 0 -> Scene 1
+        tl.to("#scene-0", { opacity: 0, scale: 0.96, y: -25, duration: 0.32, ease: "power2.in" }, 5.196);
+        tl.fromTo("#scene-1", 
+          { opacity: 0, scale: 1.05, y: 35 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+          5.396
+        );
+
+        // Subtitle scene switch
+        tl.call(() => {
+          document.querySelectorAll('.sub-scene').forEach(el => el.classList.remove('active'));
+          const target = document.getElementById("sub-scene-1");
+          if (target) target.classList.add('active');
+        }, null, 5.396);
+      
+        // Word: "Most"
+        tl.to("#w-1-0", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 5.396);
+
+        tl.to("#w-1-0", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 5.7665);
+      
+        // Word: "people"
+        tl.to("#w-1-1", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 5.807666666666667);
+
+        tl.to("#w-1-1", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 6.178166666666667);
+      
+        // Word: "get"
+        tl.to("#w-1-2", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 6.219333333333333);
+
+        tl.to("#w-1-2", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 6.589833333333333);
+      
+        // Word: "stuck"
+        tl.to("#w-1-3", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 6.631);
+
+        tl.to("#w-1-3", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 7.0015);
+      
+        // Word: "paying"
+        tl.to("#w-1-4", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 7.042666666666666);
+
+        tl.to("#w-1-4", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 7.413166666666666);
+      
+        // Word: "monthly"
+        tl.to("#w-1-5", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 7.4543333333333335);
+
+        tl.to("#w-1-5", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 7.824833333333333);
+      
+        // Word: "subscriptions"
+        tl.to("#w-1-6", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 7.866);
+
+        tl.to("#w-1-6", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 8.2365);
+      
+        // Word: "and"
+        tl.to("#w-1-7", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 8.277666666666667);
+
+        tl.to("#w-1-7", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 8.648166666666667);
+      
+        // Word: "wrestling"
+        tl.to("#w-1-8", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 8.689333333333334);
+
+        tl.to("#w-1-8", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 9.059833333333334);
+      
+        // Word: "with"
+        tl.to("#w-1-9", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 9.100999999999999);
+
+        tl.to("#w-1-9", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 9.471499999999999);
+      
+        // Word: "slow"
+        tl.to("#w-1-10", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 9.512666666666668);
+
+        tl.to("#w-1-10", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 9.883166666666668);
+      
+        // Word: "tools."
+        tl.to("#w-1-11", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 9.924333333333333);
+
+        tl.to("#w-1-11", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 10.294833333333333);
+      
+        // Transition Scene 1 -> Scene 2
+        tl.to("#scene-1", { opacity: 0, scale: 0.96, y: -25, duration: 0.32, ease: "power2.in" }, 10.136000000000001);
+        tl.fromTo("#scene-2", 
+          { opacity: 0, scale: 1.05, y: 35 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+          10.336
+        );
+
+        // Subtitle scene switch
+        tl.call(() => {
+          document.querySelectorAll('.sub-scene').forEach(el => el.classList.remove('active'));
+          const target = document.getElementById("sub-scene-2");
+          if (target) target.classList.add('active');
+        }, null, 10.336);
+      
+        // Word: "Instead,"
+        tl.to("#w-2-0", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 10.336);
+
+        tl.to("#w-2-0", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 10.78405);
+      
+        // Word: "combine"
+        tl.to("#w-2-1", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 10.833833333333333);
+
+        tl.to("#w-2-1", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 11.281883333333333);
+      
+        // Word: "lightweight"
+        tl.to("#w-2-2", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 11.331666666666667);
+
+        tl.to("#w-2-2", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 11.779716666666667);
+      
+        // Word: "headless"
+        tl.to("#w-2-3", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 11.8295);
+
+        tl.to("#w-2-3", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 12.27755);
+      
+        // Word: "engines"
+        tl.to("#w-2-4", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 12.327333333333334);
+
+        tl.to("#w-2-4", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 12.775383333333334);
+      
+        // Word: "with"
+        tl.to("#w-2-5", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 12.825166666666666);
+
+        tl.to("#w-2-5", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 13.273216666666666);
+      
+        // Word: "zero-cost"
+        tl.to("#w-2-6", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 13.323);
+
+        tl.to("#w-2-6", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 13.77105);
+      
+        // Word: "neural"
+        tl.to("#w-2-7", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 13.820833333333333);
+
+        tl.to("#w-2-7", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 14.268883333333333);
+      
+        // Word: "audio"
+        tl.to("#w-2-8", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 14.318666666666665);
+
+        tl.to("#w-2-8", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 14.766716666666666);
+      
+        // Word: "for"
+        tl.to("#w-2-9", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 14.816499999999998);
+
+        tl.to("#w-2-9", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 15.264549999999998);
+      
+        // Word: "instant"
+        tl.to("#w-2-10", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 15.314333333333332);
+
+        tl.to("#w-2-10", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 15.762383333333332);
+      
+        // Word: "results."
+        tl.to("#w-2-11", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 15.812166666666666);
+
+        tl.to("#w-2-11", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 16.260216666666665);
+      
+        // Transition Scene 2 -> Scene 3
+        tl.to("#scene-2", { opacity: 0, scale: 0.96, y: -25, duration: 0.32, ease: "power2.in" }, 16.11);
+        tl.fromTo("#scene-3", 
+          { opacity: 0, scale: 1.05, y: 35 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+          16.31
+        );
+
+        // Subtitle scene switch
+        tl.call(() => {
+          document.querySelectorAll('.sub-scene').forEach(el => el.classList.remove('active'));
+          const target = document.getElementById("sub-scene-3");
+          if (target) target.classList.add('active');
+        }, null, 16.31);
+      
+        tl.fromTo("#gauge-ring-3", 
+          { strokeDashoffset: 301.6 },
+          { strokeDashoffset: 0, duration: 1.4, ease: "power2.out" },
+          16.61
+        );
+      
+        // Word: "And"
+        tl.to("#w-3-0", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 16.31);
+
+        tl.to("#w-3-0", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 16.68425);
+      
+        // Word: "that's"
+        tl.to("#w-3-1", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 16.725833333333334);
+
+        tl.to("#w-3-1", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 17.100083333333334);
+      
+        // Word: "why"
+        tl.to("#w-3-2", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 17.141666666666666);
+
+        tl.to("#w-3-2", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 17.515916666666666);
+      
+        // Word: "you"
+        tl.to("#w-3-3", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 17.557499999999997);
+
+        tl.to("#w-3-3", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 17.931749999999997);
+      
+        // Word: "should"
+        tl.to("#w-3-4", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 17.973333333333333);
+
+        tl.to("#w-3-4", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 18.347583333333333);
+      
+        // Word: "start"
+        tl.to("#w-3-5", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 18.389166666666668);
+
+        tl.to("#w-3-5", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 18.763416666666668);
+      
+        // Word: "streamlining"
+        tl.to("#w-3-6", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 18.805);
+
+        tl.to("#w-3-6", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 19.17925);
+      
+        // Word: "your"
+        tl.to("#w-3-7", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 19.22083333333333);
+
+        tl.to("#w-3-7", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 19.59508333333333);
+      
+        // Word: "entire"
+        tl.to("#w-3-8", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 19.636666666666667);
+
+        tl.to("#w-3-8", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 20.010916666666667);
+      
+        // Word: "creation"
+        tl.to("#w-3-9", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 20.052500000000002);
+
+        tl.to("#w-3-9", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 20.426750000000002);
+      
+        // Word: "loop"
+        tl.to("#w-3-10", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 20.468333333333334);
+
+        tl.to("#w-3-10", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 20.842583333333334);
+      
+        // Word: "today."
+        tl.to("#w-3-11", {
+          color: "#d97757",
+          backgroundColor: "rgba(217, 119, 87, 0.14)",
+          scale: 1.14,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 20.884166666666665);
+
+        tl.to("#w-3-11", {
+          color: "#1c1917",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 21.258416666666665);
+      
+    window.__timelines["short-0785-claude-ai-workflows"] = tl;
+  
+    </script>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "favstash-ai-video-editing-skills",
+  "version": "0.7.0",
+  "private": true,
+  "description": "Creator-loop skills for AI agents: find ideas, write scripts, edit short videos in five styles, then publish and learn with FavStash.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "doctor": "node skills/3-editing/edit-video/scripts/doctor.mjs",
+    "setup": "node skills/3-editing/edit-video/scripts/init-workspace.mjs",
+    "new-edit": "node skills/3-editing/edit-video/scripts/new-edit.mjs",
+    "index-broll": "node skills/3-editing/edit-video/scripts/index-broll.mjs",
+    "analyze-reference": "node skills/3-editing/edit-video/scripts/reference-analyze.mjs",
+    "scaffold-glass": "node skills/3-editing-styles/adaptive-glass/scripts/scaffold-glass.mjs",
+    "sfx-sync": "node skills/3-editing/edit-video/scripts/sfx-sync.mjs",
+    "generate:sfx": "node scripts/generate-sfx.mjs",
+    "test": "node --test",
+    "validate": "node scripts/validate-repo.mjs"
+  },
+  "license": "Apache-2.0"
+}

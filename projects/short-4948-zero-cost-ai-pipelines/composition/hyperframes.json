@@ -1,0 +1,12 @@
+{
+  "$schema": "https://hyperframes.heygen.com/schema/hyperframes.json",
+  "name": "short-4948-zero-cost-ai-pipelines",
+  "paths": {
+    "blocks": "compositions",
+    "components": "compositions/components",
+    "assets": "assets"
+  },
+  "media": {
+    "autoProxy": false
+  }
+}
