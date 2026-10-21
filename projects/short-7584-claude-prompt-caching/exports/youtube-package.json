@@ -1,0 +1,78 @@
+{
+  "title": "How Claude Prompt Caching Actually Works ⚡ #Shorts",
+  "description": "Learn how Claude prompt caching reduces latency and token costs by preserving static prefixes in ephemeral memory across API calls (5-min default, 1-hour extended TTL).\n\nSubscribe to AI Simplified Lab (@AISimplifiedLab) for honest, zero-fluff AI workflows and code tutorials.\n\n#Shorts #AI #Engineering #AISimplifiedLab",
+  "tags": [
+    "Shorts",
+    "AI",
+    "Engineering",
+    "Tutorial",
+    "Workflow"
+  ],
+  "verificationReport": {
+    "technicalChecksPassed": true,
+    "rightsApproved": true,
+    "editorialReviewStatus": "UNASSESSED",
+    "publishApproved": false,
+    "releaseEligible": true,
+    "releaseBlockers": [],
+    "automatedMediaQA": {
+      "streamIntegrity": "PASS",
+      "decodeErrors": 0,
+      "blackFrameSegments": 0,
+      "blackFrameStatus": "PASS",
+      "videoCodec": "h264",
+      "resolution": "1080x1920",
+      "framerate": 30,
+      "durationSeconds": 26.233333333333334,
+      "audioCodec": "aac",
+      "audioSamplingRate": 48000
+    },
+    "contentIntegrity": {
+      "offlineVendoredAssets": "PASS (Zero remote CDN dependency)",
+      "safeZoneAdherence": "VERIFIED_BY_CSS (1080x1920 layout bounded: top 240px, bottom 380px)",
+      "hardcodedFictionalMetrics": 0,
+      "timingSyncMethod": "Edge-TTS SentenceBoundary stream extraction",
+      "scriptTimingSync": "PASS",
+      "scriptTimingIssues": []
+    },
+    "rightsProvenance": {
+      "status": "PASS",
+      "details": "All external assets referenced by scenes possess verified compatible licenses.",
+      "projectAssetsCount": 1,
+      "credits": "No external assets requiring attribution were used."
+    },
+    "editorialGovernance": {
+      "youtubePolicyReview": "UNASSESSED (Requires Human / Creator Review prior to upload)",
+      "syntheticMediaDisclosure": "NOT_REQUIRED (Editorial code & motion graphics explainer)",
+      "commercialAudioRights": "PASS (Edge-TTS neural voice + Apache-2.0 sound design)",
+      "releaseEligible": true,
+      "releaseBlockers": []
+    }
+  },
+  "mediaSpecs": {
+    "file": "final.mp4",
+    "coverThumbnail": "cover-frame.png",
+    "contactSheet": "contact-sheet.png",
+    "format": {
+      "duration": "26.233333",
+      "size": "7656270"
+    },
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1080,
+        "height": 1920,
+        "r_frame_rate": "30/1",
+        "duration": "26.233333",
+        "nb_frames": "787"
+      },
+      {
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "r_frame_rate": "0/0",
+        "duration": "26.233333",
+        "nb_frames": "1231"
+      }
+    ]
+  }
+}

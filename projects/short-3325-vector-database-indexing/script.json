@@ -1,0 +1,66 @@
+{
+  "id": "short-3325-vector-database-indexing",
+  "topic": "Vector Database Indexing",
+  "title": "How HNSW Vector Search Works",
+  "youtubeTitle": "How Vector Search Works in Milliseconds ⚡ #Shorts",
+  "youtubeDescription": "Understand how Hierarchical Navigable Small World (HNSW) graphs index dense vector embeddings to achieve sub-millisecond similarity search.",
+  "voice": "en-US-ChristopherNeural",
+  "rate": "+3%",
+  "fps": 30,
+  "scenes": [
+    {
+      "id": "hook",
+      "cardType": "hook-bold-object",
+      "badge": "VECTOR SEARCH SCALING",
+      "tag": "SEARCH COMPLEXITY",
+      "visualTitle": "The Vector Search Dilemma",
+      "visualBody": "Brute force cosine distance compares against millions of points linearly, collapsing search throughput.",
+      "voiceText": "Searching millions of high-dimensional vectors linearly creates an unscalable bottleneck for AI applications.",
+      "source": "Vector Indexing Technical Papers",
+      "sfx": "hook-impact"
+    },
+    {
+      "id": "metaphor",
+      "cardType": "physical-metaphor",
+      "badge": "HIERARCHICAL HIGHWAY",
+      "visualTitle": "The Multi-Layer Graph Highway",
+      "visualBody": "Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.",
+      "voiceText": "Hierarchical Navigable Small World graphs skip dense clusters like multi-tier highways across high-dimensional space.",
+      "sfx": "zoom-swish"
+    },
+    {
+      "id": "architecture",
+      "cardType": "architecture-diagram",
+      "badge": "GRAPH TOPOLOGY",
+      "visualTitle": "HNSW Layered Navigation",
+      "diagramNodes": [
+        {
+          "label": "Entry Point",
+          "sub": "Top Layer 2"
+        },
+        {
+          "label": "Intermediate Leap",
+          "sub": "Layer 1 Hops"
+        },
+        {
+          "label": "Exact Nearest Point",
+          "sub": "Base Layer 0"
+        }
+      ],
+      "visualBody": "Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.",
+      "voiceText": "The search hops across sparse upper layers before descending to the base for precise nearest neighbor convergence.",
+      "sfx": "ui-pop"
+    },
+    {
+      "id": "payoff",
+      "cardType": "concept-explainer",
+      "badge": "PRODUCTION RULE",
+      "tag": "INDEXING STANDARD",
+      "visualTitle": "Sub-Millisecond Retrieval",
+      "visualBody": "Tune graph connectivity M and construction breadth efSearch to balance recall against memory footprint.",
+      "voiceText": "Balancing graph connectivity with construction depth is how production vector databases maintain sub-millisecond latency.",
+      "source": "HNSW Algorithm & Vector DB Standards",
+      "sfx": "clean-ding"
+    }
+  ]
+}

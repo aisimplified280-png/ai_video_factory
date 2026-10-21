@@ -8,6 +8,7 @@ import { generateComposition } from "./composition-generator.mjs";
 import { renderAndMux } from "./render-and-mux.mjs";
 import { AssetRegistry } from "./asset-scout/registry.mjs";
 import { planStoryboard } from "./storyboard-planner.mjs";
+import { lintVisualDiversity } from "./visual-linter.mjs";
 
 /**
  * Generate a topic-specific, evidence-backed script without hardcoded fake claims.
@@ -24,34 +25,30 @@ function buildSemanticScript(topic) {
       topic,
       title: "How Claude Prompt Caching Actually Works",
       youtubeTitle: "How Claude Prompt Caching Actually Works ⚡ #Shorts",
-      youtubeDescription: "Learn how Claude prompt caching reduces latency and input token costs by preserving shared context across API calls.",
+      youtubeDescription: "Learn how Claude prompt caching reduces latency and token costs by preserving static prefixes in ephemeral memory across API calls (5-min default, 1-hour extended TTL).",
       voice: "en-US-ChristopherNeural",
       rate: "+3%",
       fps: 30,
       scenes: [
         {
           id: "hook",
-          cardType: "hook",
+          cardType: "hook-bold-object",
           badge: "ARCHITECTURE INSIGHT",
-          tag: "EFFICIENCY",
+          tag: "LATENCY BOTTLENECK",
           visualTitle: "The Power of Prompt Caching",
-          visualBody: "Re-sending large context files on every API call slows down your pipeline.",
+          visualBody: "Re-sending large context documents on every API call slows down and inflates your pipeline.",
           voiceText: "If you are building with Claude, re-sending entire documents on every prompt wastes substantial bandwidth.",
-          source: "Anthropic Engineering Guide",
+          source: "Anthropic API Prompt Caching Reference",
           sfx: "hook-impact",
         },
         {
           id: "architecture",
           cardType: "architecture-diagram",
-          badge: "DATA FLOW",
+          badge: "SYSTEM TOPOLOGY",
           visualTitle: "Prompt Cache Architecture",
-          diagramNodes: [
-            { label: "Base Prompt", sub: "Static Context" },
-            { label: "Ephemeral Cache", sub: "5-Min Lifetime" },
-            { label: "Claude Model", sub: "Instant Warm Hit" },
-          ],
-          visualBody: "Cached prompt prefixes bypass repetitive context ingestion on subsequent calls.",
+          visualBody: "Cached prompt prefixes bypass repetitive context ingestion on subsequent calls with 5-min or 1-hour TTL.",
           voiceText: "Prompt caching stores your system instructions in memory, allowing subsequent calls to read directly from cache.",
+          source: "Anthropic Documentation",
           sfx: "zoom-swish",
         },
         {
@@ -59,9 +56,9 @@ function buildSemanticScript(topic) {
           cardType: "code",
           badge: "AUTHENTIC API SYNTAX",
           visualTitle: "Prompt Caching Header",
-          terminalTitle: "anthropic_request.py",
+          terminalTitle: "anthropic_cache.py",
           terminalLang: "Python",
-          codeSnippet: `response = client.messages.create(\n    model="claude-3-5-sonnet-20241022",\n    system=[{\n        "type": "text",\n        "text": system_prompt,\n        "cache_control": {"type": "ephemeral"}\n    }],\n    messages=user_messages\n)`,
+          codeSnippet: `response = client.messages.create(\n    model="claude-3-5-sonnet-latest",\n    system=[{\n        "type": "text",\n        "text": system_prompt,\n        "cache_control": {"type": "ephemeral"}\n    }],\n    messages=user_messages\n)`,
           voiceText: "Simply add the ephemeral cache control block to your system prompt to activate instant prefix matching.",
           sfx: "ui-pop",
         },
@@ -71,7 +68,7 @@ function buildSemanticScript(topic) {
           badge: "CORE PRINCIPLE",
           tag: "PRODUCTION TAKEAWAY",
           visualTitle: "Smarter Context Design",
-          visualBody: "Place static instructions at the top and dynamic queries at the bottom to maximize cache hits.",
+          visualBody: "Place static instructions at the top and dynamic queries at the bottom to maximize warm cache hits.",
           voiceText: "Structure your static context at the start of the prompt to maximize warm cache hits and minimize latency.",
           source: "Anthropic Prompt Caching Documentation",
           sfx: "clean-ding",
@@ -80,7 +77,68 @@ function buildSemanticScript(topic) {
     };
   }
 
-  // 2. Default: High-Integrity Technical Explainer
+  // 2. Topic: Vector Database Indexing / HNSW Graphs
+  if (lowerTopic.includes("vector") || lowerTopic.includes("hnsw") || lowerTopic.includes("database")) {
+    return {
+      id: projectId,
+      topic,
+      title: "How HNSW Vector Search Works",
+      youtubeTitle: "How Vector Search Works in Milliseconds ⚡ #Shorts",
+      youtubeDescription: "Understand how Hierarchical Navigable Small World (HNSW) graphs index dense vector embeddings to achieve sub-millisecond similarity search.",
+      voice: "en-US-ChristopherNeural",
+      rate: "+3%",
+      fps: 30,
+      scenes: [
+        {
+          id: "hook",
+          cardType: "hook-bold-object",
+          badge: "VECTOR SEARCH SCALING",
+          tag: "SEARCH COMPLEXITY",
+          visualTitle: "The Vector Search Dilemma",
+          visualBody: "Brute force cosine distance compares against millions of points linearly, collapsing search throughput.",
+          voiceText: "Searching millions of high-dimensional vectors linearly creates an unscalable bottleneck for AI applications.",
+          source: "Vector Indexing Technical Papers",
+          sfx: "hook-impact",
+        },
+        {
+          id: "metaphor",
+          cardType: "physical-metaphor",
+          badge: "HIERARCHICAL HIGHWAY",
+          visualTitle: "The Multi-Layer Graph Highway",
+          visualBody: "Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.",
+          voiceText: "Hierarchical Navigable Small World graphs skip dense clusters like multi-tier highways across high-dimensional space.",
+          sfx: "zoom-swish",
+        },
+        {
+          id: "architecture",
+          cardType: "architecture-diagram",
+          badge: "GRAPH TOPOLOGY",
+          visualTitle: "HNSW Layered Navigation",
+          diagramNodes: [
+            { label: "Entry Point", sub: "Top Layer 2" },
+            { label: "Intermediate Leap", sub: "Layer 1 Hops" },
+            { label: "Exact Nearest Point", sub: "Base Layer 0" },
+          ],
+          visualBody: "Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.",
+          voiceText: "The search hops across sparse upper layers before descending to the base for precise nearest neighbor convergence.",
+          sfx: "ui-pop",
+        },
+        {
+          id: "payoff",
+          cardType: "concept-explainer",
+          badge: "PRODUCTION RULE",
+          tag: "INDEXING STANDARD",
+          visualTitle: "Sub-Millisecond Retrieval",
+          visualBody: "Tune graph connectivity M and construction breadth efSearch to balance recall against memory footprint.",
+          voiceText: "Balancing graph connectivity with construction depth is how production vector databases maintain sub-millisecond latency.",
+          source: "HNSW Algorithm & Vector DB Standards",
+          sfx: "clean-ding",
+        },
+      ],
+    };
+  }
+
+  // 3. Default: High-Integrity Technical Explainer
   return {
     id: projectId,
     topic,
@@ -93,7 +151,7 @@ function buildSemanticScript(topic) {
     scenes: [
       {
         id: "hook",
-        cardType: "hook",
+        cardType: "hook-bold-object",
         badge: "TECHNICAL BREAKDOWN",
         tag: "CORE PROBLEM",
         visualTitle: topic,
@@ -166,7 +224,7 @@ async function main() {
   }
 
   console.log(`\n=============================================================`);
-  console.log(`🎬 AI Simplified Lab — YouTube Shorts Generator`);
+  console.log(`🎬 AI Simplified Lab — Purple Collage Shorts Engine`);
   console.log(`   Project ID: ${scriptData.id}`);
   console.log(`   Topic:      ${scriptData.topic || scriptData.title}`);
   console.log(`=============================================================\n`);
@@ -193,15 +251,23 @@ async function main() {
     { ...scriptData, ...audioResult },
     assetRegistry
   );
+
+  // Lint visual diversity across beats
+  const diversityLint = lintVisualDiversity(storyboardData);
+  console.log(`[Diversity Lint] Score: ${diversityLint.diversityScore}/100 | Unique Modes: ${diversityLint.uniqueModesCount}`);
+  if (diversityLint.issues.length > 0) {
+    console.warn(`[Diversity Lint Warnings]:`, diversityLint.issues);
+  }
   console.log(`✓ Storyboard planned with ${storyboardData.beatsCount} beats.\n`);
 
-  // Step 3: Build HTML & GSAP Composition (Offline Vendored GSAP + Verified Scouted Assets)
-  console.log(`[Step 3/4] Synthesizing HyperFrames Composition (Offline Vendored & Asset-Aware)...`);
+  // Step 3: Build HTML & GSAP Composition (AI Simplified Lab Purple Collage Explainer)
+  console.log(`[Step 3/4] Synthesizing HyperFrames Composition (Purple Collage Style)...`);
   const compositionData = {
     ...scriptData,
     totalDuration: audioResult.totalDuration,
     totalFrames: audioResult.totalFrames,
     fps: audioResult.fps,
+    rawTimings: audioResult.rawTimings,
     scenes: storyboardData.beats.map((beat) => ({
       id: beat.beatId,
       cardType: beat.visualMode,
@@ -216,6 +282,7 @@ async function main() {
       source: beat.source,
       assetData: beat.assetData,
       diagramNodes: beat.diagramNodes,
+      metaphorType: beat.metaphorType,
       codeSnippet: beat.codeSnippet,
       terminalTitle: beat.terminalTitle,
       terminalLang: beat.terminalLang,

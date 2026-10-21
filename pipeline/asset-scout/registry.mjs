@@ -12,11 +12,15 @@ export class AssetRegistry {
     this.cacheDir = options.cacheDir || path.join(ROOT_DIR, "assets", "cache");
     this.ledgerPath = options.ledgerPath || path.join(ROOT_DIR, "assets", "rights-ledger.json");
     
-    // Register providers (Offline fixture is primary default)
-    this.providers = [
-      new FixtureProvider(),
-      new OpenverseProvider(),
+    // Online providers are searched first so online assets are selectable
+    this.onlineProviders = [
       new PexelsProvider(),
+      new OpenverseProvider(),
+    ];
+
+    // Offline fixture provider serves as deterministic fallback
+    this.fallbackProviders = [
+      new FixtureProvider(),
     ];
   }
 
@@ -31,34 +35,55 @@ export class AssetRegistry {
   }
 
   /**
-   * Search across registered providers for topic-relevant assets.
+   * Search across registered providers. Online providers are searched first;
+   * offline fixtures serve as fallback when online results are empty or offlineOnly is set.
    */
-  async searchAssets(query, { type = "image", count = 2 } = {}) {
+  async searchAssets(query, { type = "image", count = 2, offlineOnly = false } = {}) {
     const allResults = [];
-    for (const provider of this.providers) {
-      try {
-        const results = await provider.search({ query, type, count });
-        if (Array.isArray(results) && results.length > 0) {
-          allResults.push(...results);
+
+    // 1. Search online providers first if not offlineOnly
+    if (!offlineOnly) {
+      for (const provider of this.onlineProviders) {
+        try {
+          const results = await provider.search({ query, type, count });
+          if (Array.isArray(results) && results.length > 0) {
+            allResults.push(...results);
+          }
+        } catch (err) {
+          console.warn(`[AssetScout] Online provider '${provider.name}' search failed:`, err.message);
         }
-      } catch (err) {
-        console.warn(`[AssetScout] Provider '${provider.name}' search failed:`, err.message);
       }
     }
+
+    // 2. If no online results found (or offlineOnly requested), use fallback fixture provider
+    if (allResults.length === 0) {
+      for (const provider of this.fallbackProviders) {
+        try {
+          const results = await provider.search({ query, type, count });
+          if (Array.isArray(results) && results.length > 0) {
+            allResults.push(...results);
+          }
+        } catch (err) {
+          console.warn(`[AssetScout] Fallback provider '${provider.name}' failed:`, err.message);
+        }
+      }
+    }
+
     return allResults.slice(0, count);
   }
 
   /**
    * Acquire, hash, audit, and register an asset into the Rights Ledger.
+   * Fails closed: REVIEW_REQUIRED and REJECTED assets are strictly excluded from approved assets.
    */
   async acquireAndVerifyAsset(candidateMetadata, plannedTransformations = true) {
     await this.init();
 
     // 1. Audit rights first before downloading
     const rightsVerdict = auditAssetRights(candidateMetadata, plannedTransformations);
-    if (rightsVerdict.status === RIGHTS_STATUS.REJECTED) {
+    if (rightsVerdict.status === RIGHTS_STATUS.REJECTED || rightsVerdict.status === RIGHTS_STATUS.REVIEW_REQUIRED) {
       return {
-        status: RIGHTS_STATUS.REJECTED,
+        status: rightsVerdict.status,
         reason: rightsVerdict.reason,
         asset: null,
       };
@@ -77,7 +102,7 @@ export class AssetRegistry {
       await fs.writeFile(localCachedFile, buf);
     }
 
-    // 3. Compute SHA-256 hash for tamper-proof provenance
+    // 3. Compute SHA-256 hash for file content identification
     const sha256 = await computeSha256(localCachedFile);
 
     // 4. Construct verified asset record

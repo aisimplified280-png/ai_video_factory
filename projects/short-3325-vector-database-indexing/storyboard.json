@@ -1,0 +1,189 @@
+{
+  "version": 2,
+  "id": "short-3325-vector-database-indexing",
+  "topic": "Vector Database Indexing",
+  "styleProfile": "ai_simplified_purple_collage",
+  "totalDuration": 27.833333333333332,
+  "beatsCount": 4,
+  "beats": [
+    {
+      "beatId": "beat-1-hook",
+      "sceneIndex": 0,
+      "narrativePurpose": "Hook attention with an unexpected physical contradiction or system bottleneck.",
+      "viewerQuestion": "What unseen mistake is slowing down or complicating the system?",
+      "spokenLine": "Searching millions of high-dimensional vectors linearly creates an unscalable bottleneck for AI applications.",
+      "startTime": 0,
+      "endTime": 6.6262,
+      "duration": 6.6262,
+      "visualMode": "hook-bold-object",
+      "visualTitle": "The Vector Search Dilemma",
+      "visualBody": "Brute force cosine distance compares against millions of points linearly, collapsing search throughput.",
+      "badge": "VECTOR SEARCH SCALING",
+      "source": "Vector Indexing Technical Papers",
+      "assetId": null,
+      "assetData": null,
+      "motion": {
+        "transition": "back.out(1.5)",
+        "cameraPush": true,
+        "staggerRate": 0.12
+      },
+      "sfxCue": "hook-impact"
+    },
+    {
+      "beatId": "beat-2-metaphor",
+      "sceneIndex": 1,
+      "narrativePurpose": "Translate abstract software dynamics into an intuitive physical metaphor.",
+      "viewerQuestion": "What real-world object or mechanic makes this invisible concept concrete?",
+      "spokenLine": "Hierarchical Navigable Small World graphs skip dense clusters like multi-tier highways across high-dimensional space.",
+      "startTime": 6.6262,
+      "endTime": 13.8835,
+      "duration": 7.2573,
+      "visualMode": "physical-metaphor",
+      "visualTitle": "The Multi-Layer Graph Highway",
+      "visualBody": "Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.",
+      "badge": "HIERARCHICAL HIGHWAY",
+      "source": null,
+      "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+      "assetData": {
+        "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+        "cachedPath": "assets/cache/openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985.jpg",
+        "licenseId": "CC-BY-2.0",
+        "attributionText": "3 Bottle Bar by H.i. Williams (1943) page xi by MetaGrrrl via Openverse (CC-BY-2.0)",
+        "creator": "MetaGrrrl",
+        "sourceProvider": "openverse",
+        "sourcePage": "https://www.flickr.com/photos/35468156668@N01/2155542715",
+        "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+      },
+      "motion": {
+        "transition": "power3.out",
+        "cameraPush": true,
+        "staggerRate": 0.12
+      },
+      "sfxCue": "zoom-swish"
+    },
+    {
+      "beatId": "beat-3-architecture",
+      "sceneIndex": 2,
+      "narrativePurpose": "Visually demonstrate data flow, memory lifecycle, and component interactions.",
+      "viewerQuestion": "How does data move through the actual system components?",
+      "spokenLine": "The search hops across sparse upper layers before descending to the base for precise nearest neighbor convergence.",
+      "startTime": 13.8835,
+      "endTime": 20.2427,
+      "duration": 6.3591999999999995,
+      "visualMode": "architecture-diagram",
+      "visualTitle": "HNSW Layered Navigation",
+      "visualBody": "Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.",
+      "badge": "GRAPH TOPOLOGY",
+      "source": null,
+      "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+      "assetData": {
+        "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+        "cachedPath": "assets/cache/openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985.jpg",
+        "licenseId": "CC-BY-2.0",
+        "attributionText": "3 Bottle Bar by H.i. Williams (1943) page xi by MetaGrrrl via Openverse (CC-BY-2.0)",
+        "creator": "MetaGrrrl",
+        "sourceProvider": "openverse",
+        "sourcePage": "https://www.flickr.com/photos/35468156668@N01/2155542715",
+        "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+      },
+      "motion": {
+        "transition": "power3.out",
+        "cameraPush": true,
+        "staggerRate": 0.12
+      },
+      "sfxCue": "ui-pop",
+      "diagramNodes": [
+        {
+          "label": "Entry Point",
+          "sub": "Top Layer 2"
+        },
+        {
+          "label": "Intermediate Leap",
+          "sub": "Layer 1 Hops"
+        },
+        {
+          "label": "Exact Nearest Point",
+          "sub": "Base Layer 0"
+        }
+      ]
+    },
+    {
+      "beatId": "beat-4-payoff",
+      "sceneIndex": 3,
+      "narrativePurpose": "Deliver verifiable conclusion citing authentic documentation.",
+      "viewerQuestion": "What is the concrete architectural takeaway and rule of thumb?",
+      "spokenLine": "Balancing graph connectivity with construction depth is how production vector databases maintain sub-millisecond latency.",
+      "startTime": 20.2427,
+      "endTime": 27.833333333333332,
+      "duration": 7.590633333333333,
+      "visualMode": "concept-explainer",
+      "visualTitle": "Sub-Millisecond Retrieval",
+      "visualBody": "Tune graph connectivity M and construction breadth efSearch to balance recall against memory footprint.",
+      "badge": "PRODUCTION RULE",
+      "source": "HNSW Algorithm & Vector DB Standards",
+      "assetId": null,
+      "assetData": null,
+      "motion": {
+        "transition": "power3.out",
+        "cameraPush": true,
+        "staggerRate": 0.12
+      },
+      "sfxCue": "clean-ding"
+    }
+  ],
+  "projectAssets": [
+    {
+      "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+      "type": "image",
+      "title": "3 Bottle Bar by H.i. Williams (1943) page xi",
+      "sourceProvider": "openverse",
+      "sourcePage": "https://www.flickr.com/photos/35468156668@N01/2155542715",
+      "downloadUrl": "https://live.staticflickr.com/2198/2155542715_4c9f215b2f_b.jpg",
+      "creator": "MetaGrrrl",
+      "licenseId": "CC-BY-2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "commercialUse": true,
+      "modificationsAllowed": true,
+      "attributionRequired": true,
+      "attributionText": "3 Bottle Bar by H.i. Williams (1943) page xi by MetaGrrrl via Openverse (CC-BY-2.0)",
+      "reviewFlags": {
+        "recognizablePerson": false,
+        "trademarkLogo": false,
+        "sensitiveContent": false
+      },
+      "status": "APPROVED_WITH_ATTRIBUTION",
+      "sha256": "2eabc59565b952e0f05548645189d026c595d28100d9c2eff3dd3e3517bff2ee",
+      "cachedPath": "assets/cache/openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985.jpg",
+      "absolutePath": "C:\\Users\\USER\\Documents\\AI-Simplified-Lab\\assets\\cache\\openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985.jpg",
+      "verifiedAt": "2026-10-21T11:38:16.041Z",
+      "rightsAuditReason": "Approved with required attribution."
+    },
+    {
+      "assetId": "openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985",
+      "type": "image",
+      "title": "3 Bottle Bar by H.i. Williams (1943) page xi",
+      "sourceProvider": "openverse",
+      "sourcePage": "https://www.flickr.com/photos/35468156668@N01/2155542715",
+      "downloadUrl": "https://live.staticflickr.com/2198/2155542715_4c9f215b2f_b.jpg",
+      "creator": "MetaGrrrl",
+      "licenseId": "CC-BY-2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "commercialUse": true,
+      "modificationsAllowed": true,
+      "attributionRequired": true,
+      "attributionText": "3 Bottle Bar by H.i. Williams (1943) page xi by MetaGrrrl via Openverse (CC-BY-2.0)",
+      "reviewFlags": {
+        "recognizablePerson": false,
+        "trademarkLogo": false,
+        "sensitiveContent": false
+      },
+      "status": "APPROVED_WITH_ATTRIBUTION",
+      "sha256": "2eabc59565b952e0f05548645189d026c595d28100d9c2eff3dd3e3517bff2ee",
+      "cachedPath": "assets/cache/openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985.jpg",
+      "absolutePath": "C:\\Users\\USER\\Documents\\AI-Simplified-Lab\\assets\\cache\\openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985.jpg",
+      "verifiedAt": "2026-10-21T11:38:16.171Z",
+      "rightsAuditReason": "Approved with required attribution."
+    }
+  ],
+  "createdAt": "2026-10-21T11:38:16.173Z"
+}

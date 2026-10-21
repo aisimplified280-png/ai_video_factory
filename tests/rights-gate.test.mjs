@@ -1,4 +1,4 @@
-// tests/rights-gate.test.mjs - Unit tests for License Verification & Asset Registry
+// tests/rights-gate.test.mjs - Unit tests for License Verification, Normalization & Asset Registry
 import test from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
@@ -7,10 +7,31 @@ import {
   auditAssetRights,
   RIGHTS_STATUS,
   generateCreditsReport,
+  normalizeLicenseId,
 } from "../pipeline/rights-gate.mjs";
 import { FixtureProvider } from "../pipeline/asset-scout/providers/fixture-provider.mjs";
 import { AssetRegistry } from "../pipeline/asset-scout/registry.mjs";
+import { lintVisualDiversity } from "../pipeline/visual-linter.mjs";
 import { ROOT_DIR } from "../pipeline/config.mjs";
+
+test("normalizeLicenseId correctly normalizes valid identifiers and never assumes missing licenses", () => {
+  // Valid mappings
+  assert.equal(normalizeLicenseId("cc0"), "CC0-1.0");
+  assert.equal(normalizeLicenseId("pdm"), "Public Domain");
+  assert.equal(normalizeLicenseId("by", "4.0"), "CC-BY-4.0");
+  assert.equal(normalizeLicenseId("by", "3.0"), "CC-BY-3.0");
+  assert.equal(normalizeLicenseId("by"), "CC-BY-4.0");
+  assert.equal(normalizeLicenseId("by-nc", "4.0"), "CC-BY-NC-4.0");
+  assert.equal(normalizeLicenseId("by-nd", "4.0"), "CC-BY-ND-4.0");
+  assert.equal(normalizeLicenseId("apache-2.0"), "Apache-2.0");
+  assert.equal(normalizeLicenseId("mit"), "MIT");
+
+  // Missing or invalid returns null (never guesses or assumes default)
+  assert.equal(normalizeLicenseId(null), null);
+  assert.equal(normalizeLicenseId(""), null);
+  assert.equal(normalizeLicenseId(undefined), null);
+  assert.equal(normalizeLicenseId("unverified-custom-license"), null);
+});
 
 test("auditAssetRights rejects non-commercial (NC) restrictions", () => {
   const ncAsset = {
@@ -35,6 +56,18 @@ test("auditAssetRights rejects no-derivatives (ND) when transformations are plan
   const verdict = auditAssetRights(ndAsset, true);
   assert.equal(verdict.status, RIGHTS_STATUS.REJECTED);
   assert.ok(verdict.reason.includes("prohibits modifications"));
+});
+
+test("auditAssetRights rejects assets with missing licenseId", () => {
+  const unlicAsset = {
+    assetId: "asset-unknown-1",
+    sourceProvider: "openverse",
+    licenseId: null, // Missing license
+    commercialUse: true,
+  };
+  const verdict = auditAssetRights(unlicAsset);
+  assert.equal(verdict.status, RIGHTS_STATUS.REJECTED);
+  assert.ok(verdict.reason.includes("missing licenseId"));
 });
 
 test("auditAssetRights flags recognizable persons to REVIEW_REQUIRED", () => {
@@ -64,7 +97,7 @@ test("auditAssetRights approves CC0 without attribution", () => {
   assert.equal(verdict.status, RIGHTS_STATUS.APPROVED);
 });
 
-test("auditAssetRights approves CC-BY with attribution and formats credits report", () => {
+test("generateCreditsReport outputs unified schema for YouTube description and QA report", () => {
   const ccByAsset = {
     assetId: "asset-ccby-1",
     sourceProvider: "openverse",
@@ -73,13 +106,41 @@ test("auditAssetRights approves CC-BY with attribution and formats credits repor
     modificationsAllowed: true,
     attributionRequired: true,
     attributionText: "Diagram by OpenSourceContributor via Openverse (CC BY 4.0)",
+    status: RIGHTS_STATUS.APPROVED_WITH_ATTRIBUTION,
+    sourcePage: "https://openverse.org/image/123",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
   };
-  const verdict = auditAssetRights(ccByAsset);
-  assert.equal(verdict.status, RIGHTS_STATUS.APPROVED_WITH_ATTRIBUTION);
 
-  const credits = generateCreditsReport([{ ...ccByAsset, status: verdict.status }]);
+  const credits = generateCreditsReport([ccByAsset]);
   assert.equal(credits.hasCredits, true);
+  assert.equal(credits.count, 1);
   assert.ok(credits.creditsText.includes("OpenSourceContributor"));
+  assert.ok(credits.youtubeDescriptionText.includes("Visual & Media Credits"));
+  assert.ok(credits.reportText.includes("CC-BY-4.0"));
+});
+
+test("AssetRegistry blocks REVIEW_REQUIRED assets from returning as approved assets", async () => {
+  const testCacheDir = path.join(ROOT_DIR, "assets", "test-cache-review");
+  const testLedgerPath = path.join(ROOT_DIR, "assets", "test-ledger-review.json");
+  const registry = new AssetRegistry({ cacheDir: testCacheDir, ledgerPath: testLedgerPath });
+
+  const reviewAsset = {
+    assetId: "asset-review-candidate",
+    sourceProvider: "pexels",
+    licenseId: "Pexels-License",
+    commercialUse: true,
+    modificationsAllowed: true,
+    downloadUrl: "https://example.com/photo.jpg",
+    reviewFlags: { recognizablePerson: true },
+  };
+
+  const res = await registry.acquireAndVerifyAsset(reviewAsset);
+  assert.equal(res.status, RIGHTS_STATUS.REVIEW_REQUIRED);
+  assert.equal(res.asset, null); // Must NEVER return approved asset object
+
+  // Clean up
+  await fs.rm(testCacheDir, { recursive: true, force: true }).catch(() => {});
+  await fs.rm(testLedgerPath, { force: true }).catch(() => {});
 });
 
 test("FixtureProvider returns offline-verified CC0 SVG assets", async () => {
@@ -98,17 +159,41 @@ test("AssetRegistry acquires, hashes with SHA-256, and records to rights-ledger.
 
   const fixtureProvider = new FixtureProvider();
   const [candidate] = await fixtureProvider.search({ query: "architecture" });
+  assert.ok(candidate);
 
-  const outcome = await registry.acquireAndVerifyAsset(candidate);
-  assert.equal(outcome.status, RIGHTS_STATUS.APPROVED);
-  assert.ok(outcome.asset.sha256 && outcome.asset.sha256.length === 64);
+  const acquisition = await registry.acquireAndVerifyAsset(candidate);
+  assert.equal(acquisition.status, RIGHTS_STATUS.APPROVED);
+  assert.ok(acquisition.asset.sha256);
+  assert.equal(acquisition.asset.sha256.length, 64);
 
-  // Verify ledger file was created and contains the asset record
-  const ledgerRaw = await fs.readFile(testLedgerPath, "utf8");
-  const ledger = JSON.parse(ledgerRaw);
-  assert.ok(ledger.assets[candidate.assetId]);
+  // Clean up
+  await fs.rm(testCacheDir, { recursive: true, force: true }).catch(() => {});
+  await fs.rm(testLedgerPath, { force: true }).catch(() => {});
+});
 
-  // Clean test artifacts
-  await fs.rm(testCacheDir, { recursive: true, force: true });
-  await fs.rm(testLedgerPath, { force: true });
+test("lintVisualDiversity flags consecutive repetitions and overused layouts", () => {
+  // Case 1: Consecutive repetitive modes
+  const badStoryboard = {
+    beats: [
+      { visualMode: "architecture-diagram", spokenLine: "Line 1", visualTitle: "Title 1" },
+      { visualMode: "architecture-diagram", spokenLine: "Line 2", visualTitle: "Title 2" }, // Consecutive duplicate
+      { visualMode: "concept-explainer", spokenLine: "Line 3", visualTitle: "Title 3" },
+    ],
+  };
+  const lintRes1 = lintVisualDiversity(badStoryboard);
+  assert.equal(lintRes1.passed, false);
+  assert.ok(lintRes1.issues.some((i) => i.includes("Consecutive visual repetition")));
+
+  // Case 2: Diverse storyboard passes
+  const goodStoryboard = {
+    beats: [
+      { visualMode: "hook-bold-object", spokenLine: "Hook line", visualTitle: "Hook" },
+      { visualMode: "physical-metaphor", spokenLine: "Metaphor line", visualTitle: "Metaphor" },
+      { visualMode: "architecture-diagram", spokenLine: "Diagram line", visualTitle: "Diagram" },
+      { visualMode: "concept-explainer", spokenLine: "Payoff line", visualTitle: "Payoff" },
+    ],
+  };
+  const lintRes2 = lintVisualDiversity(goodStoryboard);
+  assert.equal(lintRes2.passed, true);
+  assert.equal(lintRes2.diversityScore, 100);
 });

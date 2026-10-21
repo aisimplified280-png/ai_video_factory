@@ -1,0 +1,1789 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>How HNSW Vector Search Works</title>
+    <!-- Local Offline Vendored GSAP -->
+    <script src="./assets/vendor/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #0b0518;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #f8fafc;
+      }
+      .composition-root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: radial-gradient(circle at 50% 15%, #241147 0%, #13082a 55%, #080312 100%);
+        overflow: hidden;
+      }
+
+      /* Tactile Halftone Dot-Matrix Pattern */
+      .halftone-overlay {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(192, 132, 252, 0.13) 1.5px, transparent 1.5px);
+        background-size: 26px 26px;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Ambient Atmospheric Glows */
+      .glow-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        pointer-events: none;
+        z-index: 1;
+      }
+      .orb-violet {
+        width: 700px;
+        height: 700px;
+        background: radial-gradient(circle, rgba(168, 85, 247, 0.22) 0%, rgba(168, 85, 247, 0) 70%);
+        top: 8%;
+        left: -150px;
+      }
+      .orb-lime {
+        width: 550px;
+        height: 550px;
+        background: radial-gradient(circle, rgba(163, 230, 53, 0.16) 0%, rgba(163, 230, 53, 0) 70%);
+        top: 50%;
+        right: -120px;
+      }
+
+      /* Virtual Camera Wrapper */
+      .camera-viewport {
+        position: absolute;
+        inset: 0;
+        transform-origin: center center;
+        z-index: 3;
+      }
+
+      /* Top Progress Bar & Header */
+      .top-progress-track {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        z-index: 50;
+      }
+      .top-progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #c084fc, #a3e635, #c084fc);
+        box-shadow: 0 0 14px rgba(163, 230, 53, 0.7);
+      }
+      .top-bar {
+        position: absolute;
+        top: 80px;
+        left: 90px;
+        right: 90px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 20;
+      }
+      .brand-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #e2e8f0;
+      }
+      .brand-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #a3e635;
+        box-shadow: 0 0 14px #a3e635;
+      }
+
+      /* Scene Stage (Inside Safe-Zone: Y 250 to 1420) */
+      .scene-stage {
+        position: absolute;
+        top: 250px;
+        left: 90px;
+        width: 900px;
+        height: 1150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+      .scene-layer {
+        position: absolute;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      /* Badges & Headlines */
+      .purple-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 24px;
+        border-radius: 9999px;
+        background: rgba(192, 132, 252, 0.12);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+        color: #e9d5ff;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 28px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      }
+      .pulse-lime {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #a3e635;
+        box-shadow: 0 0 12px #a3e635;
+      }
+      .pulse-violet {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #c084fc;
+        box-shadow: 0 0 12px #c084fc;
+      }
+      .hero-headline {
+        font-size: 74px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        color: #ffffff;
+        margin-bottom: 34px;
+        max-width: 860px;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      }
+      .scene-title {
+        font-size: 56px;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+        margin-bottom: 30px;
+        max-width: 860px;
+      }
+
+      /* Collage Hero Card */
+      .collage-hero-card {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+      .surreal-object-container {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .surreal-glow-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(163, 230, 53, 0.25) 0%, transparent 70%);
+        border: 2px dashed rgba(163, 230, 53, 0.6);
+        animation: rotateRing 15s linear infinite;
+      }
+      @keyframes rotateRing {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .surreal-icon {
+        font-size: 64px;
+        color: #a3e635;
+        filter: drop-shadow(0 0 16px rgba(163, 230, 53, 0.8));
+      }
+      .hero-statement-box {
+        width: 100%;
+        border-radius: 24px;
+        padding: 36px 40px;
+        background: rgba(30, 16, 56, 0.85);
+        border: 1px solid rgba(192, 132, 252, 0.3);
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+        text-align: left;
+      }
+      .card-tag {
+        font-size: 20px;
+        font-weight: 700;
+        color: #a3e635;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .card-highlight {
+        font-size: 34px;
+        font-weight: 600;
+        line-height: 1.35;
+        color: #f1f5f9;
+        margin-bottom: 18px;
+      }
+      .source-tag {
+        font-size: 20px;
+        font-weight: 500;
+        color: #94a3b8;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 14px;
+      }
+
+      /* Diagram Hero Frame (Large, Prominent, Non-Cramped) */
+      .diagram-hero-frame {
+        width: 100%;
+        border-radius: 28px;
+        background: rgba(22, 12, 42, 0.9);
+        border: 2px solid rgba(192, 132, 252, 0.35);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .scouted-asset-img {
+        max-width: 100%;
+        max-height: 480px;
+        object-fit: contain;
+        border-radius: 16px;
+      }
+      .diagram-caption-strip {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .caption-text {
+        font-size: 22px;
+        font-weight: 600;
+        color: #e2e8f0;
+      }
+      .asset-attribution-badge {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #c084fc;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        background: rgba(192, 132, 252, 0.12);
+        border: 1px solid rgba(192, 132, 252, 0.3);
+      }
+
+      /* Procedural Purple Flow Diagram */
+      .purple-flow-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        width: 100%;
+        margin-bottom: 24px;
+      }
+      .purple-flow-node {
+        flex: 1;
+        padding: 24px 16px;
+        border-radius: 20px;
+        background: rgba(36, 18, 66, 0.9);
+        border: 1px solid rgba(192, 132, 252, 0.35);
+        text-align: center;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+      .node-icon-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #a3e635;
+        box-shadow: 0 0 10px #a3e635;
+        margin: 0 auto 10px auto;
+      }
+      .node-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .node-sub {
+        font-size: 18px;
+        color: #cbd5e1;
+        margin-top: 4px;
+      }
+      .purple-flow-arrow {
+        font-size: 30px;
+        color: #a3e635;
+        font-weight: 800;
+      }
+      .collage-note-box {
+        width: 100%;
+        padding: 24px 30px;
+        border-radius: 20px;
+        background: rgba(22, 12, 42, 0.8);
+        border: 1px solid rgba(192, 132, 252, 0.2);
+        text-align: left;
+      }
+
+      /* Physical Metaphor Stage */
+      .metaphor-collage-stage {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .conveyor-block {
+        width: 100%;
+        padding: 30px;
+        border-radius: 24px;
+        background: rgba(26, 14, 50, 0.9);
+        border: 1px solid rgba(163, 230, 53, 0.35);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+      }
+      .conveyor-track {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .conveyor-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 24px;
+        border-radius: 16px;
+      }
+      .item-static {
+        background: rgba(192, 132, 252, 0.15);
+        border: 1px solid rgba(192, 132, 252, 0.4);
+      }
+      .item-dynamic {
+        background: rgba(163, 230, 53, 0.15);
+        border: 1px solid rgba(163, 230, 53, 0.4);
+      }
+      .item-tag {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #ffffff;
+      }
+      .item-desc {
+        font-size: 20px;
+        color: #cbd5e1;
+      }
+      .item-status {
+        font-size: 18px;
+        font-weight: 700;
+        color: #a3e635;
+      }
+      .conveyor-arrow {
+        font-size: 20px;
+        font-weight: 800;
+        color: #c084fc;
+        text-align: center;
+      }
+      .ttl-badge {
+        margin-top: 18px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #e9d5ff;
+        text-align: center;
+        letter-spacing: 0.04em;
+      }
+      .metaphor-caption {
+        text-align: left;
+        margin-bottom: 0;
+      }
+
+      /* Purple Terminal Card */
+      .purple-terminal-card {
+        width: 100%;
+        border-radius: 28px;
+        background: #100722;
+        border: 1px solid rgba(192, 132, 252, 0.3);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+        text-align: left;
+      }
+      .terminal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 26px;
+        background: #1a0e36;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .term-controls {
+        display: flex;
+        gap: 10px;
+      }
+      .term-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+      }
+      .dot-purple { background-color: #c084fc; }
+      .dot-lavender { background-color: #e9d5ff; }
+      .dot-lime { background-color: #a3e635; }
+      .term-title {
+        font-size: 20px;
+        font-weight: 600;
+        font-family: monospace;
+        color: #e2e8f0;
+      }
+      .term-lang {
+        font-size: 16px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #a3e635;
+      }
+      .terminal-body {
+        padding: 32px 36px;
+        font-family: "SF Mono", Consolas, Menlo, Monaco, "Courier New", monospace;
+        font-size: 24px;
+        line-height: 1.5;
+        color: #e2e8f0;
+      }
+      .terminal-body pre {
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .typing-cursor {
+        color: #a3e635;
+        font-weight: 800;
+      }
+
+      /* Comparison Collage Grid */
+      .compare-collage-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+      }
+      .compare-box {
+        padding: 28px 32px;
+        border-radius: 20px;
+        text-align: left;
+      }
+      .box-unoptimized {
+        background: rgba(40, 16, 28, 0.85);
+        border: 1px solid rgba(244, 63, 94, 0.35);
+      }
+      .box-optimized {
+        background: rgba(22, 38, 26, 0.85);
+        border: 1px solid rgba(163, 230, 53, 0.4);
+      }
+      .box-label {
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin-bottom: 10px;
+      }
+      .cross-label { color: #fb7185; }
+      .check-label { color: #a3e635; }
+      .compare-desc {
+        font-size: 26px;
+        font-weight: 600;
+        line-height: 1.3;
+        color: #f1f5f9;
+      }
+
+      /* Takeaway Collage Card */
+      .takeaway-collage-card {
+        width: 100%;
+        padding: 38px 42px;
+        border-radius: 28px;
+        background: rgba(30, 16, 56, 0.9);
+        border: 2px solid rgba(163, 230, 53, 0.4);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+        text-align: left;
+      }
+      .takeaway-header {
+        margin-bottom: 16px;
+      }
+      .takeaway-stamp {
+        display: inline-block;
+        padding: 8px 18px;
+        border-radius: 8px;
+        background: #a3e635;
+        color: #0d061c;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      /* Kinetic Active Captions (Safe Zone: Y 1460 to 1580) */
+      .captions-wrapper {
+        position: absolute;
+        bottom: 240px;
+        left: 90px;
+        width: 900px;
+        height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 40;
+      }
+      .caption-pill-backdrop {
+        width: 100%;
+        padding: 22px 30px;
+        border-radius: 24px;
+        background: rgba(14, 7, 28, 0.88);
+        border: 1px solid rgba(192, 132, 252, 0.3);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(12px);
+        text-align: center;
+      }
+      .sub-scene {
+        display: none;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px 14px;
+      }
+      .sub-scene.active {
+        display: flex;
+      }
+      .cap-word {
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #cbd5e1;
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        transition: transform 0.1s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="composition-root" data-composition-id="short-3325-vector-database-indexing" data-width="1080" data-height="1920" data-duration="27.833333333333332">
+      <div class="halftone-overlay"></div>
+      <div id="orb-violet" class="glow-orb orb-violet"></div>
+      <div id="orb-lime" class="glow-orb orb-lime"></div>
+
+      <div class="camera-viewport" id="stage-camera">
+        <!-- Top Track & Header -->
+        <div class="top-progress-track">
+          <div id="top-progress" class="top-progress-bar"></div>
+        </div>
+        <header class="top-bar">
+          <div class="brand-badge">
+            <span class="brand-dot"></span>
+            AI SIMPLIFIED LAB
+          </div>
+        </header>
+
+        <!-- Main Scene Stage -->
+        <main class="scene-stage">
+          
+      <div id="scene-0" class="scene-layer clip" data-start="0" data-duration="6.6262" style="opacity: 1;">
+        
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          VECTOR SEARCH SCALING
+        </div>
+        <h1 class="hero-headline">The Vector Search Dilemma</h1>
+        <div class="collage-hero-card">
+          <div class="surreal-object-container">
+            <div class="surreal-glow-ring"></div>
+            <div class="surreal-icon">⚡</div>
+          </div>
+          <div class="hero-statement-box">
+            <div class="card-tag">OBSERVATION</div>
+            <p class="card-highlight">Brute force cosine distance compares against millions of points linearly, collapsing search throughput.</p>
+            <div class="source-tag">Source: Vector Indexing Technical Papers</div>
+          </div>
+        </div>
+      
+      </div>
+    
+
+      <div id="scene-1" class="scene-layer clip" data-start="6.6262" data-duration="7.2573" style="opacity: 0;">
+        
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          HIERARCHICAL HIGHWAY
+        </div>
+        <h2 class="scene-title">The Multi-Layer Graph Highway</h2>
+        <div class="metaphor-collage-stage">
+          <div class="metaphor-block conveyor-block">
+            <div class="conveyor-track">
+              <div class="conveyor-item item-static">
+                <span class="item-tag">STATIC PREFIX</span>
+                <span class="item-desc">System Prompt &amp; Context</span>
+                <span class="item-status">📌 Pinned in RAM</span>
+              </div>
+              <div class="conveyor-arrow">⬇ Instant Match</div>
+              <div class="conveyor-item item-dynamic">
+                <span class="item-tag">DYNAMIC QUERY</span>
+                <span class="item-desc">User Message</span>
+                <span class="item-status">⚡ Instant Hit</span>
+              </div>
+            </div>
+            <div class="ttl-badge">⏳ 5-Min Default • 1-Hour Extended TTL</div>
+          </div>
+          <p class="card-highlight metaphor-caption">Top layers make massive express leaps while base layers pinpoint exact nearest neighbors.</p>
+        </div>
+      
+      </div>
+    
+
+      <div id="scene-2" class="scene-layer clip" data-start="13.8835" data-duration="6.3591999999999995" style="opacity: 0;">
+        
+          <div class="purple-badge">
+            <span class="badge-dot pulse-violet"></span>
+            GRAPH TOPOLOGY
+          </div>
+          <h2 class="scene-title">HNSW Layered Navigation</h2>
+          <div class="diagram-hero-frame">
+            <img src="./assets/scouted/openverse-30208930-cdf6-4ae9-953f-c20fc3dd0985.jpg" class="scouted-asset-img" alt="HNSW Layered Navigation" />
+            <div class="diagram-caption-strip">
+              <span class="caption-text">Coarse hops converge rapidly down to the densest layer, reducing complexity from linear to logarithmic.</span>
+              <span class="asset-attribution-badge">Verified Media • CC-BY-2.0</span>
+            </div>
+          </div>
+        
+      </div>
+    
+
+      <div id="scene-3" class="scene-layer clip" data-start="20.2427" data-duration="7.590633333333333" style="opacity: 0;">
+        
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          PRODUCTION RULE
+        </div>
+        <h2 class="scene-title">Sub-Millisecond Retrieval</h2>
+        <div class="takeaway-collage-card">
+          <div class="takeaway-header">
+            <span class="takeaway-stamp">ARCHITECTURAL RULE</span>
+          </div>
+          <p class="card-highlight">Tune graph connectivity M and construction breadth efSearch to balance recall against memory footprint.</p>
+          <div class="source-tag">Reference: HNSW Algorithm &amp; Vector DB Standards</div>
+        </div>
+      
+      </div>
+    
+        </main>
+      </div>
+
+      <!-- Kinetic Captions Frame -->
+      <footer class="captions-wrapper">
+        <div class="caption-pill-backdrop">
+          
+      <div id="sub-scene-0" class="sub-scene active">
+        <span class="cap-word" id="w-0-0">Searching</span> <span class="cap-word" id="w-0-1">millions</span> <span class="cap-word" id="w-0-2">of</span> <span class="cap-word" id="w-0-3">high-dimensional</span> <span class="cap-word" id="w-0-4">vectors</span> <span class="cap-word" id="w-0-5">linearly</span> <span class="cap-word" id="w-0-6">creates</span> <span class="cap-word" id="w-0-7">an</span> <span class="cap-word" id="w-0-8">unscalable</span> <span class="cap-word" id="w-0-9">bottleneck</span> <span class="cap-word" id="w-0-10">for</span> <span class="cap-word" id="w-0-11">AI</span> <span class="cap-word" id="w-0-12">applications.</span>
+      </div>
+    
+
+      <div id="sub-scene-1" class="sub-scene ">
+        <span class="cap-word" id="w-1-0">Hierarchical</span> <span class="cap-word" id="w-1-1">Navigable</span> <span class="cap-word" id="w-1-2">Small</span> <span class="cap-word" id="w-1-3">World</span> <span class="cap-word" id="w-1-4">graphs</span> <span class="cap-word" id="w-1-5">skip</span> <span class="cap-word" id="w-1-6">dense</span> <span class="cap-word" id="w-1-7">clusters</span> <span class="cap-word" id="w-1-8">like</span> <span class="cap-word" id="w-1-9">multi-tier</span> <span class="cap-word" id="w-1-10">highways</span> <span class="cap-word" id="w-1-11">across</span> <span class="cap-word" id="w-1-12">high-dimensional</span> <span class="cap-word" id="w-1-13">space.</span>
+      </div>
+    
+
+      <div id="sub-scene-2" class="sub-scene ">
+        <span class="cap-word" id="w-2-0">The</span> <span class="cap-word" id="w-2-1">search</span> <span class="cap-word" id="w-2-2">hops</span> <span class="cap-word" id="w-2-3">across</span> <span class="cap-word" id="w-2-4">sparse</span> <span class="cap-word" id="w-2-5">upper</span> <span class="cap-word" id="w-2-6">layers</span> <span class="cap-word" id="w-2-7">before</span> <span class="cap-word" id="w-2-8">descending</span> <span class="cap-word" id="w-2-9">to</span> <span class="cap-word" id="w-2-10">the</span> <span class="cap-word" id="w-2-11">base</span> <span class="cap-word" id="w-2-12">for</span> <span class="cap-word" id="w-2-13">precise</span> <span class="cap-word" id="w-2-14">nearest</span> <span class="cap-word" id="w-2-15">neighbor</span> <span class="cap-word" id="w-2-16">convergence.</span>
+      </div>
+    
+
+      <div id="sub-scene-3" class="sub-scene ">
+        <span class="cap-word" id="w-3-0">Balancing</span> <span class="cap-word" id="w-3-1">graph</span> <span class="cap-word" id="w-3-2">connectivity</span> <span class="cap-word" id="w-3-3">with</span> <span class="cap-word" id="w-3-4">construction</span> <span class="cap-word" id="w-3-5">depth</span> <span class="cap-word" id="w-3-6">is</span> <span class="cap-word" id="w-3-7">how</span> <span class="cap-word" id="w-3-8">production</span> <span class="cap-word" id="w-3-9">vector</span> <span class="cap-word" id="w-3-10">databases</span> <span class="cap-word" id="w-3-11">maintain</span> <span class="cap-word" id="w-3-12">sub-millisecond</span> <span class="cap-word" id="w-3-13">latency.</span>
+      </div>
+    
+        </div>
+      </footer>
+    </div>
+
+    <!-- Timeline Animation Script -->
+    <script>
+      
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // Continuous Subtle Virtual Camera push-in
+    tl.to("#stage-camera", { scale: 1.035, duration: 27.833333333333332, ease: "none" }, 0);
+
+    // Ambient floating purple & lime aura glow
+    tl.to("#orb-violet", { scale: 1.25, x: 25, y: -20, opacity: 0.7, duration: 3.2, yoyo: true, repeat: 10, ease: "sine.inOut" }, 0);
+    tl.to("#orb-lime", { scale: 1.2, x: -20, y: 30, opacity: 0.6, duration: 3.6, yoyo: true, repeat: 10, ease: "sine.inOut" }, 0);
+    tl.to("#top-progress", { width: "100%", duration: 27.833333333333332, ease: "none" }, 0);
+
+    // Cursor blink
+    tl.to(".typing-cursor", { opacity: 0, duration: 0.45, repeat: 61, yoyo: true, ease: "steps(1)" }, 0);
+  
+        // Scene 0 Entrance (Hook)
+        tl.from("#scene-0 .purple-badge", { scale: 0.85, opacity: 0, y: -25, duration: 0.5, ease: "back.out(1.6)" }, 0);
+        tl.from("#scene-0 .hero-headline", { opacity: 0, y: 35, duration: 0.6, ease: "power3.out" }, 0.12);
+        tl.from("#scene-0 .collage-hero-card", { opacity: 0, y: 45, scale: 0.94, duration: 0.65, ease: "back.out(1.3)" }, 0.25);
+        tl.from("#scene-0 .surreal-icon", { rotation: -20, scale: 0.5, opacity: 0, duration: 0.6, ease: "back.out(1.8)" }, 0.35);
+      
+        tl.to("#w-0-0", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 0);
+
+        tl.to("#w-0-0", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 0.4587369230769231);
+      
+        tl.to("#w-0-1", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 0.5097076923076923);
+
+        tl.to("#w-0-1", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 0.9684446153846153);
+      
+        tl.to("#w-0-2", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 1.0194153846153846);
+
+        tl.to("#w-0-2", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 1.4781523076923078);
+      
+        tl.to("#w-0-3", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 1.529123076923077);
+
+        tl.to("#w-0-3", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 1.9878600000000002);
+      
+        tl.to("#w-0-4", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 2.0388307692307692);
+
+        tl.to("#w-0-4", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 2.497567692307692);
+      
+        tl.to("#w-0-5", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 2.5485384615384614);
+
+        tl.to("#w-0-5", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 3.0072753846153844);
+      
+        tl.to("#w-0-6", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 3.058246153846154);
+
+        tl.to("#w-0-6", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 3.516983076923077);
+      
+        tl.to("#w-0-7", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 3.5679538461538463);
+
+        tl.to("#w-0-7", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 4.026690769230769);
+      
+        tl.to("#w-0-8", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 4.0776615384615384);
+
+        tl.to("#w-0-8", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 4.536398461538462);
+      
+        tl.to("#w-0-9", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 4.587369230769231);
+
+        tl.to("#w-0-9", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 5.0461061538461545);
+      
+        tl.to("#w-0-10", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 5.097076923076923);
+
+        tl.to("#w-0-10", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 5.555813846153846);
+      
+        tl.to("#w-0-11", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 5.6067846153846155);
+
+        tl.to("#w-0-11", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 6.065521538461539);
+      
+        tl.to("#w-0-12", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 6.116492307692308);
+
+        tl.to("#w-0-12", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 6.5752292307692315);
+      
+        // Transition Scene 0 -> Scene 1
+        tl.to("#scene-0", { opacity: 0, scale: 0.96, y: -25, duration: 0.3, ease: "power2.in" }, 6.4262);
+        tl.fromTo("#scene-1", 
+          { opacity: 0, scale: 1.04, y: 30 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+          6.6262
+        );
+
+        // Subtitle scene switch
+        tl.call(() => {
+          document.querySelectorAll('.sub-scene').forEach(el => el.classList.remove('active'));
+          const target = document.getElementById("sub-scene-1");
+          if (target) target.classList.add('active');
+        }, null, 6.6262);
+      
+        tl.from("#scene-1 .diagram-hero-frame", {
+          scale: 0.92,
+          opacity: 0,
+          y: 20,
+          duration: 0.5,
+          ease: "back.out(1.4)"
+        }, 6.8262);
+      
+        tl.to("#w-1-0", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 6.6262);
+
+        tl.to("#w-1-0", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 7.092740714285714);
+      
+        tl.to("#w-1-1", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 7.144578571428571);
+
+        tl.to("#w-1-1", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 7.6111192857142855);
+      
+        tl.to("#w-1-2", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 7.662957142857143);
+
+        tl.to("#w-1-2", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 8.129497857142857);
+      
+        tl.to("#w-1-3", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 8.181335714285714);
+
+        tl.to("#w-1-3", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 8.64787642857143);
+      
+        tl.to("#w-1-4", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 8.699714285714286);
+
+        tl.to("#w-1-4", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 9.166255);
+      
+        tl.to("#w-1-5", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 9.218092857142857);
+
+        tl.to("#w-1-5", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 9.68463357142857);
+      
+        tl.to("#w-1-6", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 9.736471428571429);
+
+        tl.to("#w-1-6", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 10.203012142857144);
+      
+        tl.to("#w-1-7", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 10.254850000000001);
+
+        tl.to("#w-1-7", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 10.721390714285715);
+      
+        tl.to("#w-1-8", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 10.773228571428572);
+
+        tl.to("#w-1-8", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 11.239769285714285);
+      
+        tl.to("#w-1-9", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 11.291607142857142);
+
+        tl.to("#w-1-9", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 11.758147857142855);
+      
+        tl.to("#w-1-10", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 11.809985714285714);
+
+        tl.to("#w-1-10", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 12.27652642857143);
+      
+        tl.to("#w-1-11", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 12.328364285714287);
+
+        tl.to("#w-1-11", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 12.794905);
+      
+        tl.to("#w-1-12", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 12.846742857142857);
+
+        tl.to("#w-1-12", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 13.31328357142857);
+      
+        tl.to("#w-1-13", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 13.36512142857143);
+
+        tl.to("#w-1-13", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 13.831662142857144);
+      
+        // Transition Scene 1 -> Scene 2
+        tl.to("#scene-1", { opacity: 0, scale: 0.96, y: -25, duration: 0.3, ease: "power2.in" }, 13.6835);
+        tl.fromTo("#scene-2", 
+          { opacity: 0, scale: 1.04, y: 30 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+          13.8835
+        );
+
+        // Subtitle scene switch
+        tl.call(() => {
+          document.querySelectorAll('.sub-scene').forEach(el => el.classList.remove('active'));
+          const target = document.getElementById("sub-scene-2");
+          if (target) target.classList.add('active');
+        }, null, 13.8835);
+      
+        tl.from("#scene-2 .diagram-hero-frame", {
+          scale: 0.92,
+          opacity: 0,
+          y: 20,
+          duration: 0.5,
+          ease: "back.out(1.4)"
+        }, 14.083499999999999);
+      
+        tl.to("#w-2-0", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 13.8835);
+
+        tl.to("#w-2-0", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 14.220163529411764);
+      
+        tl.to("#w-2-1", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 14.257570588235295);
+
+        tl.to("#w-2-1", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 14.594234117647058);
+      
+        tl.to("#w-2-2", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 14.631641176470588);
+
+        tl.to("#w-2-2", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 14.968304705882352);
+      
+        tl.to("#w-2-3", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 15.005711764705882);
+
+        tl.to("#w-2-3", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 15.342375294117646);
+      
+        tl.to("#w-2-4", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 15.379782352941175);
+
+        tl.to("#w-2-4", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 15.71644588235294);
+      
+        tl.to("#w-2-5", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 15.75385294117647);
+
+        tl.to("#w-2-5", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 16.090516470588234);
+      
+        tl.to("#w-2-6", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 16.127923529411763);
+
+        tl.to("#w-2-6", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 16.46458705882353);
+      
+        tl.to("#w-2-7", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 16.501994117647058);
+
+        tl.to("#w-2-7", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 16.838657647058824);
+      
+        tl.to("#w-2-8", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 16.876064705882353);
+
+        tl.to("#w-2-8", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 17.21272823529412);
+      
+        tl.to("#w-2-9", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 17.250135294117648);
+
+        tl.to("#w-2-9", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 17.586798823529413);
+      
+        tl.to("#w-2-10", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 17.62420588235294);
+
+        tl.to("#w-2-10", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 17.960869411764705);
+      
+        tl.to("#w-2-11", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 17.998276470588234);
+
+        tl.to("#w-2-11", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 18.33494);
+      
+        tl.to("#w-2-12", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 18.37234705882353);
+
+        tl.to("#w-2-12", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 18.709010588235294);
+      
+        tl.to("#w-2-13", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 18.746417647058824);
+
+        tl.to("#w-2-13", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 19.08308117647059);
+      
+        tl.to("#w-2-14", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 19.12048823529412);
+
+        tl.to("#w-2-14", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 19.457151764705884);
+      
+        tl.to("#w-2-15", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 19.49455882352941);
+
+        tl.to("#w-2-15", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 19.831222352941175);
+      
+        tl.to("#w-2-16", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 19.868629411764704);
+
+        tl.to("#w-2-16", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 20.20529294117647);
+      
+        // Transition Scene 2 -> Scene 3
+        tl.to("#scene-2", { opacity: 0, scale: 0.96, y: -25, duration: 0.3, ease: "power2.in" }, 20.0427);
+        tl.fromTo("#scene-3", 
+          { opacity: 0, scale: 1.04, y: 30 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+          20.2427
+        );
+
+        // Subtitle scene switch
+        tl.call(() => {
+          document.querySelectorAll('.sub-scene').forEach(el => el.classList.remove('active'));
+          const target = document.getElementById("sub-scene-3");
+          if (target) target.classList.add('active');
+        }, null, 20.2427);
+      
+        tl.to("#w-3-0", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 20.2427);
+
+        tl.to("#w-3-0", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 20.730669285714285);
+      
+        tl.to("#w-3-1", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 20.784888095238095);
+
+        tl.to("#w-3-1", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 21.27285738095238);
+      
+        tl.to("#w-3-2", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 21.32707619047619);
+
+        tl.to("#w-3-2", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 21.815045476190477);
+      
+        tl.to("#w-3-3", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 21.869264285714284);
+
+        tl.to("#w-3-3", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 22.35723357142857);
+      
+        tl.to("#w-3-4", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 22.41145238095238);
+
+        tl.to("#w-3-4", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 22.899421666666665);
+      
+        tl.to("#w-3-5", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 22.953640476190476);
+
+        tl.to("#w-3-5", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 23.44160976190476);
+      
+        tl.to("#w-3-6", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 23.49582857142857);
+
+        tl.to("#w-3-6", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 23.983797857142857);
+      
+        tl.to("#w-3-7", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 24.038016666666664);
+
+        tl.to("#w-3-7", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 24.52598595238095);
+      
+        tl.to("#w-3-8", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 24.58020476190476);
+
+        tl.to("#w-3-8", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 25.068174047619046);
+      
+        tl.to("#w-3-9", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 25.122392857142856);
+
+        tl.to("#w-3-9", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 25.61036214285714);
+      
+        tl.to("#w-3-10", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 25.664580952380952);
+
+        tl.to("#w-3-10", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 26.152550238095237);
+      
+        tl.to("#w-3-11", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 26.206769047619048);
+
+        tl.to("#w-3-11", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 26.694738333333333);
+      
+        tl.to("#w-3-12", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 26.748957142857144);
+
+        tl.to("#w-3-12", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 27.23692642857143);
+      
+        tl.to("#w-3-13", {
+          color: "#a3e635",
+          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          scale: 1.15,
+          opacity: 1,
+          duration: 0.12,
+          ease: "back.out(1.5)"
+        }, 27.291145238095236);
+
+        tl.to("#w-3-13", {
+          color: "#e2e8f0",
+          backgroundColor: "transparent",
+          scale: 1.0,
+          duration: 0.14,
+          ease: "power2.out"
+        }, 27.779114523809522);
+      
+    window.__timelines["short-3325-vector-database-indexing"] = tl;
+  
+    </script>
+  </body>
+</html>

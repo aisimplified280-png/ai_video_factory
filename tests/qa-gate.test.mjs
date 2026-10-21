@@ -9,12 +9,16 @@ import {
   evaluateReleaseEligibility,
 } from "../pipeline/qa-gate.mjs";
 
-test("validateScriptTimingSync passes on valid chronological scenes", () => {
+test("validateScriptTimingSync passes on valid chronological scenes and matching boundaries", () => {
   const validScenes = [
     { id: "s1", voiceText: "Hello world.", startTime: 0.0, endTime: 2.5 },
     { id: "s2", voiceText: "Next point.", startTime: 2.5, endTime: 5.0 },
   ];
-  const res = validateScriptTimingSync(validScenes, 5.0);
+  const rawTimings = [
+    { startTime: 0.0, endTime: 2.4 },
+    { startTime: 2.5, endTime: 4.8 },
+  ];
+  const res = validateScriptTimingSync(validScenes, 5.0, 30, rawTimings);
   assert.equal(res.status, STATUS.PASS);
   assert.equal(res.issues.length, 0);
 });
@@ -29,10 +33,23 @@ test("validateScriptTimingSync fails when scenes overlap backwards or have NaN",
   assert.ok(res.issues.some((i) => i.includes("overlaps backwards")));
 });
 
+test("validateScriptTimingSync fails explicitly on sentence boundary count mismatch", () => {
+  const scenes = [
+    { id: "s1", voiceText: "First sentence.", startTime: 0.0, endTime: 2.5 },
+    { id: "s2", voiceText: "Second sentence.", startTime: 2.5, endTime: 5.0 },
+  ];
+  const mismatchTimings = [
+    { startTime: 0.0, endTime: 2.4 }, // Only 1 boundary for 2 scenes
+  ];
+  const res = validateScriptTimingSync(scenes, 5.0, 30, mismatchTimings);
+  assert.equal(res.status, STATUS.FAIL);
+  assert.ok(res.issues.some((i) => i.includes("boundary count mismatch")));
+});
+
 test("parseBlackDetectOutput correctly identifies black frame segments", () => {
   const sampleFfmpegLog = `
-    [blackdetect @ 000001] black_start:1.200 black_end:2.500 black_duration:1.300
-    [blackdetect @ 000001] black_start:4.100 black_end:5.200 black_duration:1.100
+    [Parsed_blackdetect_0 @ 000001] black_start:1.200 black_end:2.500 black_duration:1.300
+    [Parsed_blackdetect_0 @ 000001] black_start:4.100 black_end:5.200 black_duration:1.100
   `;
   const res = parseBlackDetectOutput(sampleFfmpegLog);
   assert.equal(res.status, STATUS.FAIL);
@@ -40,32 +57,55 @@ test("parseBlackDetectOutput correctly identifies black frame segments", () => {
   assert.equal(res.segments[0].duration, 1.3);
 });
 
-test("parseBlackDetectOutput returns PASS when no black segments detected", () => {
-  const sampleFfmpegCleanLog = `frame= 650 fps=140 q=-0.0 Lsize=N/A time=00:00:21.66 bitrate=N/A`;
+test("parseBlackDetectOutput returns PASS when blackdetect ran and zero black segments found", () => {
+  const sampleFfmpegCleanLog = `[Parsed_blackdetect_0 @ 000001] auto-inserting filter 'auto_scale_0'
+  frame=  787 fps=120 q=-0.0 Lsize=N/A time=00:00:26.23 bitrate=N/A`;
   const res = parseBlackDetectOutput(sampleFfmpegCleanLog);
   assert.equal(res.status, STATUS.PASS);
   assert.equal(res.blackSegmentsCount, 0);
 });
 
-test("verifyStreamProperties flags wrong dimensions or missing streams", () => {
+test("parseBlackDetectOutput returns UNKNOWN when filter did not run or stderr is empty", () => {
+  const resEmpty = parseBlackDetectOutput("");
+  assert.equal(resEmpty.status, STATUS.UNKNOWN);
+  assert.equal(resEmpty.blackSegmentsCount, null);
+
+  const resUnrelated = parseBlackDetectOutput("ffmpeg version 7.0 Copyright (c) 2000-2024");
+  assert.equal(resUnrelated.status, STATUS.UNKNOWN);
+});
+
+test("verifyStreamProperties flags wrong dimensions, wrong codec, or wrong sample rate", () => {
   const badProbe = {
     streams: [
-      { codec_name: "h264", codec_type: "video", width: 1920, height: 1080, r_frame_rate: "30/1" }, // Horizontal 16:9 instead of portrait 9:16
-      // Missing audio stream
+      { codec_name: "vp9", codec_type: "video", width: 1920, height: 1080, r_frame_rate: "24/1" }, // Wrong codec, wrong dimensions, wrong fps
+      { codec_name: "mp3", codec_type: "audio", sample_rate: "44100" }, // Wrong audio codec, wrong sample rate
     ],
   };
   const res = verifyStreamProperties(badProbe);
   assert.equal(res.status, STATUS.FAIL);
+  assert.ok(res.issues.some((i) => i.includes("Video codec mismatch")));
   assert.ok(res.issues.some((i) => i.includes("Resolution mismatch")));
-  assert.ok(res.issues.some((i) => i.includes("Missing audio stream")));
+  assert.ok(res.issues.some((i) => i.includes("Framerate mismatch")));
+  assert.ok(res.issues.some((i) => i.includes("Audio codec mismatch")));
+  assert.ok(res.issues.some((i) => i.includes("Audio sample rate mismatch")));
 });
 
-test("evaluateReleaseEligibility blocks release on failed rights or decode errors", () => {
-  const mediaQA = { streamIntegrity: STATUS.PASS, decodeErrors: 1, blackFrameDetection: STATUS.PASS };
+test("evaluateReleaseEligibility fails closed on UNKNOWN black frames or missing checks", () => {
+  // Case 1: blackFrameDetection is UNKNOWN
+  const mediaQAUnknown = { streamIntegrity: STATUS.PASS, decodeErrors: 0, blackFrameDetection: STATUS.UNKNOWN };
   const contentIntegrity = { offlineVendoredAssets: STATUS.PASS, scriptTimingSync: STATUS.PASS };
-  const rightsAudit = { status: STATUS.FAIL, reason: "Unlicensed stock photo found." };
+  const rightsAudit = { status: STATUS.PASS, reason: "Verified." };
 
-  const res = evaluateReleaseEligibility(mediaQA, contentIntegrity, rightsAudit);
-  assert.equal(res.releaseEligible, false);
-  assert.equal(res.blockers.length, 2);
+  const res1 = evaluateReleaseEligibility(mediaQAUnknown, contentIntegrity, rightsAudit);
+  assert.equal(res1.releaseEligible, false);
+  assert.ok(res1.blockers.some((b) => b.includes("Black frame check must be PASS")));
+
+  // Case 2: Missing rights audit
+  const res2 = evaluateReleaseEligibility(
+    { streamIntegrity: STATUS.PASS, decodeErrors: 0, blackFrameDetection: STATUS.PASS },
+    contentIntegrity,
+    null
+  );
+  assert.equal(res2.releaseEligible, false);
+  assert.ok(res2.blockers.some((b) => b.includes("Missing rightsAudit")));
 });

@@ -40,6 +40,13 @@ export async function generateAudio(projectDir, scriptData) {
   const rawTimings = JSON.parse(await fs.readFile(speechTimingsFile, "utf8"));
   console.log(`[Audio] Extracted ${rawTimings.length} exact sentence boundaries.`);
 
+  // Strictly enforce 1-to-1 correspondence between scene beats and speech boundaries
+  if (rawTimings.length !== scriptData.scenes.length) {
+    throw new Error(
+      `Audio speech timing mismatch: script defines ${scriptData.scenes.length} scenes, but Edge-TTS extracted ${rawTimings.length} sentence boundaries. Each scene must map cleanly to its spoken sentence.`
+    );
+  }
+
   // Measure total audio duration via ffprobe
   const { stdout: probeOut } = await execFileAsync("ffprobe", [
     "-v", "error",
@@ -55,12 +62,16 @@ export async function generateAudio(projectDir, scriptData) {
 
   // Map each scene to its exact spoken boundary
   const scenesWithTiming = scriptData.scenes.map((scene, idx) => {
-    const timing = rawTimings[idx] || rawTimings[rawTimings.length - 1] || { startTime: idx * 2.0, endTime: (idx + 1) * 2.0 };
+    const timing = rawTimings[idx];
+    if (!timing || typeof timing.startTime !== "number" || typeof timing.endTime !== "number") {
+      throw new Error(`Malformed speech timing entry at index ${idx}.`);
+    }
     
     // Scene 0 starts at frame 0 (0.0s)
     const startTime = idx === 0 ? 0.0 : timing.startTime;
-    // Last scene stretches to the end of the video
-    const endTime = idx === scriptData.scenes.length - 1 ? totalDuration : (rawTimings[idx + 1]?.startTime || timing.endTime);
+    // Next scene onset or total duration
+    const nextStart = idx < scriptData.scenes.length - 1 ? rawTimings[idx + 1].startTime : totalDuration;
+    const endTime = idx === scriptData.scenes.length - 1 ? totalDuration : nextStart;
     const duration = Math.max(0.2, endTime - startTime);
     
     const startFrame = Math.round(startTime * fps);

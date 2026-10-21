@@ -1,0 +1,26 @@
+[
+  {
+    "text": "Searching millions of high-dimensional vectors linearly creates an unscalable bottleneck for AI applications.",
+    "startTime": 0.1,
+    "endTime": 6.6762,
+    "duration": 6.5762
+  },
+  {
+    "text": "Hierarchical Navigable Small World graphs skip dense clusters like multi-tier highways across high-dimensional space.",
+    "startTime": 6.6262,
+    "endTime": 13.8835,
+    "duration": 7.2573
+  },
+  {
+    "text": "The search hops across sparse upper layers before descending to the base for precise nearest neighbor convergence.",
+    "startTime": 13.8835,
+    "endTime": 20.2427,
+    "duration": 6.3592
+  },
+  {
+    "text": "Balancing graph connectivity with construction depth is how production vector databases maintain sub-millisecond latency.",
+    "startTime": 20.2427,
+    "endTime": 27.3665,
+    "duration": 7.1238
+  }
+]

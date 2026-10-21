@@ -52,5 +52,24 @@ Build a ₹0 ongoing-cost workflow for creating YouTube Shorts from idea to fini
   - **Verified Test Suite**: 13/13 unit tests passing in ~170ms with 0 API keys required.
   - **End-to-End Proven Short**: Generated, linted, rendered, muxed, and packaged `short-6501-claude-prompt-caching` (26.23s, 787 frames @ 30fps, 1080x1920) with verified CC0 SVG diagram and `releaseEligible: true`.
 
+- [x] Checkpoint 6 (2026-10-21): **Engine Hardening & Creative Direction Upgrade (AI Simplified Lab Purple Collage Explainer)**.
+  - **Fail-Closed Release Gate**: Completely closed all fail-open pathways. `evaluateReleaseEligibility` strictly blocks release on any `UNKNOWN`, missing, or non-`PASS` checks (including unexecuted black frame detectors or malformed probe data). Segregated `technicalChecksPassed`, `rightsApproved`, `editorialReviewStatus: UNASSESSED`, and `publishApproved: false`.
+  - **Strict Rights Gate & Asset Filtering**: `REVIEW_REQUIRED` and `REJECTED` assets are strictly prevented from returning as approved assets or entering composition code. Validated URLs, hashes, and licenses without assuming default licenses.
+  - **Provider Hierarchy & Openverse Normalization**: Online providers (`Pexels`, `Openverse`) are searched before fallback fixtures. Explicit license normalization for Openverse (`normalizeLicenseId`) mapping `by`, `by-nc`, `cc0`, `pdm`, etc., with zero assumptions.
+  - **Unified Credits & Attribution Output**: Unified schema (`youtubeDescriptionText`, `reportText`, `creditsText`) between rights-gate, renderer, and YouTube manifest. Approved CC-BY assets automatically embed full creator, license identifier, license link, and source page in the generated YouTube description and QA ledger.
+  - **Exact Speech Timing Validation**: Strict 1-to-1 match enforced between script beats and extracted `SentenceBoundary` ticks without silent fallback.
+  - **Brand Identity — AI Simplified Lab Purple Collage Explainer**:
+    - Replaced the hardcoded Claude warm-ivory/terracotta cards with AI Simplified Lab's brand identity.
+    - Deep violet/ink textured background (`#0d0819` to `#241147`) with halftone dot-matrix pattern overlay (`rgba(192, 132, 252, 0.13)` on 26px grid).
+    - Bold modern typography, glowing status badges, illuminated diagram frames, authentic code syntax, and kinetic active-caption pills.
+    - Narrative-driven compositions: physical metaphors (conveyor belts, express multi-layer graph highways), architecture flow diagrams, and authentic code syntax terminals.
+  - **Visual Diversity Linter**: Built `pipeline/visual-linter.mjs` to deterministically flag consecutive mode repetitions and overused layouts (>50%).
+  - **Updated Antigravity Skills**: Upgraded `storyboard-director`, `composition-builder`, and `rendered-video-critique` to enforce the AI Simplified Lab Purple Collage design system.
+  - **19/19 Passing Unit Tests**: Fast deterministic suite running offline in ~180ms.
+  - **Two Distinct Proven Shorts Rendered & Verified**:
+    1. `short-7584-claude-prompt-caching` (26.23s, 787 frames): Verified CC0 diagram, authentic syntax (`claude-3-5-sonnet-latest`, 5-min/1-hr TTL context), and 0 black frames.
+    2. `short-3325-vector-database-indexing` (27.83s, 835 frames): Verified CC-BY-2.0 scouted asset, multi-layer graph highway metaphor, full credit attribution in YouTube package, and 0 black frames.
+
 ## Resume Instruction
-The asset-aware video engine and governance pipeline are fully operational offline. To run with external providers, configure `PEXELS_API_KEY` or Openverse credentials.
+The hardened asset-aware video factory with the AI Simplified Lab Purple Collage Explainer design system is 100% operational offline.
+

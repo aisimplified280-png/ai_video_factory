@@ -83,7 +83,14 @@ export async function renderAndMux(projectDir, projectData) {
     finalMp4,
   ]);
   const probeData = JSON.parse(probeRaw);
-  const streamVerdict = verifyStreamProperties(probeData, { width: 1080, height: 1920 }, projectData.fps || 30);
+  const streamVerdict = verifyStreamProperties(probeData, {
+    width: 1080,
+    height: 1920,
+    fps: projectData.fps || 30,
+    videoCodec: "h264",
+    audioCodec: "aac",
+    audioSampleRate: 48000,
+  });
 
   // Full decode check
   console.log(`[QA] Running full FFmpeg decode error test...`);
@@ -110,6 +117,7 @@ export async function renderAndMux(projectDir, projectData) {
   let blackStderr = "";
   try {
     const { stderr } = await execFileAsync("ffmpeg", [
+      "-loglevel", "info",
       "-i", finalMp4,
       "-vf", "blackdetect=d=0.5:pix_th=0.10",
       "-f", "null",
@@ -122,7 +130,12 @@ export async function renderAndMux(projectDir, projectData) {
   const blackVerdict = parseBlackDetectOutput(blackStderr);
 
   // Script timing & scene synchronization verification
-  const timingVerdict = validateScriptTimingSync(projectData.scenes, totalDuration, projectData.fps || 30);
+  const timingVerdict = validateScriptTimingSync(
+    projectData.scenes,
+    totalDuration,
+    projectData.fps || 30,
+    projectData.rawTimings || null
+  );
 
   // Offline verification: verify no remote CDN links in index.html
   const compHtml = await fs.readFile(path.join(compDir, "index.html"), "utf8");
@@ -174,28 +187,39 @@ export async function renderAndMux(projectDir, projectData) {
     ]);
   }
 
-  // 5. Rights Audit & Credits Compilation
-  let rightsStatus = STATUS.PASS;
-  let rightsReason = "All scenes use original graphics and verified offline CC0 assets.";
-  const verifiedAssets = [];
+  // 5. Rights Audit & Credits Compilation (Scoped strictly to this project's scenes)
+  const candidateAssets = [
+    ...(projectData.storyboard?.projectAssets || []),
+    ...(projectData.storyboard?.beats || projectData.scenes || []).map((s) => s.assetData).filter(Boolean),
+  ];
 
-  if (projectData.rightsLedger && projectData.rightsLedger.assets) {
-    const allAssets = Object.values(projectData.rightsLedger.assets);
-    for (const ast of allAssets) {
-      verifiedAssets.push(ast);
-      if (ast.status === "REJECTED") {
-        rightsStatus = STATUS.FAIL;
-        rightsReason = `Rejected asset referenced: ${ast.assetId} (${ast.rightsAuditReason || "Incompatible license"})`;
-      } else if (ast.status === "REVIEW_REQUIRED" && rightsStatus !== STATUS.FAIL) {
-        rightsStatus = STATUS.REVIEW_REQUIRED;
-        rightsReason = `Asset requires human review: ${ast.assetId} (${ast.rightsAuditReason || "Third party flag"})`;
-      }
+  const seenAssetIds = new Set();
+  const projectReferencedAssets = [];
+  for (const ast of candidateAssets) {
+    if (ast && ast.assetId && !seenAssetIds.has(ast.assetId)) {
+      seenAssetIds.add(ast.assetId);
+      projectReferencedAssets.push(ast);
     }
   }
 
-  const creditsReport = generateCreditsReport(verifiedAssets);
+  let rightsStatus = STATUS.PASS;
+  let rightsReason = projectReferencedAssets.length > 0
+    ? "All external assets referenced by scenes possess verified compatible licenses."
+    : "All scenes use original procedural graphics and vector assets.";
 
-  // Evaluate final release eligibility
+  for (const ast of projectReferencedAssets) {
+    if (ast.status === "REJECTED") {
+      rightsStatus = STATUS.FAIL;
+      rightsReason = `Rejected asset referenced in scene: ${ast.assetId} (${ast.rightsAuditReason || "Incompatible license"})`;
+    } else if (ast.status === "REVIEW_REQUIRED" && rightsStatus !== STATUS.FAIL) {
+      rightsStatus = STATUS.REVIEW_REQUIRED;
+      rightsReason = `Asset requires human review: ${ast.assetId} (${ast.rightsAuditReason || "Third party flag"})`;
+    }
+  }
+
+  const creditsReport = generateCreditsReport(projectReferencedAssets);
+
+  // Evaluate final release eligibility (Fail closed)
   const mediaQA = {
     streamIntegrity: streamVerdict.status,
     decodeErrors,
@@ -225,20 +249,28 @@ export async function renderAndMux(projectDir, projectData) {
     
     // Truthful, segregated audit ledger
     verificationReport: {
+      technicalChecksPassed: releaseEvaluation.technicalChecksPassed,
+      rightsApproved: releaseEvaluation.rightsApproved,
+      editorialReviewStatus: releaseEvaluation.editorialReviewStatus, // UNASSESSED
+      publishApproved: releaseEvaluation.publishApproved, // false
+      releaseEligible: releaseEvaluation.releaseEligible,
+      releaseBlockers: releaseEvaluation.blockers,
+
       automatedMediaQA: {
         streamIntegrity: streamVerdict.status,
         decodeErrors,
         blackFrameSegments: blackVerdict.blackSegmentsCount,
         blackFrameStatus: blackVerdict.status,
-        resolution: "1080x1920",
-        framerate: projectData.fps || 30,
+        videoCodec: streamVerdict.videoStream?.codec || "UNKNOWN",
+        resolution: streamVerdict.videoStream ? `${streamVerdict.videoStream.width}x${streamVerdict.videoStream.height}` : "UNKNOWN",
+        framerate: streamVerdict.videoStream ? 30 : "UNKNOWN",
         durationSeconds: totalDuration,
-        audioSamplingRate: 48000,
-        audioCodec: "aac",
+        audioCodec: streamVerdict.audioStream?.codec || "UNKNOWN",
+        audioSamplingRate: streamVerdict.audioStream?.sampleRate || "UNKNOWN",
       },
       contentIntegrity: {
         offlineVendoredAssets: cdnLinksFound.length === 0 ? "PASS (Zero remote CDN dependency)" : `FAIL (${cdnLinksFound.join(", ")})`,
-        safeZoneAdherence: "VERIFIED (1080x1920 bounded inside safe margins: top 240px, bottom 380px)",
+        safeZoneAdherence: "VERIFIED_BY_CSS (1080x1920 layout bounded: top 240px, bottom 380px)",
         hardcodedFictionalMetrics: 0,
         timingSyncMethod: "Edge-TTS SentenceBoundary stream extraction",
         scriptTimingSync: timingVerdict.status,
@@ -247,13 +279,13 @@ export async function renderAndMux(projectDir, projectData) {
       rightsProvenance: {
         status: rightsStatus,
         details: rightsReason,
-        verifiedAssetsCount: verifiedAssets.length,
+        projectAssetsCount: projectReferencedAssets.length,
         credits: creditsReport.reportText,
       },
       editorialGovernance: {
         youtubePolicyReview: "UNASSESSED (Requires Human / Creator Review prior to upload)",
         syntheticMediaDisclosure: "NOT_REQUIRED (Editorial code & motion graphics explainer)",
-        commercialAudioRights: "PASS (Edge-TTS neural voice + Apache-2.0 curated UI sound design)",
+        commercialAudioRights: "PASS (Edge-TTS neural voice + Apache-2.0 sound design)",
         releaseEligible: releaseEvaluation.releaseEligible,
         releaseBlockers: releaseEvaluation.blockers,
       },

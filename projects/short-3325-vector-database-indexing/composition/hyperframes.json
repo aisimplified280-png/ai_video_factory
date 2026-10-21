@@ -1,0 +1,12 @@
+{
+  "$schema": "https://hyperframes.heygen.com/schema/hyperframes.json",
+  "name": "short-3325-vector-database-indexing",
+  "paths": {
+    "blocks": "compositions",
+    "components": "compositions/components",
+    "assets": "assets"
+  },
+  "media": {
+    "autoProxy": false
+  }
+}

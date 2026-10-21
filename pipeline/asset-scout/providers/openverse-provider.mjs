@@ -1,5 +1,5 @@
 // pipeline/asset-scout/providers/openverse-provider.mjs - Openverse Creative Commons Index
-import process from "node:process";
+import { normalizeLicenseId } from "../../rights-gate.mjs";
 
 /**
  * Openverse API adapter (Creative Commons & Public Domain media index).
@@ -25,25 +25,39 @@ export class OpenverseProvider {
       const data = await response.json();
       if (!Array.isArray(data.results)) return [];
 
-      return data.results.map((item) => ({
-        assetId: `openverse-${item.id}`,
-        type: "image",
-        sourceProvider: "openverse",
-        sourcePage: item.foreign_landing_url || item.url,
-        downloadUrl: item.url,
-        creator: item.creator || "Unknown Creator",
-        licenseId: (item.license || "CC-BY-4.0").toUpperCase(),
-        licenseUrl: item.license_url || "https://creativecommons.org/licenses/",
-        commercialUse: true,
-        modificationsAllowed: true,
-        attributionRequired: item.license !== "cc0" && item.license !== "pdm",
-        attributionText: `${item.title || "Image"} by ${item.creator || "Creator"} via Openverse (${(item.license || "CC-BY").toUpperCase()})`,
-        reviewFlags: {
-          recognizablePerson: false,
-          trademarkLogo: false,
-          sensitiveContent: false,
-        },
-      }));
+      const validItems = [];
+      for (const item of data.results) {
+        if (!item.url || !item.id) continue;
+
+        // Strictly normalize license without guessing or assuming defaults
+        const normalizedLicense = normalizeLicenseId(item.license, item.license_version);
+        if (!normalizedLicense) continue; // Skip items with unverified/missing licenses
+
+        const isPublicDomain = normalizedLicense === "CC0-1.0" || normalizedLicense === "Public Domain";
+
+        validItems.push({
+          assetId: `openverse-${item.id}`,
+          type: "image",
+          title: item.title || "Openverse Asset",
+          sourceProvider: "openverse",
+          sourcePage: item.foreign_landing_url || item.url,
+          downloadUrl: item.url,
+          creator: item.creator || "Unknown Creator",
+          licenseId: normalizedLicense,
+          licenseUrl: item.license_url || `https://creativecommons.org/licenses/`,
+          commercialUse: true,
+          modificationsAllowed: true,
+          attributionRequired: !isPublicDomain,
+          attributionText: `${item.title || "Image"} by ${item.creator || "Creator"} via Openverse (${normalizedLicense})`,
+          reviewFlags: {
+            recognizablePerson: false,
+            trademarkLogo: false,
+            sensitiveContent: false,
+          },
+        });
+      }
+
+      return validItems;
     } catch {
       return [];
     }

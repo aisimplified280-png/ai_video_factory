@@ -1,40 +1,41 @@
-// pipeline/asset-scout/providers/fixture-provider.mjs - Offline Verified Fixture Provider
-import path from "node:path";
+// pipeline/asset-scout/providers/fixture-provider.mjs - 100% Offline CC0 SVG Diagram Fixture Provider
 import fs from "node:fs/promises";
+import path from "node:path";
 import { ROOT_DIR } from "../../config.mjs";
 
 /**
- * Embedded SVG / visual fixture generator for 100% offline development & tests.
- * Zero network calls, zero API keys, 100% CC0 / Apache-2.0 license provenance.
+ * Deterministic offline fixture provider for testing and offline builds.
+ * Generates valid, CC0-licensed SVG architecture diagrams with the AI Simplified Lab Purple Collage aesthetic.
  */
 export class FixtureProvider {
   name = "offline-fixture";
 
-  async search({ query, type = "image", count = 3 }) {
+  async search({ query = "", count = 2 }) {
     const fixturesDir = path.join(ROOT_DIR, "assets", "fixtures");
     await fs.mkdir(fixturesDir, { recursive: true });
 
-    // Generate high-quality SVG diagrams matching the query
+    const normalizedQuery = query.toLowerCase();
     const results = [];
-    const normalizedQuery = (query || "ai-architecture").toLowerCase();
 
     if (normalizedQuery.includes("prompt") || normalizedQuery.includes("cache") || normalizedQuery.includes("claude")) {
       const filePath = path.join(fixturesDir, "prompt-caching-diagram.svg");
       const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
-        <rect width="100%" height="100%" fill="#faf8f5" rx="24"/>
-        <rect x="40" y="40" width="720" height="420" fill="#ffffff" stroke="#e7d8cc" stroke-width="2" rx="20"/>
-        <text x="70" y="90" font-family="-apple-system, sans-serif" font-size="24" font-weight="bold" fill="#1c1917">Prompt Caching Topology</text>
-        <rect x="70" y="140" width="180" height="120" fill="#fbf3ee" stroke="#d97757" stroke-width="2" rx="12"/>
-        <text x="90" y="190" font-family="-apple-system, sans-serif" font-size="18" font-weight="bold" fill="#a45338">Static Context</text>
-        <text x="90" y="220" font-family="-apple-system, sans-serif" font-size="14" fill="#78716c">10k+ Tokens</text>
-        <path d="M 260 200 L 330 200" stroke="#d97757" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
-        <rect x="340" y="140" width="180" height="120" fill="#f4ede6" stroke="#cc785c" stroke-width="2" rx="12"/>
-        <text x="360" y="190" font-family="-apple-system, sans-serif" font-size="18" font-weight="bold" fill="#a45338">Ephemeral RAM</text>
-        <text x="360" y="220" font-family="-apple-system, sans-serif" font-size="14" fill="#78716c">5-Min Warm Window</text>
-        <path d="M 530 200 L 600 200" stroke="#d97757" stroke-width="3" fill="none"/>
-        <rect x="610" y="140" width="130" height="120" fill="#ffffff" stroke="#16a34a" stroke-width="2" rx="12"/>
-        <text x="630" y="190" font-family="-apple-system, sans-serif" font-size="18" font-weight="bold" fill="#166534">Claude 3.5</text>
-        <text x="630" y="220" font-family="-apple-system, sans-serif" font-size="14" fill="#16a34a">Instant Hit</text>
+        <rect width="100%" height="100%" fill="#120826" rx="24"/>
+        <rect x="30" y="30" width="740" height="440" fill="#1b0e36" stroke="rgba(192, 132, 252, 0.4)" stroke-width="2" rx="20"/>
+        <text x="60" y="85" font-family="-apple-system, sans-serif" font-size="26" font-weight="800" fill="#ffffff" letter-spacing="0.04em">PROMPT CACHE TOPOLOGY</text>
+        <rect x="60" y="130" width="190" height="130" fill="rgba(192, 132, 252, 0.12)" stroke="#c084fc" stroke-width="2" rx="14"/>
+        <text x="80" y="180" font-family="-apple-system, sans-serif" font-size="20" font-weight="700" fill="#ffffff">Static Context</text>
+        <text x="80" y="215" font-family="-apple-system, sans-serif" font-size="15" fill="#cbd5e1">10k+ Tokens</text>
+        <path d="M 260 195 L 320 195" stroke="#a3e635" stroke-width="3" fill="none"/>
+        <rect x="330" y="130" width="200" height="130" fill="rgba(46, 16, 101, 0.6)" stroke="#8b5cf6" stroke-width="2" rx="14"/>
+        <text x="350" y="180" font-family="-apple-system, sans-serif" font-size="20" font-weight="700" fill="#ffffff">Ephemeral RAM</text>
+        <text x="350" y="215" font-family="-apple-system, sans-serif" font-size="15" fill="#a3e635">5-Min / 1-Hr TTL</text>
+        <path d="M 540 195 L 600 195" stroke="#a3e635" stroke-width="3" fill="none"/>
+        <rect x="610" y="130" width="140" height="130" fill="rgba(163, 230, 53, 0.12)" stroke="#a3e635" stroke-width="2" rx="14"/>
+        <text x="625" y="180" font-family="-apple-system, sans-serif" font-size="20" font-weight="800" fill="#a3e635">Claude 3.5</text>
+        <text x="625" y="215" font-family="-apple-system, sans-serif" font-size="15" fill="#ffffff">Warm Hit</text>
+        <text x="60" y="310" font-family="-apple-system, sans-serif" font-size="18" fill="#e2e8f0">✓ Bypasses repetitive prompt context ingestion on subsequent API calls</text>
+        <text x="60" y="340" font-family="-apple-system, sans-serif" font-size="16" fill="#94a3b8">Source: Anthropic API Prompt Caching Reference</text>
       </svg>`;
       await fs.writeFile(filePath, svgContent, "utf8");
 
@@ -63,23 +64,24 @@ export class FixtureProvider {
     // Default Tech Architecture Fixture
     const defPath = path.join(fixturesDir, "tech-architecture-diagram.svg");
     const defSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
-      <rect width="100%" height="100%" fill="#faf8f5" rx="24"/>
-      <rect x="40" y="40" width="720" height="420" fill="#ffffff" stroke="#e7d8cc" stroke-width="2" rx="20"/>
-      <text x="70" y="90" font-family="-apple-system, sans-serif" font-size="24" font-weight="bold" fill="#1c1917">Deterministic Media Pipeline</text>
-      <rect x="70" y="150" width="190" height="110" fill="#fbf3ee" stroke="#d97757" stroke-width="2" rx="12"/>
-      <text x="95" y="200" font-family="-apple-system, sans-serif" font-size="18" font-weight="bold" fill="#a45338">Input Contract</text>
-      <text x="95" y="230" font-family="-apple-system, sans-serif" font-size="14" fill="#78716c">Validated Schema</text>
-      <rect x="310" y="150" width="190" height="110" fill="#f4ede6" stroke="#cc785c" stroke-width="2" rx="12"/>
-      <text x="330" y="200" font-family="-apple-system, sans-serif" font-size="18" font-weight="bold" fill="#a45338">Local Renderer</text>
-      <text x="330" y="230" font-family="-apple-system, sans-serif" font-size="14" fill="#78716c">HyperFrames + GSAP</text>
-      <rect x="550" y="150" width="180" height="110" fill="#ffffff" stroke="#16a34a" stroke-width="2" rx="12"/>
-      <text x="570" y="200" font-family="-apple-system, sans-serif" font-size="18" font-weight="bold" fill="#166534">Quality Gate</text>
-      <text x="570" y="230" font-family="-apple-system, sans-serif" font-size="14" fill="#16a34a">FFprobe / Rights</text>
+      <rect width="100%" height="100%" fill="#120826" rx="24"/>
+      <rect x="30" y="30" width="740" height="440" fill="#1b0e36" stroke="rgba(192, 132, 252, 0.4)" stroke-width="2" rx="20"/>
+      <text x="60" y="85" font-family="-apple-system, sans-serif" font-size="26" font-weight="800" fill="#ffffff">DETERMINISTIC MEDIA PIPELINE</text>
+      <rect x="60" y="140" width="200" height="120" fill="rgba(192, 132, 252, 0.12)" stroke="#c084fc" stroke-width="2" rx="14"/>
+      <text x="80" y="190" font-family="-apple-system, sans-serif" font-size="20" font-weight="700" fill="#ffffff">Input Contract</text>
+      <text x="80" y="220" font-family="-apple-system, sans-serif" font-size="15" fill="#cbd5e1">Validated Schema</text>
+      <rect x="290" y="140" width="200" height="120" fill="rgba(46, 16, 101, 0.6)" stroke="#8b5cf6" stroke-width="2" rx="14"/>
+      <text x="310" y="190" font-family="-apple-system, sans-serif" font-size="20" font-weight="700" fill="#ffffff">Local Renderer</text>
+      <text x="310" y="220" font-family="-apple-system, sans-serif" font-size="15" fill="#cbd5e1">HyperFrames + GSAP</text>
+      <rect x="520" y="140" width="200" height="120" fill="rgba(163, 230, 53, 0.12)" stroke="#a3e635" stroke-width="2" rx="14"/>
+      <text x="540" y="190" font-family="-apple-system, sans-serif" font-size="20" font-weight="800" fill="#a3e635">Quality Gate</text>
+      <text x="540" y="220" font-family="-apple-system, sans-serif" font-size="15" fill="#ffffff">Fail-Closed Verification</text>
+      <text x="60" y="320" font-family="-apple-system, sans-serif" font-size="18" fill="#e2e8f0">✓ Complete offline verification with zero remote runtime dependencies</text>
     </svg>`;
     await fs.writeFile(defPath, defSvg, "utf8");
 
     results.push({
-      assetId: "fix-tech-architecture-diagram-02",
+      assetId: "fix-tech-architecture-01",
       type: "svg",
       sourceProvider: "offline-fixture",
       sourcePage: "file:///assets/fixtures/tech-architecture-diagram.svg",
