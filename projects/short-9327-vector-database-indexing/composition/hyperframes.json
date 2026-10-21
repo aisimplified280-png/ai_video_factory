@@ -1,6 +1,6 @@
 {
   "$schema": "https://hyperframes.heygen.com/schema/hyperframes.json",
-  "name": "short-7466-vector-database-indexing",
+  "name": "short-9327-vector-database-indexing",
   "paths": {
     "blocks": "compositions",
     "components": "compositions/components",

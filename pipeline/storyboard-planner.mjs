@@ -17,7 +17,60 @@ export const VISUAL_MODES = new Set([
   "comparison",
   "concept-explainer",
   "asset-reveal",
+  "subscribe-outro",
 ]);
+
+/**
+ * Supported topic visual strategies.
+ */
+export const VISUAL_STRATEGIES = {
+  TECHNICAL_EXPLAINER: "technical-explainer",
+  ABSTRACT_CONCEPT: "abstract-concept",
+  COMPARISON_MYTHBUSTER: "comparison-mythbuster",
+  AI_NEWS_BREAKTHROUGH: "ai-news-breakthrough",
+  TUTORIAL_WORKFLOW: "tutorial-workflow",
+};
+
+/**
+ * Select purposeful visual strategy per topic rather than forcing a single template.
+ */
+export function selectTopicVisualStrategy(topic = "", scriptData = {}) {
+  const text = `${topic} ${scriptData.title || ""} ${scriptData.description || ""}`.toLowerCase();
+
+  if (/\b(vs|compare|comparison|myth|truth|legacy|difference)\b/i.test(text)) {
+    return {
+      strategy: VISUAL_STRATEGIES.COMPARISON_MYTHBUSTER,
+      rationale: "Topic contrasts competing paradigms; employs asymmetric comparison collages, side-by-side metrics, and match-cut transformations.",
+    };
+  }
+
+  if (/\b(release|breakthrough|announced|benchmark|sota|update|news)\b/i.test(text)) {
+    return {
+      strategy: VISUAL_STRATEGIES.AI_NEWS_BREAKTHROUGH,
+      rationale: "Topic reports an industry milestone; employs editorial headline cards, empirical evidence badges, and breakthrough reveal stamps.",
+    };
+  }
+
+  if (/\b(how to|guide|tutorial|setup|install|cli|command|pipeline)\b/i.test(text)) {
+    return {
+      strategy: VISUAL_STRATEGIES.TUTORIAL_WORKFLOW,
+      rationale: "Topic teaches an operational workflow; employs syntax terminals, sequential checklist badges, and guide character cues.",
+    };
+  }
+
+  if (/\b(embeddings|latent|diffusion|attention|transformer|math)\b/i.test(text)) {
+    return {
+      strategy: VISUAL_STRATEGIES.ABSTRACT_CONCEPT,
+      rationale: "Topic explains mathematical or multidimensional dynamics; employs custom physical metaphors, geometric fields, and interactive token tracks.",
+    };
+  }
+
+  // Default: Technical architecture explainer
+  return {
+    strategy: VISUAL_STRATEGIES.TECHNICAL_EXPLAINER,
+    rationale: "Topic explores computational systems or data structures; employs layered topology diagrams, moving search probes, and verified benchmarks.",
+  };
+}
 
 /**
  * Score a candidate asset's relevance to a scene based on keywords,
@@ -272,10 +325,14 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
     beats.push(beat);
   }
 
+  const topicStrategy = selectTopicVisualStrategy(scriptData.topic || scriptData.title, scriptData);
+
   const storyboard = {
     version: 2,
     id: scriptData.id,
     topic: scriptData.topic || scriptData.title,
+    visualStrategy: topicStrategy.strategy,
+    strategyRationale: topicStrategy.rationale,
     styleProfile: "ai_simplified_purple_collage",
     totalDuration: scriptData.totalDuration,
     beatsCount: beats.length,
@@ -369,7 +426,7 @@ export function planSceneGraph(scene, beat, scriptData) {
 
   const titleLower = `${scene.visualTitle || ""} ${scriptData.topic || ""}`.toLowerCase();
   const isVector = titleLower.includes("vector") || titleLower.includes("hnsw");
-  const mode = beat.visualMode;
+  const mode = beat.visualMode || beat.beatType || scene.cardType;
 
   const defaultSafeZone = { top: 250, bottom: 1400, left: 90, right: 990 };
 
@@ -703,6 +760,39 @@ export function planSceneGraph(scene, beat, scriptData) {
           }
         },
       ],
+    };
+  }
+
+  if (mode === "subscribe-outro") {
+    return {
+      visualMetaphor: "channel-community-outro",
+      metaphorExplanation: "Branded channel outro with faceless guide character directing viewer to interactive subscribe action.",
+      primarySubject: "yt-sub-btn",
+      safeZone: defaultSafeZone,
+      elements: [
+        { id: "brand-crest", role: "brand-emblem", assetSource: "procedural-html", depth: 1 },
+        { id: "yt-sub-btn", role: "focal-subject", assetSource: "procedural-html", depth: 3 },
+        { id: "yt-bell-btn", role: "action-trigger", assetSource: "procedural-html", depth: 3 },
+        { id: "guide-outro", role: "audience-guide", assetSource: "procedural-svg", depth: 4 },
+      ],
+      actions: [
+        {
+          trigger: "spoken-phrase",
+          phrase: "Subscribe",
+          audioAnchor: "Subscribe",
+          action: "animate-subscribe-conversion",
+          target: "yt-sub-btn",
+          duration: 0.9,
+          sfxCue: "ui-click",
+          purpose: "Animate subscribe button transition into subscribed state",
+          causeAndEffect: {
+            triggerElement: "yt-sub-btn",
+            reactingElements: ["yt-bell-btn", "guide-outro"],
+            reaction: "ring-bell-and-wave"
+          }
+        },
+      ],
+      transition: { type: "fade-out", duration: 0.3 }
     };
   }
 

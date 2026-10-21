@@ -24,7 +24,7 @@
       "videoCodec": "h264",
       "resolution": "1080x1920",
       "framerate": 30,
-      "durationSeconds": 27.833333333333332,
+      "durationSeconds": 33.6,
       "audioCodec": "aac",
       "audioSamplingRate": 48000
     },
@@ -40,7 +40,7 @@
         "passed": true,
         "criticalIssues": [],
         "warnings": [],
-        "uniqueModesCount": 4
+        "uniqueModesCount": 5
       },
       "visualCritique": {
         "score": 100,
@@ -73,8 +73,8 @@
     "motionContactSheet": "motion-contact-sheet.png",
     "visualCritiqueReport": "visual-critique-report.json",
     "format": {
-      "duration": "27.833333",
-      "size": "8665871"
+      "duration": "33.600000",
+      "size": "9980617"
     },
     "streams": [
       {
@@ -82,15 +82,15 @@
         "width": 1080,
         "height": 1920,
         "r_frame_rate": "30/1",
-        "duration": "27.833333",
-        "nb_frames": "835"
+        "duration": "33.600000",
+        "nb_frames": "1008"
       },
       {
         "codec_name": "aac",
         "sample_rate": "48000",
         "r_frame_rate": "0/0",
-        "duration": "27.833333",
-        "nb_frames": "1306"
+        "duration": "33.600000",
+        "nb_frames": "1576"
       }
     ]
   }

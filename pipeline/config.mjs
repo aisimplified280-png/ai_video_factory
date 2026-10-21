@@ -22,7 +22,7 @@ try {
 
 export const HYPERFRAMES_BIN = path.join(ROOT_DIR, ".favstash-studio", "runtime", "node_modules", ".bin", "hyperframes.cmd");
 export const SFX_SYNC_BIN = path.join(ROOT_DIR, ".favstash-studio", "skills-source", "skills", "3-editing", "edit-video", "scripts", "sfx-sync.mjs");
-export const SFX_DIR = path.join(ROOT_DIR, ".favstash-studio", "skills-source", "skills", "3-editing", "edit-video", "assets", "sfx");
+export const SFX_DIR = path.join(ROOT_DIR, "assets", "sfx");
 
 export const DEFAULTS = {
   fps: 30,

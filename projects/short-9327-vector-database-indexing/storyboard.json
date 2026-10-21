@@ -1,10 +1,12 @@
 {
   "version": 2,
-  "id": "short-7466-vector-database-indexing",
+  "id": "short-9327-vector-database-indexing",
   "topic": "Vector Database Indexing",
+  "visualStrategy": "technical-explainer",
+  "strategyRationale": "Topic explores computational systems or data structures; employs layered topology diagrams, moving search probes, and verified benchmarks.",
   "styleProfile": "ai_simplified_purple_collage",
-  "totalDuration": 27.833333333333332,
-  "beatsCount": 4,
+  "totalDuration": 33.6,
+  "beatsCount": 5,
   "beats": [
     {
       "beatId": "beat-1-hook",
@@ -460,8 +462,8 @@
       "viewerQuestion": "What is the concrete architectural takeaway and rule of thumb?",
       "spokenLine": "Balancing graph connectivity with construction depth is how production vector databases maintain sub-millisecond latency.",
       "startTime": 20.2427,
-      "endTime": 27.833333333333332,
-      "duration": 7.590633333333333,
+      "endTime": 27.3665,
+      "duration": 7.123799999999999,
       "visualMode": "concept-explainer",
       "visualTitle": "Sub-Millisecond Retrieval",
       "visualBody": "Tune graph connectivity M and construction breadth efSearch to balance recall against memory footprint.",
@@ -548,8 +550,94 @@
           "duration": 0.5
         }
       }
+    },
+    {
+      "beatId": "beat-5-outro",
+      "sceneIndex": 4,
+      "narrativePurpose": "Deliver verifiable conclusion citing authentic documentation.",
+      "viewerQuestion": "What is the concrete architectural takeaway and rule of thumb?",
+      "spokenLine": "Subscribe to AI Simplified Lab for honest, evidence-backed AI workflows.",
+      "startTime": 27.3665,
+      "endTime": 33.6,
+      "duration": 6.233500000000003,
+      "visualMode": "subscribe-outro",
+      "visualTitle": "Subscribe for Honest AI Workflows",
+      "visualBody": "Zero fluff, verified architectures, and reproducible code.",
+      "badge": "AI SIMPLIFIED LAB",
+      "source": null,
+      "assetDecision": "bespoke-procedural-svg",
+      "assetDecisionReason": "Scene uses bespoke procedural graphics.",
+      "assetId": null,
+      "assetData": null,
+      "motion": {
+        "transition": "power3.out",
+        "cameraPush": true,
+        "staggerRate": 0.12
+      },
+      "sfxCue": "ui-pop",
+      "sceneGraph": {
+        "visualMetaphor": "channel-community-outro",
+        "metaphorExplanation": "Branded channel outro with faceless guide character directing viewer to interactive subscribe action.",
+        "primarySubject": "yt-sub-btn",
+        "safeZone": {
+          "top": 250,
+          "bottom": 1400,
+          "left": 90,
+          "right": 990
+        },
+        "elements": [
+          {
+            "id": "brand-crest",
+            "role": "brand-emblem",
+            "assetSource": "procedural-html",
+            "depth": 1
+          },
+          {
+            "id": "yt-sub-btn",
+            "role": "focal-subject",
+            "assetSource": "procedural-html",
+            "depth": 3
+          },
+          {
+            "id": "yt-bell-btn",
+            "role": "action-trigger",
+            "assetSource": "procedural-html",
+            "depth": 3
+          },
+          {
+            "id": "guide-outro",
+            "role": "audience-guide",
+            "assetSource": "procedural-svg",
+            "depth": 4
+          }
+        ],
+        "actions": [
+          {
+            "trigger": "spoken-phrase",
+            "phrase": "Subscribe",
+            "audioAnchor": "Subscribe",
+            "action": "animate-subscribe-conversion",
+            "target": "yt-sub-btn",
+            "duration": 0.9,
+            "sfxCue": "ui-click",
+            "purpose": "Animate subscribe button transition into subscribed state",
+            "causeAndEffect": {
+              "triggerElement": "yt-sub-btn",
+              "reactingElements": [
+                "yt-bell-btn",
+                "guide-outro"
+              ],
+              "reaction": "ring-bell-and-wave"
+            }
+          }
+        ],
+        "transition": {
+          "type": "fade-out",
+          "duration": 0.3
+        }
+      }
     }
   ],
   "projectAssets": [],
-  "createdAt": "2026-10-21T12:56:09.438Z"
+  "createdAt": "2026-10-21T13:24:37.877Z"
 }

@@ -1,7 +1,7 @@
-// pipeline/composition-generator.mjs - AI Simplified Lab Purple Collage Explainer Synthesizer
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ROOT_DIR } from "./config.mjs";
+import { renderLabGuideSvg, getLabGuideCss } from "./character-director.mjs";
 
 /**
  * Escape HTML characters to prevent XSS and template injection.
@@ -156,7 +156,7 @@ export async function generateComposition(compDir, projectData) {
             </div>
 
             <div class="skip-counter-badge" id="skip-counter">
-              ⚡ 99.4% Irrelevant Vectors Skipped in 0.4ms
+              <span class="benchmark-tag">BENCHMARK (1M Vectors):</span> ~99% Skip Ratio via O(log N) Traversal
             </div>
           </div>
           <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
@@ -246,9 +246,9 @@ export async function generateComposition(compDir, projectData) {
             </div>
           </div>
           <div class="latency-gauge-box" id="latency-gauge">
-            <div class="gauge-label">QUERY RETRIEVAL SPEED</div>
-            <div class="gauge-value" id="gauge-val">0.42 ms</div>
-            <div class="gauge-sub">⚡ 100x Faster than Brute-Force O(N)</div>
+            <div class="gauge-label">SEARCH COMPLEXITY ADVANTAGE</div>
+            <div class="gauge-value" id="gauge-val">O(log N)</div>
+            <div class="gauge-sub">Sub-Millisecond Logarithmic Traversal vs O(N)</div>
           </div>
           <p class="card-highlight">${escapeHtml(scene.visualBody)}</p>
           ${scene.source ? `<div class="source-tag">Reference: ${escapeHtml(scene.source)}</div>` : ""}
@@ -403,6 +403,31 @@ export async function generateComposition(compDir, projectData) {
           <div class="diagram-caption-strip">
             <span class="caption-text">${escapeHtml(scene.visualBody)}</span>
             ${scene.assetData?.attributionText ? `<span class="asset-attribution-badge">${escapeHtml(scene.assetData.attributionText)}</span>` : ""}
+          </div>
+        </div>
+      `;
+    } else if (cardType === "subscribe-outro") {
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          ${escapeHtml(scene.badge || "AI SIMPLIFIED LAB")}
+        </div>
+        <div class="subscribe-outro-stage" id="outro-stage">
+          <h2 class="outro-headline">${escapeHtml(scene.visualTitle || "Subscribe for Honest AI Workflows")}</h2>
+          <p class="outro-subline">${escapeHtml(scene.visualBody || "Zero fluff. Real code architectures.")}</p>
+
+          <div class="cta-interaction-container">
+            <div class="yt-subscribe-btn" id="yt-sub-btn">
+              <span class="sub-play-icon">▶</span>
+              <span class="sub-btn-text" id="sub-btn-text">SUBSCRIBE</span>
+            </div>
+            <div class="yt-bell-btn" id="yt-bell-btn">
+              <span class="bell-icon">🔔</span>
+            </div>
+          </div>
+
+          <div class="outro-guide-anchor">
+            ${renderLabGuideSvg("outro-cta", "guide-outro")}
           </div>
         </div>
       `;
@@ -762,6 +787,44 @@ export async function generateComposition(compDir, projectData) {
             { scale: 1.05, opacity: 1, duration: 0.4, stagger: 0.25, ease: "back.out(1.4)" }, 
             ${actionTime.toFixed(3)}
           );
+          `;
+          break;
+
+        case "animate-subscribe-conversion":
+          script += `
+          // Action: animate-subscribe-conversion on #${act.target}
+          tl.fromTo("#scene-${idx} .outro-guide-anchor", 
+            { x: 80, opacity: 0 }, 
+            { x: 0, opacity: 1, duration: 0.5, ease: "back.out(1.8)" }, 
+            ${startT + 0.15}
+          );
+          tl.to("#scene-${idx} #yt-sub-btn", { 
+            scale: 0.92, 
+            duration: 0.12, 
+            ease: "power2.in" 
+          }, ${actionTime.toFixed(3)});
+          tl.to("#scene-${idx} #yt-sub-btn", { 
+            scale: 1.0, 
+            backgroundColor: "#160a2c", 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 28px rgba(163, 230, 53, 0.75)", 
+            duration: 0.25, 
+            ease: "back.out(2)" 
+          }, ${(actionTime + 0.12).toFixed(3)});
+          tl.to("#scene-${idx} #sub-btn-text", { 
+            innerText: "✓ SUBSCRIBED", 
+            color: "#a3e635", 
+            duration: 0.2 
+          }, ${(actionTime + 0.12).toFixed(3)});
+          tl.to("#scene-${idx} #yt-bell-btn", { 
+            rotation: 20, 
+            yoyo: true, 
+            repeat: 5, 
+            duration: 0.08, 
+            color: "#facc15", 
+            borderColor: "#a3e635",
+            ease: "sine.inOut" 
+          }, ${(actionTime + 0.35).toFixed(3)});
           `;
           break;
 
@@ -1850,6 +1913,105 @@ export async function generateComposition(compDir, projectData) {
         letter-spacing: 0.1em;
         text-transform: uppercase;
       }
+
+      .benchmark-tag {
+        font-size: 14px;
+        color: #cbd5e1;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-right: 6px;
+      }
+
+      /* Animated Subscribe Outro Stage */
+      .subscribe-outro-stage {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 44px 32px 42px;
+        border-radius: 28px;
+        background: rgba(22, 10, 44, 0.95);
+        border: 2px solid rgba(192, 132, 252, 0.4);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+        position: relative;
+        overflow: visible;
+      }
+      .outro-headline {
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #ffffff;
+        margin-bottom: 16px;
+        max-width: 820px;
+      }
+      .outro-subline {
+        font-size: 26px;
+        color: #cbd5e1;
+        margin-bottom: 36px;
+        max-width: 720px;
+      }
+      .cta-interaction-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 10px;
+        z-index: 10;
+      }
+      .outro-guide-anchor {
+        position: absolute;
+        bottom: -25px;
+        right: 15px;
+        z-index: 20;
+        pointer-events: none;
+      }
+      .outro-guide-anchor .lab-guide-figure {
+        position: static;
+        filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.8));
+      }
+      .yt-subscribe-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        padding: 20px 42px;
+        border-radius: 9999px;
+        background: #e11d48;
+        border: 2px solid #fb7185;
+        box-shadow: 0 8px 30px rgba(225, 29, 72, 0.5);
+        cursor: pointer;
+        transition: transform 0.15s ease;
+      }
+      .sub-play-icon {
+        font-size: 24px;
+        color: #ffffff;
+      }
+      .sub-btn-text {
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        color: #ffffff;
+      }
+      .yt-bell-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: rgba(30, 16, 56, 0.95);
+        border: 2px solid rgba(192, 132, 252, 0.5);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+      .bell-icon {
+        font-size: 30px;
+        color: #cbd5e1;
+      }
+
+      /* Lab Guide SVG Styles */
+      ${getLabGuideCss()}
 
       /* Kinetic Active Captions (Safe Zone: Y 1460 to 1580) */
       .captions-wrapper {

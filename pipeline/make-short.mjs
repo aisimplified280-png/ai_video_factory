@@ -73,6 +73,15 @@ function buildSemanticScript(topic) {
           source: "Anthropic Prompt Caching Documentation",
           sfx: "clean-ding",
         },
+        {
+          id: "outro",
+          cardType: "subscribe-outro",
+          badge: "AI SIMPLIFIED LAB",
+          visualTitle: "Subscribe for Honest AI Workflows",
+          visualBody: "Zero fluff, verified architectures, and reproducible code.",
+          voiceText: "Subscribe to AI Simplified Lab for honest, evidence-backed AI workflows.",
+          sfx: "ui-pop",
+        },
       ],
     };
   }
@@ -140,6 +149,15 @@ function buildSemanticScript(topic) {
           source: "HNSW Algorithm & Vector DB Standards",
           sfx: "clean-ding",
         },
+        {
+          id: "outro",
+          cardType: "subscribe-outro",
+          badge: "AI SIMPLIFIED LAB",
+          visualTitle: "Subscribe for Honest AI Workflows",
+          visualBody: "Zero fluff, verified architectures, and reproducible code.",
+          voiceText: "Subscribe to AI Simplified Lab for honest, evidence-backed AI workflows.",
+          sfx: "ui-pop",
+        },
       ],
     };
   }
@@ -202,6 +220,15 @@ function buildSemanticScript(topic) {
         voiceText: "Building on verifiable facts rather than arbitrary claims is what creates lasting credibility.",
         source: "AI Simplified Lab Engineering Standards",
         sfx: "clean-ding",
+      },
+      {
+        id: "outro",
+        cardType: "subscribe-outro",
+        badge: "AI SIMPLIFIED LAB",
+        visualTitle: "Subscribe for Honest AI Workflows",
+        visualBody: "Zero fluff, verified architectures, and reproducible code.",
+        voiceText: "Subscribe to AI Simplified Lab for honest, evidence-backed AI workflows.",
+        sfx: "ui-pop",
       },
     ],
   };
