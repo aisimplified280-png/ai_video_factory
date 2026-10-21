@@ -70,6 +70,14 @@ Build a ₹0 ongoing-cost workflow for creating YouTube Shorts from idea to fini
     1. `short-7584-claude-prompt-caching` (26.23s, 787 frames): Verified CC0 diagram, authentic syntax (`claude-3-5-sonnet-latest`, 5-min/1-hr TTL context), and 0 black frames.
     2. `short-3325-vector-database-indexing` (27.83s, 835 frames): Verified CC-BY-2.0 scouted asset, multi-layer graph highway metaphor, full credit attribution in YouTube package, and 0 black frames.
 
+- [x] Checkpoint 7 (2026-10-21): **Pixabay Online Asset Provider Integrated**.
+  - **Live Online Provider**: Implemented `pipeline/asset-scout/providers/pixabay-provider.mjs` supporting royalty-free stock illustrations, vectors, and graphics.
+  - **Environment Key Loader**: Updated `pipeline/config.mjs` to automatically load local `.env` file via Node's native `process.loadEnvFile()`.
+  - **Rights Gate Integration**: Supported `Pixabay-Content-License` in `pipeline/rights-gate.mjs` with commercial use, transformation permissions, and automated tag analysis for the faceless video policy (`recognizablePerson` tag filtering).
+  - **Security & Version Control**: `.env` strictly git-ignored; created public `.env.example` template.
+  - **22/22 Passing Automated Tests**: Live Pixabay search verified with 100% test suite pass rate.
+
 ## Resume Instruction
-The hardened asset-aware video factory with the AI Simplified Lab Purple Collage Explainer design system is 100% operational offline.
+The asset scout now actively queries Pixabay for online media whenever relevant, falling back to Openverse and local verified fixtures.
+
 
