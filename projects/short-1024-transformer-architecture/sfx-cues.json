@@ -1,0 +1,31 @@
+{
+  "fps": 30,
+  "total": 36.96666666666667,
+  "cues": [
+    {
+      "t": 0,
+      "sound": "hook-impact",
+      "label": "hook-hook-impact"
+    },
+    {
+      "t": 7.3058,
+      "sound": "zoom-swish",
+      "label": "metaphor-zoom-swish"
+    },
+    {
+      "t": 14.8786,
+      "sound": "ui-pop",
+      "label": "architecture-ui-pop"
+    },
+    {
+      "t": 22.2573,
+      "sound": "clean-ding",
+      "label": "payoff-clean-ding"
+    },
+    {
+      "t": 30.7524,
+      "sound": "ui-pop",
+      "label": "outro-ui-pop"
+    }
+  ]
+}

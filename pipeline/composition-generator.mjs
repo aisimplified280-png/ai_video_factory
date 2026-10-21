@@ -253,6 +253,168 @@ export async function generateComposition(compDir, projectData) {
           ${scene.source ? `<div class="source-tag">Reference: ${escapeHtml(scene.source)}</div>` : ""}
         </div>
       `;
+    } else if (metaphor === "sequential-recurrence-bottleneck") {
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          ${escapeHtml(scene.badge || "RECURRENCE BOTTLENECK")}
+        </div>
+        <h1 class="hero-headline">${escapeHtml(scene.visualTitle)}</h1>
+        <div class="rnn-recurrence-stage" id="rnn-stage">
+          <div class="rnn-token-chain" id="rnn-token-chain">
+            <div class="rnn-token-box token-done" id="token-0">
+              <span class="token-pos">t=1</span>
+              <span class="token-word">"The"</span>
+              <span class="token-hstate">h₁ ✓</span>
+            </div>
+            <div class="rnn-arrow">➔</div>
+            <div class="rnn-token-box token-done" id="token-1">
+              <span class="token-pos">t=2</span>
+              <span class="token-word">"model"</span>
+              <span class="token-hstate">h₂ ✓</span>
+            </div>
+            <div class="rnn-arrow">➔</div>
+            <div class="rnn-token-box token-current" id="token-2">
+              <span class="token-pos">t=3</span>
+              <span class="token-word">"learns"</span>
+              <span class="token-hstate">h₃ ...</span>
+            </div>
+            <div class="rnn-arrow arrow-blocked">🔒</div>
+            <div class="rnn-token-box token-blocked" id="token-3">
+              <span class="token-pos">t=4</span>
+              <span class="token-word">"parallel"</span>
+              <span class="token-hstate">BLOCKED</span>
+            </div>
+          </div>
+          <div class="scan-status-panel">
+            <div class="search-counter" id="recurrence-step-counter">
+              <span class="counter-label">TRAINING TIME COMPLEXITY</span>
+              <span class="counter-num">O(N) Sequential • Zero Parallelism</span>
+            </div>
+            <div class="bottleneck-indicator" id="token-wait-blocked">
+              <span class="stall-badge">⚠️ RECURRENCE BOTTLENECK</span>
+              <p class="stall-msg">Token 4 cannot compute until Token 3 finishes</p>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (metaphor === "transformer-attention-matrix") {
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          ${escapeHtml(scene.badge || "ALL-TO-ALL ATTENTION")}
+        </div>
+        <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
+        <div class="metaphor-collage-stage">
+          <div class="attention-matrix-stage" id="qkv-matrix-field">
+            <div class="token-nodes-row" id="token-nodes-row">
+              <div class="attn-token active-token" id="at-0">
+                <span class="attn-lbl">Token A</span>
+                <span class="qkv-mini">Q₁ K₁ V₁</span>
+              </div>
+              <div class="attn-token active-token" id="at-1">
+                <span class="attn-lbl">Token B</span>
+                <span class="qkv-mini">Q₂ K₂ V₂</span>
+              </div>
+              <div class="attn-token active-token" id="at-2">
+                <span class="attn-lbl">Token C</span>
+                <span class="qkv-mini">Q₃ K₃ V₃</span>
+              </div>
+            </div>
+
+            <div class="attention-matrix-svg-wrap">
+              <svg class="attention-beam-svg" id="attention-beam-svg" width="100%" height="90" viewBox="0 0 400 90">
+                <line id="beam-0-1" x1="80" y1="20" x2="200" y2="70" stroke="#a3e635" stroke-width="3" stroke-dasharray="6 4"/>
+                <line id="beam-0-2" x1="80" y1="20" x2="320" y2="70" stroke="#c084fc" stroke-width="3" stroke-dasharray="6 4"/>
+                <line id="beam-1-2" x1="200" y1="20" x2="320" y2="70" stroke="#a3e635" stroke-width="3" stroke-dasharray="6 4"/>
+                <line id="beam-2-0" x1="320" y1="20" x2="80" y2="70" stroke="#38bdf8" stroke-width="3" stroke-dasharray="6 4"/>
+              </svg>
+            </div>
+
+            <div class="qkv-vector-pills" id="qkv-vector-pills">
+              <div class="qkv-pill pill-q"><b>Q</b> Query</div>
+              <div class="qkv-op">×</div>
+              <div class="qkv-pill pill-k"><b>Kᵀ</b> Keys</div>
+              <div class="qkv-op">÷ √dₖ ➔ Softmax ×</div>
+              <div class="qkv-pill pill-v"><b>V</b> Values</div>
+            </div>
+
+            <div class="skip-counter-badge" id="parallel-benchmark">
+              <span class="benchmark-tag">PARALLEL ATTENTION:</span> 100% Concurrent Token Interconnection
+            </div>
+          </div>
+          <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
+        </div>
+      `;
+    } else if (metaphor === "transformer-residual-stack") {
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-violet"></span>
+          ${escapeHtml(scene.badge || "THE TRANSFORMER BLOCK")}
+        </div>
+        <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
+        <div class="metaphor-collage-stage">
+          <div class="transformer-stack-stage" id="transformer-block-container">
+            <div class="residual-stream-column">
+              <svg class="residual-svg" id="residual-skip-stream" width="46" height="260" viewBox="0 0 46 260">
+                <path id="residual-path" d="M 23 250 C 4 180, 4 80, 23 10" stroke="#a3e635" stroke-width="4" fill="none" stroke-dasharray="8 6"/>
+                <polygon points="23,5 17,16 29,16" fill="#a3e635"/>
+              </svg>
+              <span class="residual-text">+ Residual Stream</span>
+            </div>
+
+            <div class="transformer-layers-column">
+              <div class="block-layer ffn-layer" id="ffn-sublayer">
+                <div class="layer-title">Feed-Forward Network</div>
+                <div class="layer-sub">MLP Expansion • GeLU • LayerNorm</div>
+              </div>
+              <div class="sublayer-arrow">⬆ Add &amp; Norm</div>
+              <div class="block-layer attn-layer" id="attention-sublayer">
+                <div class="layer-title">Multi-Head Self-Attention</div>
+                <div class="layer-sub">8–64 Parallel Heads • Scaled Dot-Product</div>
+              </div>
+              <div class="sublayer-arrow">⬆ Positional Addition</div>
+              <div class="block-layer input-layer">
+                <div class="layer-title">Input Token Embeddings</div>
+                <div class="layer-sub">d_model Dimensions + Pos Encoding</div>
+              </div>
+            </div>
+          </div>
+          <p class="card-highlight metaphor-caption">${escapeHtml(scene.visualBody)}</p>
+        </div>
+      `;
+    } else if (metaphor === "attention-scaling-takeaway") {
+      cardContent = `
+        <div class="purple-badge">
+          <span class="badge-dot pulse-lime"></span>
+          ${escapeHtml(scene.badge || "SCALING REALITY")}
+        </div>
+        <h2 class="scene-title">${escapeHtml(scene.visualTitle)}</h2>
+        <div class="takeaway-collage-card" id="scaling-rule-stamp">
+          <div class="takeaway-header">
+            <span class="takeaway-stamp">ENGINEERING RULE</span>
+          </div>
+          <div class="latency-gauge-box" id="complexity-gauge">
+            <div class="gauge-label">ATTENTION MEMORY COMPLEXITY</div>
+            <div class="gauge-value" id="gauge-val" style="color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);">O(N²)</div>
+            <div class="gauge-sub">Quadratic RAM Scaling with Sequence Length N</div>
+          </div>
+          <div class="param-metrics-grid" id="flash-cache-pills">
+            <div class="metric-card">
+              <span class="metric-key">FlashAttention</span>
+              <span class="metric-val">IO-Aware</span>
+              <span class="metric-desc">SRAM Tiling &amp; Online Softmax</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-key">KV Caching</span>
+              <span class="metric-val">O(1) Step</span>
+              <span class="metric-desc">Stores prior Key/Value vectors</span>
+            </div>
+          </div>
+          <p class="card-highlight">${escapeHtml(scene.visualBody)}</p>
+          ${scene.source ? `<div class="source-tag">Reference: ${escapeHtml(scene.source)}</div>` : ""}
+        </div>
+      `;
     } else if (cardType === "hook" || cardType === "hook-bold-object") {
       // Full-frame hook with surreal dimensional object & oversized typography
       const isVector = (scene.visualTitle || "").toLowerCase().includes("vector") || (title || "").toLowerCase().includes("vector");
@@ -814,6 +976,139 @@ export async function generateComposition(compDir, projectData) {
             color: "#facc15", 
             borderColor: "#a3e635",
             ease: "sine.inOut" 
+          }, ${(actionTime + 0.35).toFixed(3)});
+          `;
+          break;
+
+        case "animate-rnn-token-steps":
+          script += `
+          // Action: animate-rnn-token-steps on #${act.target}
+          tl.to("#scene-${idx} #token-0", { borderColor: "#a3e635", scale: 1.05, duration: 0.25 }, ${actionTime.toFixed(3)});
+          tl.to("#scene-${idx} #token-1", { borderColor: "#a3e635", scale: 1.05, duration: 0.25 }, ${(actionTime + 0.35).toFixed(3)});
+          tl.to("#scene-${idx} #token-2", { borderColor: "#facc15", scale: 1.08, duration: 0.3 }, ${(actionTime + 0.7).toFixed(3)});
+          tl.to("#scene-${idx} #recurrence-step-counter .counter-num", { color: "#facc15", duration: 0.4 }, ${(actionTime + 0.5).toFixed(3)});
+          `;
+          break;
+
+        case "stall-and-flash-rnn-bottleneck":
+          script += `
+          // Action: stall-and-flash-rnn-bottleneck on #${act.target}
+          tl.to("#scene-${idx} #token-3", { 
+            borderColor: "#ef4444", 
+            boxShadow: "0 0 24px rgba(239, 68, 68, 0.8)", 
+            scale: 1.1, 
+            yoyo: true, 
+            repeat: 5, 
+            duration: 0.1 
+          }, ${actionTime.toFixed(3)});
+          tl.fromTo("#scene-${idx} #${act.target}", 
+            { y: 25, opacity: 0, scale: 0.92 }, 
+            { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #recurrence-step-counter .counter-num", { color: "#ef4444", duration: 0.3 }, ${(actionTime + 0.2).toFixed(3)});
+          `;
+          break;
+
+        case "project-qkv-vectors":
+          script += `
+          // Action: project-qkv-vectors on #${act.target}
+          tl.fromTo("#scene-${idx} .attn-token", 
+            { scale: 0.9, opacity: 0.5 }, 
+            { scale: 1.05, opacity: 1, stagger: 0.15, duration: 0.4, ease: "back.out(1.8)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.fromTo("#scene-${idx} #${act.target} .qkv-pill", 
+            { y: 15, opacity: 0 }, 
+            { y: 0, opacity: 1, stagger: 0.12, duration: 0.35, ease: "power2.out" }, 
+            ${(actionTime + 0.2).toFixed(3)}
+          );
+          `;
+          break;
+
+        case "ignite-attention-beams":
+          script += `
+          // Action: ignite-attention-beams on #${act.target}
+          tl.fromTo("#scene-${idx} #${act.target} line", 
+            { strokeDashoffset: 60, opacity: 0 }, 
+            { strokeDashoffset: 0, opacity: 1, stagger: 0.1, duration: 0.6, ease: "power2.inOut" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} .attn-token", { 
+            boxShadow: "0 0 25px rgba(163, 230, 53, 0.8)", 
+            borderColor: "#a3e635", 
+            duration: 0.4 
+          }, ${(actionTime + 0.2).toFixed(3)});
+          tl.fromTo("#scene-${idx} #parallel-benchmark", 
+            { y: 15, opacity: 0 }, 
+            { y: 0, opacity: 1, duration: 0.4, ease: "back.out(1.6)" }, 
+            ${(actionTime + 0.3).toFixed(3)}
+          );
+          `;
+          break;
+
+        case "activate-attention-layer":
+          script += `
+          // Action: activate-attention-layer on #${act.target}
+          tl.to("#scene-${idx} #${act.target}", { 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 30px rgba(163, 230, 53, 0.9)", 
+            scale: 1.04, 
+            duration: 0.4, 
+            ease: "back.out(1.6)" 
+          }, ${actionTime.toFixed(3)});
+          `;
+          break;
+
+        case "pulse-residual-stream":
+          script += `
+          // Action: pulse-residual-stream on #${act.target}
+          tl.fromTo("#scene-${idx} #residual-path", 
+            { strokeDashoffset: 150 }, 
+            { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #${act.target}", { 
+            filter: "drop-shadow(0 0 16px rgba(163, 230, 53, 0.9))", 
+            duration: 0.5 
+          }, ${(actionTime + 0.1).toFixed(3)});
+          tl.to("#scene-${idx} #ffn-sublayer", { 
+            borderColor: "#c084fc", 
+            boxShadow: "0 0 24px rgba(192, 132, 252, 0.7)", 
+            duration: 0.4 
+          }, ${(actionTime + 0.3).toFixed(3)});
+          `;
+          break;
+
+        case "flash-quadratic-gauge":
+          script += `
+          // Action: flash-quadratic-gauge on #${act.target}
+          tl.fromTo("#scene-${idx} #${act.target}", 
+            { scale: 0.9, opacity: 0 }, 
+            { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.8)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #gauge-val", { 
+            scale: 1.25, 
+            yoyo: true, 
+            repeat: 3, 
+            duration: 0.15 
+          }, ${(actionTime + 0.2).toFixed(3)});
+          `;
+          break;
+
+        case "highlight-optimizations":
+          script += `
+          // Action: highlight-optimizations on #${act.target}
+          tl.fromTo("#scene-${idx} #${act.target} .metric-card", 
+            { y: 20, opacity: 0 }, 
+            { y: 0, opacity: 1, stagger: 0.15, duration: 0.45, ease: "back.out(1.6)" }, 
+            ${actionTime.toFixed(3)}
+          );
+          tl.to("#scene-${idx} #${act.target} .metric-card", { 
+            borderColor: "#a3e635", 
+            boxShadow: "0 0 20px rgba(163, 230, 53, 0.4)", 
+            duration: 0.3 
           }, ${(actionTime + 0.35).toFixed(3)});
           `;
           break;
@@ -1788,6 +2083,201 @@ export async function generateComposition(compDir, projectData) {
         font-size: 17px;
         font-weight: 700;
         color: #cbd5e1;
+      }
+
+      /* Transformer & RNN Recurrence Stages */
+      .rnn-recurrence-stage {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        margin-top: 10px;
+      }
+      .rnn-token-chain {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        padding: 24px 16px;
+        background: rgba(22, 10, 44, 0.92);
+        border-radius: 24px;
+        border: 1px solid rgba(192, 132, 252, 0.35);
+      }
+      .rnn-token-box {
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: rgba(36, 18, 66, 0.9);
+        border: 2px solid rgba(192, 132, 252, 0.4);
+        text-align: center;
+        min-width: 90px;
+      }
+      .token-pos {
+        font-size: 13px;
+        font-weight: 800;
+        color: #c084fc;
+        display: block;
+        letter-spacing: 0.05em;
+      }
+      .token-word {
+        font-size: 20px;
+        font-weight: 800;
+        color: #ffffff;
+        display: block;
+        margin: 4px 0;
+      }
+      .token-hstate {
+        font-size: 13px;
+        font-weight: 700;
+        color: #a3e635;
+        display: block;
+      }
+      .token-blocked {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.15);
+      }
+      .token-blocked .token-hstate {
+        color: #ef4444;
+      }
+      .rnn-arrow {
+        font-size: 22px;
+        color: #c084fc;
+        font-weight: 900;
+      }
+      .arrow-blocked {
+        font-size: 18px;
+        color: #ef4444;
+      }
+
+      /* Attention Matrix Stage */
+      .attention-matrix-stage {
+        width: 100%;
+        padding: 26px;
+        border-radius: 26px;
+        background: rgba(22, 10, 44, 0.92);
+        border: 1px solid rgba(192, 132, 252, 0.4);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .token-nodes-row {
+        display: flex;
+        justify-content: space-around;
+        gap: 12px;
+      }
+      .attn-token {
+        padding: 12px 18px;
+        border-radius: 16px;
+        background: rgba(36, 18, 66, 0.9);
+        border: 2px solid rgba(192, 132, 252, 0.5);
+        text-align: center;
+      }
+      .attn-lbl {
+        font-size: 18px;
+        font-weight: 800;
+        color: #ffffff;
+        display: block;
+      }
+      .qkv-mini {
+        font-size: 13px;
+        font-weight: 700;
+        color: #a3e635;
+        letter-spacing: 0.05em;
+        display: block;
+        margin-top: 4px;
+      }
+      .attention-matrix-svg-wrap {
+        width: 100%;
+        position: relative;
+      }
+      .qkv-vector-pills {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 12px;
+        background: rgba(14, 6, 28, 0.7);
+        border-radius: 18px;
+      }
+      .qkv-pill {
+        padding: 8px 14px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .pill-q { background: rgba(163, 230, 53, 0.2); border: 1px solid #a3e635; color: #a3e635; }
+      .pill-k { background: rgba(192, 132, 252, 0.2); border: 1px solid #c084fc; color: #c084fc; }
+      .pill-v { background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; }
+      .qkv-op { font-size: 14px; font-weight: 800; color: #cbd5e1; }
+
+      /* Transformer Residual Stack Stage */
+      .transformer-stack-stage {
+        width: 100%;
+        display: flex;
+        gap: 16px;
+        padding: 24px;
+        border-radius: 26px;
+        background: rgba(22, 10, 44, 0.92);
+        border: 1px solid rgba(192, 132, 252, 0.4);
+      }
+      .residual-stream-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+      }
+      .residual-text {
+        font-size: 13px;
+        font-weight: 800;
+        color: #a3e635;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        margin-top: 10px;
+        letter-spacing: 0.08em;
+      }
+      .transformer-layers-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .block-layer {
+        padding: 16px 20px;
+        border-radius: 18px;
+        text-align: left;
+      }
+      .ffn-layer {
+        background: rgba(192, 132, 252, 0.12);
+        border: 2px solid rgba(192, 132, 252, 0.5);
+      }
+      .attn-layer {
+        background: rgba(163, 230, 53, 0.12);
+        border: 2px solid rgba(163, 230, 53, 0.5);
+      }
+      .input-layer {
+        background: rgba(147, 51, 234, 0.1);
+        border: 1px dashed rgba(192, 132, 252, 0.4);
+      }
+      .layer-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #ffffff;
+      }
+      .layer-sub {
+        font-size: 14px;
+        color: #cbd5e1;
+        margin-top: 4px;
+      }
+      .sublayer-arrow {
+        font-size: 14px;
+        font-weight: 800;
+        color: #a3e635;
+        text-align: center;
+        letter-spacing: 0.05em;
       }
 
       /* Purple Terminal Card */

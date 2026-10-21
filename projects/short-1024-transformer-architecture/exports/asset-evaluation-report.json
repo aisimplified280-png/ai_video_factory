@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-21T15:07:15.048Z",
+  "projectId": "short-1024-transformer-architecture",
+  "topic": "Transformer Architecture",
+  "visualStrategy": "abstract-concept",
+  "strategyRationale": "Topic explains mathematical or multidimensional dynamics; employs custom physical metaphors, geometric fields, and interactive token tracks.",
+  "scoutingSummary": {
+    "totalSearches": 10,
+    "candidatesByProvider": {
+      "pixabay": 40,
+      "openverse": 23,
+      "pexels": 0
+    },
+    "totalDiscovered": 63
+  },
+  "sceneDecisions": [
+    {
+      "sceneIndex": 0,
+      "beatId": "beat-1-hook",
+      "visualMode": "hook-bold-object",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Stock candidates failed relevance and scene-participation thresholds; choosing procedural artwork.",
+      "rejectedCandidatesCount": 11,
+      "rejections": [
+        {
+          "assetId": "pixabay-3064515",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-8709324",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-8709321",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-8709330",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-1917737",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-998990",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-1464795",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-c2e2a3c4-ec14-43b7-b01b-739dc271ce40",
+          "provider": "openverse",
+          "score": 27,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-5e46caf2-62a8-44a7-888e-5cf0ca7a1451",
+          "provider": "openverse",
+          "score": 27,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-1aeeff8e-e602-4086-8cef-11373ad8d60b",
+          "provider": "openverse",
+          "score": 27,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-88df907a-8ba2-486e-b93a-7581edb98393",
+          "provider": "openverse",
+          "score": 27,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        }
+      ]
+    },
+    {
+      "sceneIndex": 1,
+      "beatId": "beat-2-metaphor",
+      "visualMode": "physical-metaphor",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
+      "rejectedCandidatesCount": 0,
+      "rejections": []
+    },
+    {
+      "sceneIndex": 2,
+      "beatId": "beat-3-architecture",
+      "visualMode": "architecture-diagram",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Scene explicitly prioritizes interactive procedural SVG geometry over stock imagery.",
+      "rejectedCandidatesCount": 0,
+      "rejections": []
+    },
+    {
+      "sceneIndex": 3,
+      "beatId": "beat-4-payoff",
+      "visualMode": "concept-explainer",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Stock candidates failed relevance and scene-participation thresholds; choosing procedural artwork.",
+      "rejectedCandidatesCount": 11,
+      "rejections": [
+        {
+          "assetId": "pixabay-411385",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-8709324",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-8709321",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-8709330",
+          "provider": "pixabay",
+          "score": 34,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-758264",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-4111000",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "pixabay-1464795",
+          "provider": "pixabay",
+          "score": 31,
+          "relevanceScore": 4,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-c2e2a3c4-ec14-43b7-b01b-739dc271ce40",
+          "provider": "openverse",
+          "score": 27,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-5e46caf2-62a8-44a7-888e-5cf0ca7a1451",
+          "provider": "openverse",
+          "score": 27,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-1aeeff8e-e602-4086-8cef-11373ad8d60b",
+          "provider": "openverse",
+          "score": 27,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        },
+        {
+          "assetId": "openverse-88df907a-8ba2-486e-b93a-7581edb98393",
+          "provider": "openverse",
+          "score": 27,
+          "relevanceScore": 0,
+          "reason": "Insufficient semantic keyword relevance"
+        }
+      ]
+    },
+    {
+      "sceneIndex": 4,
+      "beatId": "beat-5-outro",
+      "visualMode": "subscribe-outro",
+      "selectedAssetId": null,
+      "decision": "bespoke-procedural-svg",
+      "decisionReason": "Scene uses bespoke procedural graphics.",
+      "rejectedCandidatesCount": 0,
+      "rejections": []
+    }
+  ],
+  "subscribeOutro": {
+    "hasAnimatedCta": true,
+    "buttonStateChange": "SUBSCRIBE -> ✓ SUBSCRIBED",
+    "bellReaction": "wiggle-and-chime"
+  }
+}

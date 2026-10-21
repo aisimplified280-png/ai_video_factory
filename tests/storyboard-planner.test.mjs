@@ -117,6 +117,34 @@ test("planSceneGraph produces compliant scene graphs for vector database beats",
   assert.equal(validateSceneGraph(graphDescent).valid, true);
 });
 
+test("planSceneGraph produces compliant scene graphs for transformer architecture beats", () => {
+  const scriptData = { topic: "Transformer Architecture" };
+
+  const beatHook = { visualMode: "hook-bold-object" };
+  const sceneHook = { visualTitle: "Why Recurrent Networks Failed", voiceText: "Before Transformers sequential networks processed tokens one by one" };
+  const graphHook = planSceneGraph(sceneHook, beatHook, scriptData);
+  assert.equal(graphHook.visualMetaphor, "sequential-recurrence-bottleneck");
+  assert.equal(validateSceneGraph(graphHook).valid, true);
+
+  const beatAttn = { visualMode: "physical-metaphor" };
+  const sceneAttn = { visualTitle: "The Multi-Head Matrix", voiceText: "Self-attention projects tokens into Query Key and Value vectors in parallel" };
+  const graphAttn = planSceneGraph(sceneAttn, beatAttn, scriptData);
+  assert.equal(graphAttn.visualMetaphor, "transformer-attention-matrix");
+  assert.equal(validateSceneGraph(graphAttn).valid, true);
+
+  const beatStack = { visualMode: "architecture-diagram" };
+  const sceneStack = { visualTitle: "Residual Attention Stack", voiceText: "Each block fuses multi-head attention with a feed-forward layer and residual connections" };
+  const graphStack = planSceneGraph(sceneStack, beatStack, scriptData);
+  assert.equal(graphStack.visualMetaphor, "transformer-residual-stack");
+  assert.equal(validateSceneGraph(graphStack).valid, true);
+
+  const beatScaling = { visualMode: "concept-explainer" };
+  const sceneScaling = { visualTitle: "Sub-Quadratic Optimizations", voiceText: "Because full attention scales quadratically with FlashAttention and KV caching" };
+  const graphScaling = planSceneGraph(sceneScaling, beatScaling, scriptData);
+  assert.equal(graphScaling.visualMetaphor, "attention-scaling-takeaway");
+  assert.equal(validateSceneGraph(graphScaling).valid, true);
+});
+
 test("lintVisualDiversity enforces sceneGraph integrity on storyboard v2", () => {
   const v2StoryboardWithoutSceneGraph = {
     version: 2,

@@ -1,0 +1,32 @@
+[
+  {
+    "text": "Before Transformers, sequential networks processed tokens one by one, creating a massive training bottleneck.",
+    "startTime": 0.1,
+    "endTime": 7.3558,
+    "duration": 7.2558
+  },
+  {
+    "text": "Self-attention projects tokens into Query, Key, and Value vectors, computing all-to-all relationships in parallel.",
+    "startTime": 7.3058,
+    "endTime": 14.8786,
+    "duration": 7.5728
+  },
+  {
+    "text": "Each block fuses multi-head attention with a feed-forward layer, linked by residual connections to prevent vanishing gradients.",
+    "startTime": 14.8786,
+    "endTime": 22.2572,
+    "duration": 7.3786
+  },
+  {
+    "text": "Because full attention scales quadratically, production models use FlashAttention and KV caching to unlock massive context windows.",
+    "startTime": 22.2573,
+    "endTime": 30.7524,
+    "duration": 8.4951
+  },
+  {
+    "text": "Subscribe to AI Simplified Lab for honest, evidence-backed AI workflows.",
+    "startTime": 30.7524,
+    "endTime": 36.5048,
+    "duration": 5.7524
+  }
+]

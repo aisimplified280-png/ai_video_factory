@@ -1,0 +1,97 @@
+{
+  "id": "short-1024-transformer-architecture",
+  "topic": "Transformer Architecture",
+  "title": "How Transformers Compute Self-Attention",
+  "youtubeTitle": "How Transformers Compute Attention in Parallel ⚡ #Shorts",
+  "youtubeDescription": "Understand how the Transformer architecture computes Multi-Head Self-Attention using Query, Key, and Value vectors to process all tokens in parallel.",
+  "voice": "en-US-ChristopherNeural",
+  "rate": "+3%",
+  "fps": 30,
+  "scenes": [
+    {
+      "id": "hook",
+      "cardType": "hook-bold-object",
+      "badge": "RECURRENCE BOTTLENECK",
+      "tag": "SEQUENTIAL COMPLEXITY",
+      "visualTitle": "Why Recurrent Networks Failed",
+      "visualBody": "Processing tokens sequentially forces every word to wait for the previous hidden state, destroying parallel training.",
+      "voiceText": "Before Transformers, sequential networks processed tokens one by one, creating a massive training bottleneck.",
+      "source": "Vaswani et al., Attention Is All You Need (2017)",
+      "sfx": "hook-impact"
+    },
+    {
+      "id": "metaphor",
+      "cardType": "physical-metaphor",
+      "badge": "ALL-TO-ALL ATTENTION",
+      "tag": "PARALLEL DYNAMICS",
+      "metaphorType": "attention-matrix",
+      "preferOriginalDiagram": true,
+      "keywords": [
+        "attention",
+        "transformer",
+        "matrix",
+        "tokens",
+        "query",
+        "key"
+      ],
+      "visualTitle": "The Multi-Head Matrix",
+      "visualBody": "Tokens project into Query, Key, and Value vectors, computing all-to-all attention scores simultaneously in parallel.",
+      "voiceText": "Self-attention projects tokens into Query, Key, and Value vectors, computing all-to-all relationships in parallel.",
+      "source": "Vaswani et al., Attention Is All You Need",
+      "sfx": "zoom-swish"
+    },
+    {
+      "id": "architecture",
+      "cardType": "architecture-diagram",
+      "badge": "THE TRANSFORMER BLOCK",
+      "diagramType": "transformer-stack",
+      "preferOriginalDiagram": true,
+      "keywords": [
+        "transformer",
+        "residual",
+        "layernorm",
+        "attention",
+        "feedforward"
+      ],
+      "visualTitle": "Residual Attention Stack",
+      "diagramNodes": [
+        {
+          "label": "Token Embeddings",
+          "sub": "Positional Encoding"
+        },
+        {
+          "label": "Multi-Head Attention",
+          "sub": "Q, K, V Projections"
+        },
+        {
+          "label": "Feed-Forward + Norm",
+          "sub": "Residual Stream"
+        }
+      ],
+      "visualBody": "Multi-head attention combines with feed-forward sublayers, stabilized by residual streams and LayerNorm.",
+      "voiceText": "Each block fuses multi-head attention with a feed-forward layer, linked by residual connections to prevent vanishing gradients.",
+      "source": "Transformer Architecture Standards",
+      "sfx": "ui-pop"
+    },
+    {
+      "id": "payoff",
+      "cardType": "concept-explainer",
+      "badge": "SCALING REALITY",
+      "tag": "QUADRATIC TRADEOFF",
+      "visualTitle": "Sub-Quadratic Optimizations",
+      "visualBody": "Native attention scales at O(N squared) memory; production engines use FlashAttention and KV caching to sustain long contexts.",
+      "voiceText": "Because full attention scales quadratically, production models use FlashAttention and KV caching to unlock massive context windows.",
+      "source": "Dao et al., FlashAttention & vLLM Architectures",
+      "sfx": "clean-ding"
+    },
+    {
+      "id": "outro",
+      "cardType": "subscribe-outro",
+      "badge": "AI SIMPLIFIED LAB",
+      "visualTitle": "Subscribe for Honest AI Workflows",
+      "visualBody": "Zero fluff, verified architectures, and reproducible code.",
+      "voiceText": "Subscribe to AI Simplified Lab for honest, evidence-backed AI workflows.",
+      "sfx": "ui-pop"
+    }
+  ]
+}

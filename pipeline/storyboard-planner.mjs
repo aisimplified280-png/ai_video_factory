@@ -481,11 +481,62 @@ export function planSceneGraph(scene, beat, scriptData) {
 
   const titleLower = `${scene.visualTitle || ""} ${scriptData.topic || ""}`.toLowerCase();
   const isVector = titleLower.includes("vector") || titleLower.includes("hnsw");
+  const isTransformer = titleLower.includes("transformer") || titleLower.includes("attention");
   const mode = beat.visualMode || beat.beatType || scene.cardType;
 
   const defaultSafeZone = { top: 250, bottom: 1400, left: 90, right: 990 };
 
   if (mode === "hook" || mode === "hook-bold-object") {
+    if (isTransformer) {
+      return {
+        visualMetaphor: "sequential-recurrence-bottleneck",
+        metaphorExplanation: "Sequential RNN token chain stalls as each word waits for preceding hidden state computations.",
+        primarySubject: "rnn-token-chain",
+        safeZone: defaultSafeZone,
+        elements: [
+          { id: "rnn-token-chain", role: "sequential-pipeline", assetSource: "procedural-html", depth: 2 },
+          { id: "token-wait-blocked", role: "bottleneck-indicator", assetSource: "procedural-html", depth: 4 },
+          { id: "recurrence-step-counter", role: "parameter-metrics", assetSource: "procedural-html", depth: 3 },
+        ],
+        actions: [
+          {
+            trigger: "spoken-phrase",
+            phrase: "sequential networks",
+            audioAnchor: "sequential networks",
+            action: "animate-rnn-token-steps",
+            target: "rnn-token-chain",
+            duration: 1.8,
+            sfxCue: "linear-scan-tick",
+            purpose: "Step through recurrent tokens one by one with sequential latency",
+            causeAndEffect: {
+              triggerElement: "rnn-token-chain",
+              reactingElements: ["recurrence-step-counter"],
+              reaction: "tick-step-latency"
+            }
+          },
+          {
+            trigger: "spoken-phrase",
+            phrase: "training bottleneck",
+            audioAnchor: "training bottleneck",
+            action: "stall-and-flash-rnn-bottleneck",
+            target: "token-wait-blocked",
+            duration: 1.4,
+            sfxCue: "bottleneck-alarm",
+            purpose: "Flash recurrence stall warning and highlight unparallelizable bottleneck",
+            causeAndEffect: {
+              triggerElement: "token-wait-blocked",
+              reactingElements: ["rnn-token-chain"],
+              reaction: "halt-and-alarm"
+            }
+          },
+        ],
+        transition: {
+          type: "match-cut-parallel",
+          duration: 0.4
+        }
+      };
+    }
+
     if (isVector) {
       return {
         visualMetaphor: "linear-scan-bottleneck",
@@ -581,6 +632,57 @@ export function planSceneGraph(scene, beat, scriptData) {
   }
 
   if (mode === "physical-metaphor") {
+    if (scene.metaphorType === "attention-matrix" || isTransformer) {
+      return {
+        visualMetaphor: "transformer-attention-matrix",
+        metaphorExplanation: "All-to-all attention grid projects Q, K, V vectors and connects all tokens concurrently in parallel.",
+        primarySubject: "qkv-matrix-field",
+        safeZone: defaultSafeZone,
+        elements: [
+          { id: "qkv-matrix-field", role: "matrix-container", assetSource: "procedural-html", depth: 1 },
+          { id: "token-nodes-row", role: "token-nodes", assetSource: "procedural-html", depth: 2 },
+          { id: "attention-beam-svg", role: "connecting-beams", assetSource: "procedural-svg", depth: 3 },
+          { id: "qkv-vector-pills", role: "qkv-projections", assetSource: "procedural-html", depth: 4 },
+        ],
+        actions: [
+          {
+            trigger: "spoken-phrase",
+            phrase: "Query, Key, and Value",
+            audioAnchor: "Query, Key, and Value",
+            action: "project-qkv-vectors",
+            target: "qkv-vector-pills",
+            duration: 1.2,
+            sfxCue: "probe-launch",
+            purpose: "Project Q, K, V dimensional vectors from each token simultaneously",
+            causeAndEffect: {
+              triggerElement: "qkv-vector-pills",
+              reactingElements: ["token-nodes-row"],
+              reaction: "illuminate-tokens"
+            }
+          },
+          {
+            trigger: "spoken-phrase",
+            phrase: "in parallel",
+            audioAnchor: "in parallel",
+            action: "ignite-attention-beams",
+            target: "attention-beam-svg",
+            duration: 1.6,
+            sfxCue: "express-bridge-whoosh",
+            purpose: "Ignite vibrant all-to-all attention weight beams linking all tokens concurrently",
+            causeAndEffect: {
+              triggerElement: "attention-beam-svg",
+              reactingElements: ["qkv-matrix-field"],
+              reaction: "flash-matrix-glow"
+            }
+          },
+        ],
+        transition: {
+          type: "stack-elevation",
+          duration: 0.3
+        }
+      };
+    }
+
     if (scene.metaphorType === "hnsw-highway" || isVector) {
       return {
         visualMetaphor: "hnsw-express-highway",
@@ -709,6 +811,57 @@ export function planSceneGraph(scene, beat, scriptData) {
   }
 
   if (mode === "architecture-diagram") {
+    if (scene.diagramType === "transformer-stack" || isTransformer) {
+      return {
+        visualMetaphor: "transformer-residual-stack",
+        metaphorExplanation: "The Transformer block stacks multi-head attention and feed-forward sublayers with residual skip stream.",
+        primarySubject: "transformer-block-container",
+        safeZone: defaultSafeZone,
+        elements: [
+          { id: "transformer-block-container", role: "stack-container", assetSource: "procedural-html", depth: 1 },
+          { id: "attention-sublayer", role: "core-sublayer", assetSource: "procedural-html", depth: 2 },
+          { id: "ffn-sublayer", role: "ffn-sublayer", assetSource: "procedural-html", depth: 2 },
+          { id: "residual-skip-stream", role: "bypass-stream", assetSource: "procedural-svg", depth: 3 },
+        ],
+        actions: [
+          {
+            trigger: "spoken-phrase",
+            phrase: "multi-head attention",
+            audioAnchor: "multi-head attention",
+            action: "activate-attention-layer",
+            target: "attention-sublayer",
+            duration: 1.1,
+            sfxCue: "ui-pop",
+            purpose: "Highlight multi-head self-attention sublayer computation",
+            causeAndEffect: {
+              triggerElement: "attention-sublayer",
+              reactingElements: ["transformer-block-container"],
+              reaction: "pulse-sublayer"
+            }
+          },
+          {
+            trigger: "spoken-phrase",
+            phrase: "residual connections",
+            audioAnchor: "residual connections",
+            action: "pulse-residual-stream",
+            target: "residual-skip-stream",
+            duration: 1.5,
+            sfxCue: "clean-ding",
+            purpose: "Animate glowing residual skip connection bypassing sublayers to preserve gradients",
+            causeAndEffect: {
+              triggerElement: "residual-skip-stream",
+              reactingElements: ["ffn-sublayer"],
+              reaction: "illuminate-stream-norm"
+            }
+          },
+        ],
+        transition: {
+          type: "fade-out",
+          duration: 0.3
+        }
+      };
+    }
+
     if (isVector) {
       return {
         visualMetaphor: "coarse-to-fine-graph-descent",
@@ -851,6 +1004,53 @@ export function planSceneGraph(scene, beat, scriptData) {
   }
 
   // Default: concept explainer / payoff
+  if (isTransformer) {
+    return {
+      visualMetaphor: "attention-scaling-takeaway",
+      metaphorExplanation: "Quadratic attention scaling breakdown with FlashAttention and KV cache throughput optimizations.",
+      primarySubject: "scaling-rule-stamp",
+      safeZone: defaultSafeZone,
+      elements: [
+        { id: "scaling-rule-stamp", role: "focal-subject", assetSource: "procedural-html", depth: 3 },
+        { id: "complexity-gauge", role: "performance-meter", assetSource: "procedural-html", depth: 4 },
+        { id: "flash-cache-pills", role: "parameter-metrics", assetSource: "procedural-html", depth: 2 },
+      ],
+      actions: [
+        {
+          trigger: "spoken-phrase",
+          phrase: "scales quadratically",
+          audioAnchor: "scales quadratically",
+          action: "flash-quadratic-gauge",
+          target: "complexity-gauge",
+          duration: 1.0,
+          sfxCue: "bottleneck-alarm",
+          purpose: "Display O(N^2) memory scaling warning",
+          causeAndEffect: {
+            triggerElement: "complexity-gauge",
+            reactingElements: ["scaling-rule-stamp"],
+            reaction: "flash-warning-border"
+          }
+        },
+        {
+          trigger: "spoken-phrase",
+          phrase: "FlashAttention and KV caching",
+          audioAnchor: "FlashAttention and KV caching",
+          action: "highlight-optimizations",
+          target: "flash-cache-pills",
+          duration: 1.3,
+          sfxCue: "clean-ding",
+          purpose: "Illuminate GPU memory tiling and KV cache speedups",
+          causeAndEffect: {
+            triggerElement: "flash-cache-pills",
+            reactingElements: ["scaling-rule-stamp"],
+            reaction: "lock-green-accent"
+          }
+        },
+      ],
+      transition: { type: "final-hold", duration: 0.5 }
+    };
+  }
+
   return {
     visualMetaphor: "architectural-production-rule",
     metaphorExplanation: "Definitive architectural rule stamp establishes concrete engineering parameters and latency limits.",

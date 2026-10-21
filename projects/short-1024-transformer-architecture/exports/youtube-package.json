@@ -1,0 +1,97 @@
+{
+  "title": "How Transformers Compute Attention in Parallel ⚡ #Shorts",
+  "description": "Understand how the Transformer architecture computes Multi-Head Self-Attention using Query, Key, and Value vectors to process all tokens in parallel.\n\nSubscribe to AI Simplified Lab (@AISimplifiedLab) for honest, zero-fluff AI workflows and code tutorials.\n\n#Shorts #AI #Engineering #AISimplifiedLab",
+  "tags": [
+    "Shorts",
+    "AI",
+    "Engineering",
+    "Tutorial",
+    "Workflow"
+  ],
+  "verificationReport": {
+    "technicalChecksPassed": true,
+    "rightsApproved": true,
+    "editorialReviewStatus": "UNASSESSED",
+    "publishApproved": false,
+    "releaseEligible": true,
+    "releaseBlockers": [],
+    "automatedMediaQA": {
+      "streamIntegrity": "PASS",
+      "decodeErrors": 0,
+      "blackFrameSegments": 0,
+      "blackFrameStatus": "PASS",
+      "blackFrameInspectionDetails": "Zero black segments >= 0.5s detected by FFmpeg blackdetect filter with pic_th=0.98",
+      "videoCodec": "h264",
+      "resolution": "1080x1920",
+      "framerate": 30,
+      "durationSeconds": 36.96666666666667,
+      "audioCodec": "aac",
+      "audioSamplingRate": 48000
+    },
+    "contentIntegrity": {
+      "offlineVendoredAssets": "PASS (Zero remote CDN dependency)",
+      "safeZoneAdherence": "VERIFIED_BY_CSS (1080x1920 layout bounded: top 240px, bottom 380px)",
+      "hardcodedFictionalMetrics": 0,
+      "timingSyncMethod": "Edge-TTS SentenceBoundary stream extraction",
+      "scriptTimingSync": "PASS",
+      "scriptTimingIssues": [],
+      "visualDiversity": {
+        "score": 100,
+        "passed": true,
+        "criticalIssues": [],
+        "warnings": [],
+        "uniqueModesCount": 5
+      },
+      "visualCritique": {
+        "score": 100,
+        "passed": true,
+        "p0Count": 0,
+        "p1Count": 0,
+        "p2Count": 0,
+        "summary": "Visual Critique Score: 100/100 (P0 Blockers: 0, P1 Polish: 0, P2 Aesthetics: 0)",
+        "rankedChecklist": []
+      }
+    },
+    "rightsProvenance": {
+      "status": "PASS",
+      "details": "All scenes use original procedural graphics and vector assets.",
+      "projectAssetsCount": 0,
+      "credits": "No external assets requiring attribution were used."
+    },
+    "editorialGovernance": {
+      "youtubePolicyReview": "UNASSESSED (Requires Human / Creator Review prior to upload)",
+      "syntheticMediaDisclosure": "UNASSESSED (Editorial code & motion graphics explainer; check prior to upload)",
+      "commercialAudioRights": "UNASSESSED (Edge-TTS neural voice + bundled sound effects; licensing unverified by external scan)",
+      "releaseEligible": true,
+      "releaseBlockers": []
+    }
+  },
+  "mediaSpecs": {
+    "file": "final.mp4",
+    "coverThumbnail": "cover-frame.png",
+    "contactSheet": "contact-sheet.png",
+    "motionContactSheet": "motion-contact-sheet.png",
+    "visualCritiqueReport": "visual-critique-report.json",
+    "format": {
+      "duration": "36.966667",
+      "size": "10219151"
+    },
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1080,
+        "height": 1920,
+        "r_frame_rate": "30/1",
+        "duration": "36.966667",
+        "nb_frames": "1109"
+      },
+      {
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "r_frame_rate": "0/0",
+        "duration": "36.966667",
+        "nb_frames": "1734"
+      }
+    ]
+  }
+}
