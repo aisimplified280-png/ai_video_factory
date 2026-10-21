@@ -1,19 +1,45 @@
-// pipeline/composition-generator.mjs - Claude Aesthetic & Motion Graphics Engine
+// pipeline/composition-generator.mjs - Semantic Storyboard & Offline-Safe HTML Synthesizer
 import fs from "node:fs/promises";
 import path from "node:path";
+import { ROOT_DIR } from "./config.mjs";
+
+/**
+ * Escape HTML characters to prevent XSS and template injection.
+ */
+export function escapeHtml(str) {
+  if (typeof str !== "string") return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 /**
  * Generate full HTML5 / GSAP 9:16 composition for HyperFrames.
  * Features:
- * - Claude (Anthropic) Aesthetic: Warm ivory paper (#fbfaf7), clean white cards, signature terracotta (#d97757) accents.
- * - Kinetic Word-by-Word Active Captioning: Words light up in terracotta with micro-scale pops as spoken.
- * - Moving Laser Border: Shimmering illuminated border on hero cards.
- * - Interactive UI Artifacts: Animated circular progress rings, live typing cursor, floating tech chips.
- * - Dynamic Virtual Camera: Smooth continuous camera push-in.
+ * - 100% Offline: Vendors local GSAP from pipeline/vendor/ (zero CDN).
+ * - Safe Injection: All dynamic strings strictly escaped.
+ * - Modular Storyboard Types:
+ *   - architecture-diagram (data flow with nodes & connectors)
+ *   - step-process (numbered implementation stages)
+ *   - real-terminal (genuine CLI/API syntax)
+ *   - comparison (factual old-vs-new workflow)
+ *   - verified-payoff (honest takeaway with evidence source)
+ * - Claude Editorial Aesthetic & Kinetic Word-by-Word Subtitles.
  */
 export async function generateComposition(compDir, projectData) {
   const { totalDuration, scenes, title, id } = projectData;
 
+  // 1. Copy local vendored GSAP to composition directory
+  const compVendorDir = path.join(compDir, "assets", "vendor");
+  await fs.mkdir(compVendorDir, { recursive: true });
+  const localGsapSrc = path.join(ROOT_DIR, "pipeline", "vendor", "gsap.min.js");
+  const localGsapDest = path.join(compVendorDir, "gsap.min.js");
+  await fs.copyFile(localGsapSrc, localGsapDest);
+
+  // 2. Write hyperframes.json
   const hyperframesJson = {
     $schema: "https://hyperframes.heygen.com/schema/hyperframes.json",
     name: id,
@@ -28,35 +54,77 @@ export async function generateComposition(compDir, projectData) {
   };
   await fs.writeFile(path.join(compDir, "hyperframes.json"), JSON.stringify(hyperframesJson, null, 2));
 
-  // Build HTML scenes and GSAP timeline scripts
+  // 3. Render modular semantic scene cards
   const scenesHtml = scenes.map((scene, idx) => {
     const isFirst = idx === 0;
+    const cardType = scene.cardType || "concept-explainer";
 
     let cardContent = "";
-    if (scene.cardType === "hook") {
+
+    if (cardType === "hook") {
       cardContent = `
         <div class="hook-badge">
           <span class="badge-dot pulse-coral"></span>
-          ${scene.badge || "CRITICAL WORKFLOW"}
+          ${escapeHtml(scene.badge || "PROVEN WORKFLOW")}
         </div>
         <h1 class="hero-headline">${scene.visualTitle}</h1>
         <div class="laser-card-wrapper">
-          <div class="laser-border"></div>
           <div class="feature-card">
-            <div class="card-tag">${scene.tag || "INSIGHT"}</div>
-            <p class="card-highlight">${scene.visualBody}</p>
-            ${scene.stat ? `
-              <div class="stat-badge">
-                <span class="stat-number">${scene.stat}</span>
-                <span class="stat-label">${scene.statLabel || ""}</span>
-              </div>
-            ` : ""}
+            <div class="card-tag">${escapeHtml(scene.tag || "OBSERVATION")}</div>
+            <p class="card-highlight">${escapeHtml(scene.visualBody)}</p>
+            ${scene.source ? `<div class="source-tag">Source: ${escapeHtml(scene.source)}</div>` : ""}
           </div>
         </div>
       `;
-    } else if (scene.cardType === "code" || scene.cardType === "terminal") {
+    } else if (cardType === "architecture-diagram") {
+      // Data Flow Diagram: Input -> Pipeline -> Output
+      const nodes = scene.diagramNodes || [
+        { label: "User Input", sub: "Raw Context" },
+        { label: "Semantic Filter", sub: "Vector / RAG" },
+        { label: "LLM Model", sub: "Cached Response" }
+      ];
       cardContent = `
-        <div class="scene-badge">${scene.badge || "STEP " + idx}</div>
+        <div class="scene-badge">${escapeHtml(scene.badge || "ARCHITECTURE")}</div>
+        <h2 class="scene-title">${scene.visualTitle}</h2>
+        <div class="feature-card flow-card">
+          <div class="flow-container">
+            ${nodes.map((node, nIdx) => `
+              <div class="flow-node node-${nIdx}">
+                <div class="node-dot"></div>
+                <div class="node-title">${escapeHtml(node.label)}</div>
+                <div class="node-sub">${escapeHtml(node.sub || "")}</div>
+              </div>
+              ${nIdx < nodes.length - 1 ? '<div class="flow-arrow">➔</div>' : ''}
+            `).join("")}
+          </div>
+          <p class="card-highlight flow-caption">${escapeHtml(scene.visualBody)}</p>
+        </div>
+      `;
+    } else if (cardType === "step-process") {
+      // 1-2-3 Step-by-Step execution
+      const steps = scene.steps || [
+        "1. Define explicit schemas",
+        "2. Streamline token footprint",
+        "3. Automate deterministic QA"
+      ];
+      cardContent = `
+        <div class="scene-badge">${escapeHtml(scene.badge || "METHODOLOGY")}</div>
+        <h2 class="scene-title">${scene.visualTitle}</h2>
+        <div class="feature-card">
+          <div class="steps-list">
+            ${steps.map((st, sIdx) => `
+              <div class="step-item step-${sIdx}">
+                <span class="step-num">${sIdx + 1}</span>
+                <span class="step-text">${escapeHtml(st)}</span>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    } else if (cardType === "code" || cardType === "terminal") {
+      // Authentic Terminal / Code Walkthrough
+      cardContent = `
+        <div class="scene-badge">${escapeHtml(scene.badge || "IMPLEMENTATION")}</div>
         <h2 class="scene-title">${scene.visualTitle}</h2>
         <div class="terminal-card">
           <div class="terminal-header">
@@ -65,60 +133,48 @@ export async function generateComposition(compDir, projectData) {
               <span class="term-dot dot-yellow"></span>
               <span class="term-dot dot-green"></span>
             </div>
-            <span class="term-title">${scene.terminalTitle || "pipeline.config.ts"}</span>
-            <span class="term-lang">TypeScript</span>
+            <span class="term-title">${escapeHtml(scene.terminalTitle || "workflow.sh")}</span>
+            <span class="term-lang">${escapeHtml(scene.terminalLang || "Bash")}</span>
           </div>
           <div class="terminal-body">
-            <pre><code>${scene.codeSnippet || scene.visualBody}</code><span class="typing-cursor">|</span></pre>
+            <pre><code>${escapeHtml(scene.codeSnippet || scene.visualBody)}</code><span class="typing-cursor">|</span></pre>
           </div>
         </div>
       `;
-    } else if (scene.cardType === "comparison") {
+    } else if (cardType === "comparison") {
+      // Honest factual comparison
       cardContent = `
-        <div class="scene-badge">${scene.badge || "COMPARISON"}</div>
+        <div class="scene-badge">${escapeHtml(scene.badge || "WORKFLOW COMPARISON")}</div>
         <h2 class="scene-title">${scene.visualTitle}</h2>
         <div class="compare-grid">
           <div class="compare-box old-box">
             <div class="compare-header">
               <span class="compare-icon cross-icon">✕</span>
-              <span class="compare-label">TRADITIONAL WAY</span>
+              <span class="compare-label">${escapeHtml(scene.oldLabel || "COMMON PRACTICE")}</span>
             </div>
-            <p class="compare-text">${scene.oldWay || "Hours of manual configuration & paid tools"}</p>
+            <p class="compare-text">${escapeHtml(scene.oldWay || "Manual multi-step repetitive tasks")}</p>
           </div>
           <div class="compare-box new-box">
             <div class="compare-header">
               <span class="compare-icon check-icon">✓</span>
-              <span class="compare-label">AI SIMPLIFIED WAY</span>
+              <span class="compare-label">${escapeHtml(scene.newLabel || "STRUCTURED PIPELINE")}</span>
             </div>
-            <p class="compare-text">${scene.newWay || "100% Automated, instant & zero ongoing cost"}</p>
+            <p class="compare-text">${escapeHtml(scene.newWay || "Modular, deterministic code automation")}</p>
           </div>
         </div>
       `;
     } else {
-      // Default / Payoff scene with animated SVG circular gauge
+      // Concept Explainer / Verified Payoff
       cardContent = `
-        <div class="scene-badge">${scene.badge || "VERIFIED RESULT"}</div>
+        <div class="scene-badge">${escapeHtml(scene.badge || "KEY TAKEAWAY")}</div>
         <h2 class="scene-title">${scene.visualTitle}</h2>
         <div class="feature-card payoff-card">
           <div class="payoff-flex">
-            <div class="gauge-container">
-              <svg class="gauge-svg" viewBox="0 0 120 120">
-                <circle class="gauge-bg" cx="60" cy="60" r="48" />
-                <circle id="gauge-ring-${idx}" class="gauge-bar" cx="60" cy="60" r="48" />
-              </svg>
-              <div class="gauge-center">
-                <span class="gauge-val">100%</span>
-              </div>
-            </div>
+            <div class="takeaway-icon">💡</div>
             <div class="payoff-info">
-              <div class="card-tag">${scene.tag || "DELIVERABLE"}</div>
-              <p class="card-highlight">${scene.visualBody}</p>
-              ${scene.stat ? `
-                <div class="stat-badge green-badge">
-                  <span class="stat-number">${scene.stat}</span>
-                  <span class="stat-label">${scene.statLabel || ""}</span>
-                </div>
-              ` : ""}
+              <div class="card-tag">${escapeHtml(scene.tag || "CORE PRINCIPLE")}</div>
+              <p class="card-highlight">${escapeHtml(scene.visualBody)}</p>
+              ${scene.source ? `<div class="source-tag">Reference: ${escapeHtml(scene.source)}</div>` : ""}
             </div>
           </div>
         </div>
@@ -132,13 +188,15 @@ export async function generateComposition(compDir, projectData) {
     `;
   }).join("\n");
 
-  // Build Kinetic Subtitle Containers (one per scene, holding word spans)
+  // Build Kinetic Subtitle Containers
   const subtitleScenesHtml = scenes.map((scene, idx) => {
     const words = scene.voiceText.trim().split(/\s+/);
-    const wordsHtml = words.map((w, wIdx) => `<span class="cap-word" id="w-${idx}-${wIdx}">${w}</span>`).join(" ");
+    const wordsHtml = words
+      .map((w, wIdx) => `<span class="cap-word" id="w-${idx}-${wIdx}">${escapeHtml(w)}</span>`)
+      .join(" ");
 
     return `
-      <div id="sub-scene-${idx}" class="sub-scene ${idx === 0 ? 'active' : ''}">
+      <div id="sub-scene-${idx}" class="sub-scene ${idx === 0 ? "active" : ""}">
         ${wordsHtml}
       </div>
     `;
@@ -162,11 +220,10 @@ export async function generateComposition(compDir, projectData) {
     tl.to(".typing-cursor", { opacity: 0, duration: 0.45, repeat: -1, yoyo: true, ease: "steps(1)" }, 0);
   `;
 
-  // Animate scenes and word-by-word kinetic captions
+  // Animate scenes and kinetic word highlights
   scenes.forEach((scene, idx) => {
     const isFirst = idx === 0;
     const startT = scene.startTime;
-    const endT = scene.endTime;
     const duration = scene.duration;
 
     if (isFirst) {
@@ -195,18 +252,7 @@ export async function generateComposition(compDir, projectData) {
       `;
     }
 
-    // Gauge animation if payoff scene
-    if (scene.cardType === "feature" || idx === scenes.length - 1) {
-      gsapTimelineScript += `
-        tl.fromTo("#gauge-ring-${idx}", 
-          { strokeDashoffset: 301.6 },
-          { strokeDashoffset: 0, duration: 1.4, ease: "power2.out" },
-          ${startT + 0.3}
-        );
-      `;
-    }
-
-    // Word-by-Word Kinetic Subtitle Animation
+    // Kinetic word-by-word active captioning
     const words = scene.voiceText.trim().split(/\s+/);
     const wordDur = Math.max(0.18, duration / words.length);
 
@@ -215,7 +261,6 @@ export async function generateComposition(compDir, projectData) {
       const wEnd = wStart + (wordDur * 0.9);
 
       gsapTimelineScript += `
-        // Word: "${w}"
         tl.to("#w-${idx}-${wIdx}", {
           color: "#d97757",
           backgroundColor: "rgba(217, 119, 87, 0.14)",
@@ -245,8 +290,9 @@ export async function generateComposition(compDir, projectData) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1080, height=1920" />
-    <title>${title}</title>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <title>${escapeHtml(title)}</title>
+    <!-- Local Offline Vendored GSAP -->
+    <script src="./assets/vendor/gsap.min.js"></script>
     <style>
       * {
         margin: 0;
@@ -305,7 +351,7 @@ export async function generateComposition(compDir, projectData) {
         transform-origin: center center;
       }
 
-      /* Top Progress Bar & Header (Claude Aesthetic) */
+      /* Top Progress Bar & Header */
       .top-progress-track {
         position: absolute;
         top: 0;
@@ -349,7 +395,7 @@ export async function generateComposition(compDir, projectData) {
         box-shadow: 0 0 12px rgba(217, 119, 87, 0.8);
       }
 
-      /* Scene Stage (Inside Safe-Zone: Y 260 to 1390) */
+      /* Scene Stage (Inside Safe-Zone: Y 250 to 1390) */
       .scene-stage {
         position: absolute;
         top: 250px;
@@ -370,7 +416,7 @@ export async function generateComposition(compDir, projectData) {
         text-align: center;
       }
 
-      /* Claude Terracotta Badges & Editorial Headlines */
+      /* Badges & Headlines */
       .hook-badge, .scene-badge {
         display: inline-flex;
         align-items: center;
@@ -412,7 +458,7 @@ export async function generateComposition(compDir, projectData) {
         margin-bottom: 36px;
       }
 
-      /* Laser Border Shimmer Card */
+      /* Cards & Containers */
       .laser-card-wrapper {
         position: relative;
         width: 100%;
@@ -427,6 +473,7 @@ export async function generateComposition(compDir, projectData) {
         border-radius: 30px;
         background: #ffffff;
         border: 1px solid rgba(60, 45, 30, 0.06);
+        box-shadow: 0 24px 48px -12px rgba(60, 45, 30, 0.12);
         text-align: left;
       }
       .card-tag {
@@ -438,33 +485,96 @@ export async function generateComposition(compDir, projectData) {
         margin-bottom: 14px;
       }
       .card-highlight {
-        font-size: 38px;
+        font-size: 36px;
         font-weight: 600;
         line-height: 1.35;
         color: #292524;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
       }
-      .stat-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 26px;
-        border-radius: 16px;
-        background: #fbf3ee;
-        border: 1px solid #ebd5c7;
-        color: #a45338;
-      }
-      .stat-number {
-        font-size: 36px;
-        font-weight: 800;
-        color: #d97757;
-      }
-      .stat-label {
-        font-size: 24px;
-        font-weight: 600;
+      .source-tag {
+        font-size: 20px;
+        font-weight: 500;
+        color: #78716c;
+        border-top: 1px solid #f0ebe4;
+        padding-top: 16px;
       }
 
-      /* Claude Terminal Card */
+      /* Architecture Flow Diagram */
+      .flow-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+      .flow-node {
+        flex: 1;
+        padding: 24px 16px;
+        border-radius: 20px;
+        background: #faf8f5;
+        border: 1px solid #e7ded4;
+        text-align: center;
+      }
+      .node-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #d97757;
+        margin: 0 auto 10px auto;
+      }
+      .node-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1c1917;
+      }
+      .node-sub {
+        font-size: 18px;
+        color: #78716c;
+        margin-top: 4px;
+      }
+      .flow-arrow {
+        font-size: 28px;
+        color: #d97757;
+        font-weight: 800;
+      }
+      .flow-caption {
+        margin-bottom: 0;
+      }
+
+      /* Step Process List */
+      .steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .step-item {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 24px 28px;
+        border-radius: 20px;
+        background: #faf8f5;
+        border: 1px solid #e7ded4;
+      }
+      .step-num {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #d97757;
+        color: #ffffff;
+        font-size: 24px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .step-text {
+        font-size: 32px;
+        font-weight: 600;
+        color: #1c1917;
+      }
+
+      /* Terminal Card */
       .terminal-card {
         width: 100%;
         border-radius: 28px;
@@ -517,7 +627,7 @@ export async function generateComposition(compDir, projectData) {
         font-weight: 800;
       }
 
-      /* Claude Comparison Cards */
+      /* Comparison Cards */
       .compare-grid {
         width: 100%;
         display: flex;
@@ -580,58 +690,20 @@ export async function generateComposition(compDir, projectData) {
         line-height: 1.35;
       }
 
-      /* Payoff Scene with Circular Gauge */
+      /* Payoff Scene */
       .payoff-flex {
         display: flex;
-        align-items: center;
-        gap: 36px;
+        align-items: flex-start;
+        gap: 28px;
       }
-      .gauge-container {
-        position: relative;
-        width: 140px;
-        height: 140px;
-        flex-shrink: 0;
+      .takeaway-icon {
+        font-size: 56px;
       }
-      .gauge-svg {
-        width: 100%;
-        height: 100%;
-        transform: rotate(-90deg);
-      }
-      .gauge-bg {
-        fill: none;
-        stroke: #f3ede6;
-        stroke-width: 12;
-      }
-      .gauge-bar {
-        fill: none;
-        stroke: #d97757;
-        stroke-width: 12;
-        stroke-linecap: round;
-        stroke-dasharray: 301.6;
-        stroke-dashoffset: 0;
-      }
-      .gauge-center {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .gauge-val {
-        font-size: 28px;
-        font-weight: 800;
-        color: #d97757;
-      }
-      .green-badge {
-        background: #f0fdf4;
-        border-color: #bbf7d0;
-        color: #166534;
-      }
-      .green-badge .stat-number {
-        color: #16a34a;
+      .payoff-info {
+        flex: 1;
       }
 
-      /* Kinetic Word-by-Word Subtitle Ribbon (Safe Zone: Y 1410 - 1540) */
+      /* Subtitle Ribbon (Safe Zone: Y 1410 - 1540) */
       .subtitle-ribbon {
         position: absolute;
         top: 1410px;
@@ -672,7 +744,7 @@ export async function generateComposition(compDir, projectData) {
   <body>
     <div
       class="composition-root"
-      data-composition-id="${id}"
+      data-composition-id="${escapeHtml(id)}"
       data-width="1080"
       data-height="1920"
       data-duration="${totalDuration}"

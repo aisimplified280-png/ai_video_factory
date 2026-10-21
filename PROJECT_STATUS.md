@@ -34,11 +34,14 @@ Build a ₹0 ongoing-cost workflow for creating YouTube Shorts from idea to fini
   - Verified local `edge-tts` for voiceover and subtitles, and `sfx-sync.mjs` for cue sync.
 - [x] Checkpoint 3 (2026-10-21): **Phase 2 End-to-End Automated Shorts Pipeline Operational**.
   - Built `pipeline/make-short.mjs`, `pipeline/audio-generator.mjs`, `pipeline/composition-generator.mjs`, and `pipeline/render-and-mux.mjs`.
-  - Automated Edge-TTS voice synthesis + subtitle sync.
-  - Curated SFX placement with dynamic ducking and -14 LUFS mastering.
-  - Successfully generated and rendered pilot Short `short-4948-zero-cost-ai-pipelines` (21.67s, 650 frames @ 30fps).
-  - Stream parameters, decode error tests, cover extraction, and YouTube policy verification all pass.
-- [ ] Checkpoint 4: **Phase 3 Batch Scheduling & Style Presets Expansion**.
+  - Pushed initial release to `aisimplified280-png/ai_video_factory`.
+- [x] Checkpoint 4 (2026-10-21): **Phase 3 Deep Quality, Evidence & Exact Timing Hardening**.
+  - **Eliminated Fake Metrics & Pseudo-Code**: Hardcoded "10x", "80%", and `new Studio()` removed. Substituted with authentic commands and cited documentation.
+  - **Exact SentenceBoundary Timing Engine**: Created `pipeline/tts-exact-aligner.py` extracting true speech boundaries directly from Edge-TTS stream.
+  - **100% Offline Vendored Builds**: Vendored GSAP into `pipeline/vendor/gsap.min.js`, eliminating external CDN dependency.
+  - **Modular Semantic Storyboards**: Implemented Data-Flow Architecture Diagrams, Step-Process lists, authentic syntax terminals, and cited concept explainers.
+  - **Truthful Segregated QA Manifest**: Separated media engineering checks (`automatedMediaQA: PASS`) from editorial oversight (`youtubePolicyReview: UNASSESSED`).
+  - Rendered and verified `projects/short-2324-claude-prompt-caching` (26.23s, 787 frames @ 30fps).
 
 ## Resume Instruction
 Review `NEXT_SESSION.md` and proceed with Phase 2 implementation.

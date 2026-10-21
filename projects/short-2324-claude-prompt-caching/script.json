@@ -1,0 +1,68 @@
+{
+  "id": "short-2324-claude-prompt-caching",
+  "topic": "Claude Prompt Caching",
+  "title": "How Claude Prompt Caching Actually Works",
+  "youtubeTitle": "How Claude Prompt Caching Actually Works ⚡ #Shorts",
+  "youtubeDescription": "Learn how Claude prompt caching reduces latency and input token costs by preserving shared context across API calls.",
+  "voice": "en-US-ChristopherNeural",
+  "rate": "+3%",
+  "fps": 30,
+  "scenes": [
+    {
+      "id": "hook",
+      "cardType": "hook",
+      "badge": "ARCHITECTURE INSIGHT",
+      "tag": "EFFICIENCY",
+      "visualTitle": "The Power of Prompt Caching",
+      "visualBody": "Re-sending large context files on every API call slows down your pipeline.",
+      "voiceText": "If you are building with Claude, re-sending entire documents on every prompt wastes substantial bandwidth.",
+      "source": "Anthropic Engineering Guide",
+      "sfx": "hook-impact"
+    },
+    {
+      "id": "architecture",
+      "cardType": "architecture-diagram",
+      "badge": "DATA FLOW",
+      "visualTitle": "Prompt Cache Architecture",
+      "diagramNodes": [
+        {
+          "label": "Base Prompt",
+          "sub": "Static Context"
+        },
+        {
+          "label": "Ephemeral Cache",
+          "sub": "5-Min Lifetime"
+        },
+        {
+          "label": "Claude Model",
+          "sub": "Instant Warm Hit"
+        }
+      ],
+      "visualBody": "Cached prompt prefixes bypass repetitive context ingestion on subsequent calls.",
+      "voiceText": "Prompt caching stores your system instructions in memory, allowing subsequent calls to read directly from cache.",
+      "sfx": "zoom-swish"
+    },
+    {
+      "id": "implementation",
+      "cardType": "code",
+      "badge": "AUTHENTIC API SYNTAX",
+      "visualTitle": "Prompt Caching Header",
+      "terminalTitle": "anthropic_request.py",
+      "terminalLang": "Python",
+      "codeSnippet": "response = client.messages.create(\n    model=\"claude-3-5-sonnet-20241022\",\n    system=[{\n        \"type\": \"text\",\n        \"text\": system_prompt,\n        \"cache_control\": {\"type\": \"ephemeral\"}\n    }],\n    messages=user_messages\n)",
+      "voiceText": "Simply add the ephemeral cache control block to your system prompt to activate instant prefix matching.",
+      "sfx": "ui-pop"
+    },
+    {
+      "id": "payoff",
+      "cardType": "concept-explainer",
+      "badge": "CORE PRINCIPLE",
+      "tag": "PRODUCTION TAKEAWAY",
+      "visualTitle": "Smarter Context Design",
+      "visualBody": "Place static instructions at the top and dynamic queries at the bottom to maximize cache hits.",
+      "voiceText": "Structure your static context at the start of the prompt to maximize warm cache hits and minimize latency.",
+      "source": "Anthropic Prompt Caching Documentation",
+      "sfx": "clean-ding"
+    }
+  ]
+}
