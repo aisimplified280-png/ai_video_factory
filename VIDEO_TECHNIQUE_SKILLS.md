@@ -8,23 +8,23 @@ These are **technique modules, not mandatory templates**. The agent must choose 
 
 | Priority | Skill folder | Use it for | Source |
 |---:|---|---|---|
-| 1 | living-screencast | Realistic software walkthroughs with visible state changes | [Living Screencast]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/living-screencast/STYLE.md ) |
-| 2 | whiteboard-explainer | Step-by-step concept diagrams and teaching | [Whiteboard]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/whiteboard/STYLE.md ) |
-| 3 | data-visualization | Verified statistics, comparisons and benchmarks | [Data Storytelling]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/dataviz/STYLE.md ) |
-| 4 | desktop-flythrough | Connected multi-stage workflows | [Desktop Flythrough]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/desktop-flythrough/STYLE.md ) |
-| 5 | circuit-board | Technical systems and signal paths | [Circuit Board]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/circuit-board/STYLE.md ) |
-| 6 | blueprint | Architecture, mechanisms and technical structure | [Blueprint]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/blueprint/STYLE.md ) |
-| 7 | paper-popup | Selective layered paper staging and object reveals | [Paper Pop-up]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/paper-popup/STYLE.md ) |
-| 8 | halftone-dossier | Evidence-led editorial and AI-news sequences | [Halftone Dossier]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/halftone-dossier/STYLE.md ) |
-| 9 | swiss-motion | Grid-led typography, hooks and concise transitions | [Swiss Motion]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/swiss-motion/STYLE.md ) |
-| 10 | transit-map | Network, pipeline and dependency explanations | [Transit Map]( https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/transit-map/STYLE.md ) |
+| 1 | living-screencast | Realistic software walkthroughs with visible state changes | [Living Screencast](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/living-screencast/STYLE.md) |
+| 2 | whiteboard-explainer | Step-by-step concept diagrams and teaching | [Whiteboard](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/whiteboard/STYLE.md) |
+| 3 | data-visualization | Verified statistics, comparisons and benchmarks | [Data Storytelling](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/dataviz/STYLE.md) |
+| 4 | desktop-flythrough | Connected multi-stage workflows | [Desktop Flythrough](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/desktop-flythrough/STYLE.md) |
+| 5 | circuit-board | Technical systems and signal paths | [Circuit Board](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/circuit-board/STYLE.md) |
+| 6 | blueprint | Architecture, mechanisms and technical structure | [Blueprint](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/blueprint/STYLE.md) |
+| 7 | paper-popup | Selective layered paper staging and object reveals | [Paper Pop-up](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/paper-popup/STYLE.md) |
+| 8 | halftone-dossier | Evidence-led editorial and AI-news sequences | [Halftone Dossier](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/halftone-dossier/STYLE.md) |
+| 9 | swiss-motion | Grid-led typography, hooks and concise transitions | [Swiss Motion](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/swiss-motion/STYLE.md) |
+| 10 | transit-map | Network, pipeline and dependency explanations | [Transit Map](https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/transit-map/STYLE.md) |
 
 ## Additional open-source adaptations
 
 | Skill folder | Use it for | Source |
 |---|---|---|
-| motion-direction | Concept-first direction, visual rhythm and picture-sound unity | [Cinetic]( https://github.com/Leonxlnx/cinetic ) |
-| brand-mark-motion | Reusable SVG logo and channel-mark animation | [Pixel2Motion]( https://github.com/nolangz/pixel2motion ) |
+| motion-direction | Concept-first direction, visual rhythm and picture-sound unity | [Cinetic](https://github.com/Leonxlnx/cinetic) |
+| brand-mark-motion | Reusable SVG logo and channel-mark animation | [Pixel2Motion](https://github.com/nolangz/pixel2motion) |
 
 ## Selection rules
 
