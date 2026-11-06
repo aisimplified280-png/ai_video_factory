@@ -45,10 +45,10 @@ function elementSvg(element, index, sceneIndex) {
   const g = element.geometry || {};
   const a = element.appearance || {};
   const primitive = a.primitive;
-  const x = n(g.x, 0.5, 0, 1) * 1000;
-  const y = n(g.y, 0.5, 0, 1) * 1150;
-  const width = n(g.width, 0.18, 0.025, 0.95) * 1000;
-  const height = n(g.height, 0.11, 0.025, 0.95) * 1150;
+  const x = n(g.x, 0.5, 0, 1) * 1080;
+  const y = n(g.y, 0.5, 0, 1) * 1920;
+  const width = n(g.width, 0.18, 0.025, 0.95) * 1080;
+  const height = n(g.height, 0.11, 0.025, 0.95) * 1920;
   const scale = n(g.scale, 1, 0.05, 5);
   const rotation = n(g.rotation, 0, -360, 360);
   const fill = color(a.color, "#7c3aed");
@@ -89,8 +89,8 @@ function elementSvg(element, index, sceneIndex) {
       ${label ? `<text x="0" y="${-height/2-18}" text-anchor="middle" class="dyn-label" font-size="25">${esc(label)}</text>` : ""}
     `;
   } else if (primitive === "beam") {
-    const endX = n(g.endX, n(g.x,0.5)+0.2, 0, 1) * 1000;
-    const endY = n(g.endY, n(g.y,0.5), 0, 1) * 1150;
+    const endX = n(g.endX, n(g.x,0.5)+0.2, 0, 1) * 1080;
+    const endY = n(g.endY, n(g.y,0.5), 0, 1) * 1920;
     shape = `
       <line x1="0" y1="0" x2="${(endX-x).toFixed(1)}" y2="${(endY-y).toFixed(1)}" stroke="${accent}" stroke-width="${Math.max(5, height*0.12)}" stroke-linecap="round" marker-end="url(#dyn-arrow-${sceneIndex})" filter="url(#${glowId})"/>
     `;
@@ -149,7 +149,7 @@ export function renderDynamicSceneHtml(scene, sceneIndex) {
   const elements = d.elements.map((el, i) => elementSvg(el, i, sceneIndex)).join("\n");
   return `
     <div class="dynamic-scene-world" role="img" aria-label="${esc(d.visualIntent)}">
-      <svg class="dynamic-scene-svg" viewBox="0 0 1000 1150" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <svg class="dynamic-scene-svg" viewBox="0 0 1080 1920" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <filter id="dyn-glow-${sceneIndex}" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="13" result="blur"/>
@@ -163,13 +163,13 @@ export function renderDynamicSceneHtml(scene, sceneIndex) {
             <stop offset="100%" stop-color="${background}"/>
           </radialGradient>
         </defs>
-        <rect width="1000" height="1150" fill="url(#dyn-bg-${sceneIndex})"/>
+        <rect width="1080" height="1920" fill="url(#dyn-bg-${sceneIndex})"/>
         <g class="dynamic-camera" id="dynamic-camera-${sceneIndex}">
-          <path d="M0 870 Q500 680 1000 870" stroke="#c084fc" stroke-opacity=".15" stroke-width="2" fill="none"/>
-          <path d="M0 930 Q500 740 1000 930" stroke="#a3e635" stroke-opacity=".1" stroke-width="2" fill="none"/>
+          <path d="M0 1430 Q540 1120 1080 1430" stroke="#c084fc" stroke-opacity=".15" stroke-width="2" fill="none"/>
+          <path d="M0 1580 Q540 1270 1080 1580" stroke="#a3e635" stroke-opacity=".1" stroke-width="2" fill="none"/>
           <g class="dynamic-atmosphere" opacity=".22">
             <circle cx="120" cy="160" r="90" fill="#a855f7" filter="url(#dyn-glow-${sceneIndex})"/>
-            <circle cx="860" cy="910" r="120" fill="#65a30d" filter="url(#dyn-glow-${sceneIndex})"/>
+            <circle cx="930" cy="1480" r="150" fill="#65a30d" filter="url(#dyn-glow-${sceneIndex})"/>
           </g>
           ${elements}
         </g>
