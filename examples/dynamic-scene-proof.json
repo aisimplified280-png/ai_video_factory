@@ -230,7 +230,7 @@
           }
         },
         "transition": {
-          "type": "match-cut",
+          "type": "cross-dissolve",
           "continuityReason": "The illuminated lock becomes the scanner ring in the next shot, carrying the stored-prefix idea forward."
         }
       }
