@@ -59,6 +59,9 @@ export function validateDynamicScenePlan(project) {
       errors.push(`${prefix}: focalHierarchy is required.`);
     }
     if (!isText(composition.negativeSpace)) errors.push(`${prefix}: caption-safe negative space must be planned.`);
+    if (!composition.camera?.animation || !composition.camera.animation.from || !composition.camera.animation.to) {
+      errors.push(`${prefix}: camera animation from/to states are required.`);
+    }
 
     const event = d.visualEvent || {};
     for (const field of ["setup", "action", "payoff"]) {
@@ -77,6 +80,7 @@ export function validateDynamicScenePlan(project) {
       if (!isText(element?.purpose)) errors.push(`${prefix}: element "${label}" needs an explicit narrative purpose.`);
       if (!isText(element?.source)) errors.push(`${prefix}: element "${label}" needs a source type.`);
       if (!isText(element?.motionRole)) errors.push(`${prefix}: element "${label}" needs a participation/motion role.`);
+      if (!isText(element?.appearance?.primitive)) errors.push(`${prefix}: element "${label}" needs a renderable appearance.primitive.`);
       if (!element?.geometry || !isFiniteNumber(element.geometry.x) || !isFiniteNumber(element.geometry.y)) {
         errors.push(`${prefix}: element "${label}" needs normalized geometry coordinates.`);
       }
@@ -105,6 +109,18 @@ export function validateDynamicScenePlan(project) {
         errors.push(`${prefix}: choreography event "${label}" needs a positive duration.`);
       }
       if (!isText(action?.purpose)) errors.push(`${prefix}: choreography event "${label}" needs a purpose.`);
+      if (!action?.animation?.from || !action.animation.to) {
+        errors.push(`${prefix}: choreography event "${label}" needs explicit from/to motion states.`);
+      }
+      const reactionMotions = Array.isArray(action?.reactionMotions) ? action.reactionMotions : [];
+      if (reactionMotions.length === 0) {
+        errors.push(`${prefix}: choreography event "${label}" needs executable reactionMotions for its cause-and-effect targets.`);
+      }
+      reactionMotions.forEach((motion) => {
+        if (!ids.has(motion?.target) || !motion?.from || !motion?.to) {
+          errors.push(`${prefix}: choreography event "${label}" has an invalid reaction motion target/state.`);
+        }
+      });
       const reaction = action?.causeAndEffect;
       if (!Array.isArray(reaction?.reacts) || reaction.reacts.length === 0 || !isText(reaction?.reaction)) {
         errors.push(`${prefix}: choreography event "${label}" needs a visible cause-and-effect reaction.`);
