@@ -16,7 +16,7 @@ test("contact sheet includes all five scene frames in a 3 by 2 grid", () => {
 test("pads a one-frame final row without creating a one-input stack", () => {
   const result = buildContactSheetFilter(4);
   assert.equal(result.rows, 2);
-  assert.match(result.filterComplex, /\[3:v\]pad=1080:640:0:0:black\[r1\]/);
+  assert.match(result.filterComplex, /\[v3\]pad=1080:640:0:0:black\[r1\]/);
   assert.doesNotMatch(result.filterComplex, /hstack=inputs=1/);
 });
 
