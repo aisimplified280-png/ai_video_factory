@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ROOT_DIR } from "./config.mjs";
+import { renderDynamicSceneHtml, buildDynamicSceneAnimation } from "./dynamic-scene-renderer.mjs";
 
 /**
  * Escape HTML characters to prevent XSS and template injection.
@@ -77,7 +78,9 @@ export async function generateComposition(compDir, projectData) {
     let cardContent = "";
     const metaphor = scene.sceneGraph?.visualMetaphor || "";
 
-    if (metaphor === "linear-scan-bottleneck") {
+    if (scene.productionMode === "dynamic" && scene.sceneDirection) {
+      cardContent = renderDynamicSceneHtml(scene, idx);
+    } else if (metaphor === "linear-scan-bottleneck") {
       cardContent = `
         <div class="purple-badge">
           <span class="badge-dot pulse-lime"></span>
@@ -1136,7 +1139,30 @@ export async function generateComposition(compDir, projectData) {
     const startT = scene.startTime;
     const duration = scene.duration;
 
-    if (isFirst) {
+    if (scene.productionMode === "dynamic" && scene.sceneDirection) {
+      const transitionType = scene.sceneDirection.transition?.type || "hard-cut";
+      if (isFirst) {
+        gsapTimelineScript += `
+          tl.set("#scene-${idx}", { opacity: 1 }, ${startT});
+        `;
+      } else if (transitionType === "hard-cut") {
+        gsapTimelineScript += `
+          tl.set("#scene-${idx - 1}", { opacity: 0 }, ${startT});
+          tl.set("#scene-${idx}", { opacity: 1 }, ${startT});
+        `;
+      } else if (transitionType === "camera-continuation") {
+        gsapTimelineScript += `
+          tl.to("#scene-${idx - 1}", { opacity: 0, duration: 0.08 }, ${startT - 0.08});
+          tl.set("#scene-${idx}", { opacity: 1 }, ${startT});
+        `;
+      } else {
+        // Match-cut, morph and sound-bridge preserve visual continuity with a short handoff.
+        gsapTimelineScript += `
+          tl.to("#scene-${idx - 1}", { opacity: 0.12, duration: 0.12, ease: "power1.in" }, ${startT - 0.12});
+          tl.fromTo("#scene-${idx}", { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, ${startT});
+        `;
+      }
+    } else if (isFirst) {
       gsapTimelineScript += `
         // Scene ${idx} Entrance (Hook)
         tl.from("#scene-${idx} .purple-badge", { scale: 0.85, opacity: 0, y: -25, duration: 0.5, ease: "back.out(1.6)" }, ${startT});
@@ -1195,8 +1221,12 @@ export async function generateComposition(compDir, projectData) {
       `;
     }
 
-    // Execute Element-Level Motion Choreography
-    gsapTimelineScript += buildMotionChoreographyScript(scene, idx);
+    // Execute scene-specific object choreography or the legacy motion library.
+    if (scene.productionMode === "dynamic" && scene.sceneDirection) {
+      gsapTimelineScript += buildDynamicSceneAnimation(scene, idx);
+    } else {
+      gsapTimelineScript += buildMotionChoreographyScript(scene, idx);
+    }
 
     // Kinetic word-by-word active captioning
     const words = scene.voiceText.trim().split(/\s+/);
@@ -1370,6 +1400,37 @@ export async function generateComposition(compDir, projectData) {
         justify-content: flex-start;
         text-align: center;
       }
+
+      /* Scene-specific procedural SVG scenes: no card/slide wrapper */
+      .dynamic-scene-world {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .dynamic-scene-svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .dyn-element {
+        transform-box: fill-box;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+      .dyn-label {
+        fill: #ffffff;
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        paint-order: stroke;
+        stroke: rgba(13, 8, 25, 0.85);
+        stroke-width: 4px;
+        stroke-linejoin: round;
+      }
+      .dynamic-atmosphere-note { display: none; }
 
       /* Badges & Headlines */
       .purple-badge {
