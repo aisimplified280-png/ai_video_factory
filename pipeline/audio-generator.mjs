@@ -108,10 +108,12 @@ function resolveMusicFile(music) {
   if (!music) return null;
   if (music.usageRightsConfirmed !== true ||
       typeof music.licenseId !== "string" || !music.licenseId.trim() ||
-      typeof music.source !== "string" || !music.source.trim()) {
+      typeof music.source !== "string" || !music.source.trim() ||
+      !/^https:\/\//i.test(music.sourceUrl || "") ||
+      !/^https:\/\//i.test(music.licenseUrl || "")) {
     throw new Error(
-      "Music bed blocked: usageRightsConfirmed, licenseId and source are required. " +
-      "Add only a rights-cleared track (for example, one whose YouTube Audio Library terms you have checked)."
+      "Music bed blocked: usageRightsConfirmed, licenseId, source, sourceUrl and licenseUrl are required. " +
+      "Add only a track whose YouTube/commercial-use terms have been checked."
     );
   }
   if (typeof music.filePath !== "string" || !music.filePath.trim()) {
@@ -254,8 +256,8 @@ export async function generateAudio(projectDir, scriptData) {
     }
     for (const extra of scene.extraSfx || []) {
       const offset = Number(extra.offset);
-      if (!Number.isFinite(offset) || offset < 0) {
-        throw new Error(`Invalid scene-relative SFX offset for scene "${scene.id}".`);
+      if (!Number.isFinite(offset) || offset < 0 || offset >= scene.duration) {
+        throw new Error(`Scene-relative SFX offset for scene "${scene.id}" must fall inside its ${scene.duration.toFixed(2)}s duration.`);
       }
       sfxCues.push({
         t: Math.max(0, scene.startTime + offset),
@@ -297,6 +299,16 @@ export async function generateAudio(projectDir, scriptData) {
     await fs.copyFile(sfxMixWav, audioMixWav);
   }
 
+  const musicMetadata = musicPath ? {
+    filePath: path.relative(ROOT_DIR, musicPath).replace(/\\\\/g, "/"),
+    source: (scriptData.audio?.music || scriptData.music).source,
+    sourceUrl: (scriptData.audio?.music || scriptData.music).sourceUrl,
+    licenseId: (scriptData.audio?.music || scriptData.music).licenseId,
+    licenseUrl: (scriptData.audio?.music || scriptData.music).licenseUrl,
+    attribution: (scriptData.audio?.music || scriptData.music).attribution || null,
+    usageRightsConfirmed: true,
+  } : null;
+
   return {
     voiceMp3,
     speechTimingsFile: sceneTimingsFile,
@@ -310,6 +322,6 @@ export async function generateAudio(projectDir, scriptData) {
     rawTimings,
     wordTimingsByScene,
     musicIncluded: Boolean(musicPath),
-    musicLicense: musicPath ? scriptData.audio?.music || scriptData.music : null,
+    musicLicense: musicMetadata,
   };
 }
