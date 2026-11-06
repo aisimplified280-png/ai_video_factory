@@ -13,6 +13,7 @@ test("renders original SVG scene elements without cards or slide containers", ()
   const html = renderDynamicSceneHtml(scene, 0);
   assert.match(html, /<svg/);
   assert.match(html, /id="prompt-cartridge"/);
+  assert.match(html, /id="prompt-cartridge-motion"/);
   assert.match(html, /id="memory-rail"/);
   assert.match(html, /id="reuse-packet"/);
   assert.doesNotMatch(html, /collage-hero-card|purple-badge|takeaway-collage-card/);
@@ -33,7 +34,10 @@ test("builds camera, subject and reaction motion from scene-specific direction",
   };
   const script = buildDynamicSceneAnimation(withTiming, 0);
   assert.match(script, /dynamic-camera-0/);
-  assert.match(script, /prompt-cartridge/);
+  assert.match(script, /#scene-0 #prompt-cartridge-motion/);
+  assert.match(script, /#scene-0 #memory-rail-motion/);
+  assert.match(script, /#scene-0 #reuse-packet-motion/);
+  assert.doesNotMatch(script, /#scene-0 #prompt-cartridge["\\]/);
   assert.match(script, /memory-rail/);
   assert.match(script, /reuse-packet/);
   assert.match(script, /fromTo/);
