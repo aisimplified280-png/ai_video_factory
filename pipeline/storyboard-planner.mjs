@@ -375,8 +375,43 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
     if (scene.oldWay) beat.oldWay = scene.oldWay;
     if (scene.newWay) beat.newWay = scene.newWay;
 
-    // Attach structured scene graph and motion actions
-    beat.sceneGraph = planSceneGraph(scene, beat, scriptData);
+    // Attach the scene graph that matches the selected production mode.
+    if (scriptData.productionMode === "dynamic" && scene.sceneDirection) {
+      const direction = scene.sceneDirection;
+      beat.sceneGraph = {
+        visualMetaphor: direction.visualMetaphor,
+        metaphorExplanation: direction.visualIntent,
+        primarySubject: direction.primarySubject,
+        elements: direction.elements.map((element, elementIndex) => ({
+          id: element.id,
+          role: element.role,
+          assetSource: element.source,
+          depth: element.depth ?? elementIndex + 1,
+        })),
+        actions: direction.choreography.map((action) => ({
+          trigger: action.trigger?.type === "timecode" ? "timestamp" : "spoken-phrase",
+          phrase: action.trigger?.anchor,
+          timestamp: action.trigger?.type === "timecode" ? Number(action.trigger.anchor) : undefined,
+          audioAnchor: action.trigger?.anchor,
+          action: action.event,
+          target: action.target,
+          duration: action.duration,
+          sfxCue: action.soundCue?.assetKey || null,
+          purpose: action.purpose,
+          causeAndEffect: {
+            triggerElement: action.target,
+            reactingElements: action.causeAndEffect?.reacts || [],
+            reaction: action.causeAndEffect?.reaction || "",
+          },
+        })),
+        transition: {
+          type: direction.transition?.type || "hard-cut",
+          continuityReason: direction.transition?.continuityReason || "",
+        },
+      };
+    } else {
+      beat.sceneGraph = planSceneGraph(scene, beat, scriptData);
+    }
 
     beats.push(beat);
   }
