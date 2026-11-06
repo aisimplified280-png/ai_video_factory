@@ -40,3 +40,24 @@ Build high-performance, deterministic 9:16 portrait video compositions using Hyp
 - `index.html` contains zero remote script or stylesheet URLs.
 - Composition passes `hyperframes lint` without errors.
 - All visual elements and text stay strictly within 1080x1920 safe-zone coordinates.
+
+
+## Stage 1C — No Template / No Slide Rule (mandatory for new projects)
+
+This tool is a motion-scene renderer, not a PowerPoint generator. The old `cardType` branches remain only to reproduce legacy projects. New projects must use `productionMode: "dynamic"` and a scene-specific `sceneDirection` as defined in `docs/DYNAMIC_SCENE_ENGINE_SPEC.md`.
+
+Build a unique visual stage per scene from its own geometry, focal object, depth layers, camera path, and action sequence. A scene cannot be only a title, badge, paragraph, rounded rectangle or image placed on a static background. Every scene needs a visible event with object-level motion or an explicitly motivated stillness beat, and every visual asset must have a stated narrative role.
+
+Never reuse a composition as a template with changed copy. Use continuity only when the same subject genuinely carries across a transition. Motion, transitions, captions and SFX must be timed to the spoken narration; do not apply decorative effects by default.
+
+Before render, validate:
+- unique scene composition signature;
+- visual event setup/action/payoff;
+- focal subject and purposeful elements;
+- object-level motion and cause/effect;
+- meaningful camera move;
+- voice/caption synchronization;
+- scene-specific sound design or documented deliberate silence;
+- aspect-safe placement.
+
+Do not silently fall back to a card layout when dynamic direction is missing. Stop and report the incomplete scene direction.
