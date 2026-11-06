@@ -274,7 +274,20 @@
             "instantly"
           ],
           "anchor": "lower-center safe zone outside the rail's moving foreground",
-          "treatment": "Large white word captions with one lime-highlighted active word; no panel/card background."
+          "treatment": "Large white word captions with one lime-highlighted active word; no panel/card background.",
+          "placement": {
+            "x": 50,
+            "y": 86,
+            "align": "center",
+            "maxWidth": 940
+          },
+          "style": {
+            "fontSize": 46,
+            "fontWeight": 800,
+            "color": "#ffffff",
+            "highlightColor": "#a3e635",
+            "activeBackgroundColor": "transparent"
+          }
         },
         "transition": {
           "type": "match-cut",
