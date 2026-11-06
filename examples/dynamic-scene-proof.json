@@ -1,0 +1,962 @@
+{
+  "productionMode": "dynamic",
+  "id": "short-dynamic-prompt-cache-proof",
+  "topic": "How prompt caching works",
+  "title": "How Prompt Caching Works",
+  "youtubeTitle": "How Prompt Caching Works — Without Re-Sending Everything",
+  "youtubeDescription": "A visual explanation of how a reusable prompt prefix is stored, matched, reused and eventually expires.",
+  "voice": "en-US-ChristopherNeural",
+  "rate": "+3%",
+  "fps": 30,
+  "scenes": [
+    {
+      "id": "store-the-prefix",
+      "voiceText": "First, the system prompt is stored inside a reusable memory rail.",
+      "sceneDirection": {
+        "narrativePurpose": "Explain how the stable system prompt becomes a reusable cached prefix.",
+        "visualIntent": "The viewer sees a large prompt cartridge enter a physical memory rail and lock into place.",
+        "visualMetaphor": "A translucent data cartridge docks into a precision memory rail.",
+        "primarySubject": "prompt-cartridge",
+        "composition": {
+          "signature": "macro-docking-memory-rail",
+          "shotType": "extreme macro tracking shot",
+          "camera": {
+            "move": "tracking-dolly",
+            "target": "prompt-cartridge",
+            "path": "Track the cartridge from the edge of frame into the open rail, then push toward the locking mechanism.",
+            "animation": {
+              "from": {
+                "x": -28,
+                "y": 8,
+                "scale": 0.9,
+                "rotation": -2,
+                "opacity": 1
+              },
+              "to": {
+                "x": 0,
+                "y": -6,
+                "scale": 1.04,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 3.8,
+              "ease": "power2.inOut"
+            }
+          },
+          "depthLayers": [
+            "dark server chamber",
+            "glass rail and lock mechanism",
+            "large prompt cartridge in foreground"
+          ],
+          "focalHierarchy": [
+            "prompt-cartridge",
+            "memory-rail",
+            "lock-node"
+          ],
+          "negativeSpace": "Keep the lower-right third clear; captions sit low only while the cartridge action stays in the upper-middle.",
+          "environment": {
+            "background": "#090615",
+            "atmosphere": "A quiet precision-storage chamber with a soft violet horizon."
+          }
+        },
+        "visualEvent": {
+          "setup": "The memory rail is empty and the prompt cartridge waits just outside it.",
+          "action": "The cartridge slides along the rail and engages with a mechanical latch.",
+          "payoff": "The cartridge remains seated and its lock indicator illuminates, showing that the prefix is now stored."
+        },
+        "elements": [
+          {
+            "id": "prompt-cartridge",
+            "role": "focal data object",
+            "purpose": "Represents the reusable system prompt being stored.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.28,
+              "y": 0.43,
+              "width": 0.28,
+              "height": 0.12,
+              "scale": 1.05
+            },
+            "appearance": {
+              "primitive": "packet",
+              "color": "#a855f7",
+              "accent": "#a3e635",
+              "label": "SYSTEM PROMPT",
+              "material": "translucent glass and brushed metal"
+            },
+            "motionRole": "Moves into the rail, rotates into alignment and settles when the latch engages."
+          },
+          {
+            "id": "memory-rail",
+            "role": "storage mechanism",
+            "purpose": "Shows the reusable cache location that keeps the stable prefix available.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.55,
+              "y": 0.48,
+              "width": 0.76,
+              "height": 0.1
+            },
+            "appearance": {
+              "primitive": "rail",
+              "color": "#5b21b6",
+              "accent": "#c084fc",
+              "label": "MEMORY RAIL"
+            },
+            "motionRole": "Illuminates along its length as the cartridge reaches the docking point."
+          },
+          {
+            "id": "lock-node",
+            "role": "state indicator",
+            "purpose": "Makes the stored state visually unambiguous.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.82,
+              "y": 0.34,
+              "width": 0.1,
+              "height": 0.1
+            },
+            "appearance": {
+              "primitive": "node",
+              "color": "#7c3aed",
+              "accent": "#a3e635",
+              "label": "LOCK"
+            },
+            "motionRole": "Rotates and changes from dim violet to bright lime when storage completes."
+          }
+        ],
+        "choreography": [
+          {
+            "trigger": {
+              "type": "spoken-phrase",
+              "anchor": "stored inside a reusable memory rail"
+            },
+            "target": "prompt-cartridge",
+            "event": "dock-the-prompt",
+            "duration": 1.5,
+            "pathOrChange": "Slide right into the rail, rotate from -12 degrees to zero and settle at the slot.",
+            "purpose": "Make storage a visible physical event.",
+            "animation": {
+              "from": {
+                "x": -260,
+                "y": 20,
+                "scale": 0.78,
+                "rotation": -12,
+                "opacity": 0
+              },
+              "to": {
+                "x": 0,
+                "y": 0,
+                "scale": 1,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 1.5,
+              "ease": "back.out"
+            },
+            "causeAndEffect": {
+              "reacts": [
+                "memory-rail",
+                "lock-node"
+              ],
+              "reaction": "The rail lights in sequence and the lock indicator rotates into its engaged state."
+            },
+            "reactionMotions": [
+              {
+                "target": "memory-rail",
+                "from": {
+                  "scale": 0.92,
+                  "opacity": 0.5
+                },
+                "to": {
+                  "scale": 1.04,
+                  "opacity": 1
+                },
+                "duration": 0.5,
+                "ease": "power2.out"
+              },
+              {
+                "target": "lock-node",
+                "from": {
+                  "scale": 0.55,
+                  "opacity": 0.3,
+                  "rotation": -40
+                },
+                "to": {
+                  "scale": 1,
+                  "opacity": 1,
+                  "rotation": 0
+                },
+                "duration": 0.45,
+                "ease": "back.out"
+              }
+            ],
+            "soundCue": {
+              "type": "mechanical-lock",
+              "assetKey": "latch",
+              "offsetSeconds": 0.35,
+              "purpose": "A tactile latch click marks the exact moment storage succeeds."
+            }
+          }
+        ],
+        "audio": {
+          "voiceSegment": "First, the system prompt is stored inside a reusable memory rail.",
+          "ambience": "A faint low mechanical hum follows the physical storage chamber; no extra music is needed in this beat.",
+          "musicCue": "No separate music in this beat; preserve the sense of precision and focus.",
+          "ducking": "Voice is foreground. Keep the latch transient short and below speech."
+        },
+        "captions": {
+          "mode": "word-synced",
+          "emphasis": [
+            "prompt",
+            "request",
+            "cache",
+            "expires"
+          ],
+          "anchor": "Placed away from the focal object and the active motion path.",
+          "treatment": "Large scene-specific word captions with transparent active background, high contrast and one purposeful highlight.",
+          "placement": {
+            "x": 50,
+            "y": 88,
+            "align": "center",
+            "maxWidth": 920
+          },
+          "style": {
+            "fontSize": 46,
+            "fontWeight": 850,
+            "color": "#ffffff",
+            "highlightColor": "#a3e635",
+            "activeBackgroundColor": "transparent"
+          }
+        },
+        "transition": {
+          "type": "match-cut",
+          "continuityReason": "The illuminated lock becomes the scanner ring in the next shot, carrying the stored-prefix idea forward."
+        }
+      }
+    },
+    {
+      "id": "find-the-shared-prefix",
+      "voiceText": "Next, the incoming request is scanned to find the prefix it already shares.",
+      "sceneDirection": {
+        "narrativePurpose": "Show that a new request can be checked against the prefix already stored.",
+        "visualIntent": "A request packet enters a scanning field; a moving scan ring passes over it and identifies the matching prefix.",
+        "visualMetaphor": "A top-down inspection scanner compares the request packet with a stored signature.",
+        "primarySubject": "request-packet",
+        "composition": {
+          "signature": "top-down-prefix-scanner",
+          "shotType": "top-down inspection shot",
+          "camera": {
+            "move": "top-down-crane",
+            "target": "scan-ring",
+            "path": "Descend from above and rotate slightly as the scanning ring moves across the request.",
+            "animation": {
+              "from": {
+                "x": 0,
+                "y": -24,
+                "scale": 0.94,
+                "rotation": -3,
+                "opacity": 1
+              },
+              "to": {
+                "x": 0,
+                "y": 0,
+                "scale": 1.08,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 3.5,
+              "ease": "power2.inOut"
+            }
+          },
+          "depthLayers": [
+            "matte inspection table",
+            "request packet and cache signature",
+            "scanner ring and match indicator"
+          ],
+          "focalHierarchy": [
+            "scan-ring",
+            "request-packet",
+            "match-node"
+          ],
+          "negativeSpace": "Place captions in the lower-left quadrant, away from the scanner sweep.",
+          "environment": {
+            "background": "#10101a",
+            "atmosphere": "A clean dark inspection surface with subtle grid depth."
+          }
+        },
+        "visualEvent": {
+          "setup": "A request packet arrives above a stored prefix signature.",
+          "action": "A scanner ring travels across the packet; matching segments light in sequence.",
+          "payoff": "The matched prefix remains illuminated while the unmatched request tail is isolated."
+        },
+        "elements": [
+          {
+            "id": "request-packet",
+            "role": "incoming request",
+            "purpose": "Represents the new request being checked for a reusable prefix.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.48,
+              "y": 0.43,
+              "width": 0.5,
+              "height": 0.1
+            },
+            "appearance": {
+              "primitive": "packet",
+              "color": "#2563eb",
+              "accent": "#93c5fd",
+              "label": "INCOMING REQUEST",
+              "material": "layered glass"
+            },
+            "motionRole": "Moves into the scanning area and pauses under the ring."
+          },
+          {
+            "id": "scan-ring",
+            "role": "comparison mechanism",
+            "purpose": "Shows the scan that looks for the matching prefix.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.5,
+              "y": 0.43,
+              "width": 0.22,
+              "height": 0.22
+            },
+            "appearance": {
+              "primitive": "ring",
+              "color": "#7c3aed",
+              "accent": "#a3e635",
+              "label": ""
+            },
+            "motionRole": "Travels across the request and pulses when a matching segment is found."
+          },
+          {
+            "id": "match-node",
+            "role": "match result",
+            "purpose": "Shows the result of prefix comparison.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.74,
+              "y": 0.68,
+              "width": 0.14,
+              "height": 0.14
+            },
+            "appearance": {
+              "primitive": "node",
+              "color": "#1d4ed8",
+              "accent": "#a3e635",
+              "label": "MATCH"
+            },
+            "motionRole": "Turns lime and expands when the scan identifies the cached prefix."
+          }
+        ],
+        "choreography": [
+          {
+            "trigger": {
+              "type": "spoken-phrase",
+              "anchor": "scanned to find the prefix"
+            },
+            "target": "scan-ring",
+            "event": "scan-the-prefix",
+            "duration": 1.45,
+            "pathOrChange": "Sweep left-to-right across the request packet, scaling up slightly as it passes the matching segment.",
+            "purpose": "Make the prefix comparison visible.",
+            "animation": {
+              "from": {
+                "x": -250,
+                "y": 0,
+                "scale": 0.72,
+                "rotation": -18,
+                "opacity": 0
+              },
+              "to": {
+                "x": 180,
+                "y": 0,
+                "scale": 1.08,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 1.45,
+              "ease": "power3.inOut"
+            },
+            "causeAndEffect": {
+              "reacts": [
+                "request-packet",
+                "match-node"
+              ],
+              "reaction": "The shared prefix glows blue-white and the match indicator turns lime."
+            },
+            "reactionMotions": [
+              {
+                "target": "request-packet",
+                "from": {
+                  "scale": 0.96,
+                  "opacity": 0.7
+                },
+                "to": {
+                  "scale": 1,
+                  "opacity": 1
+                },
+                "duration": 0.35,
+                "ease": "power2.out"
+              },
+              {
+                "target": "match-node",
+                "from": {
+                  "scale": 0.4,
+                  "opacity": 0.2
+                },
+                "to": {
+                  "scale": 1.12,
+                  "opacity": 1
+                },
+                "duration": 0.5,
+                "ease": "back.out"
+              }
+            ],
+            "soundCue": {
+              "type": "scan-tick",
+              "assetKey": "synth-click-tick",
+              "offsetSeconds": 0.25,
+              "purpose": "A restrained tick marks the precise match result."
+            }
+          }
+        ],
+        "audio": {
+          "voiceSegment": "Next, the incoming request is scanned to find the prefix it already shares.",
+          "ambience": "Use near-silence while the scanner moves so the comparison stays clear.",
+          "musicCue": "No separate music; the scan tick marks the result.",
+          "ducking": "Voice remains primary; the tick is short and does not mask the final words."
+        },
+        "captions": {
+          "mode": "word-synced",
+          "emphasis": [
+            "prompt",
+            "request",
+            "cache",
+            "expires"
+          ],
+          "anchor": "Placed away from the focal object and the active motion path.",
+          "treatment": "Large scene-specific word captions with transparent active background, high contrast and one purposeful highlight.",
+          "placement": {
+            "x": 28,
+            "y": 83,
+            "align": "left",
+            "maxWidth": 920
+          },
+          "style": {
+            "fontSize": 46,
+            "fontWeight": 850,
+            "color": "#ffffff",
+            "highlightColor": "#a3e635",
+            "activeBackgroundColor": "transparent"
+          }
+        },
+        "transition": {
+          "type": "hard-cut",
+          "continuityReason": "The comparison ends; the next shot switches to a side view that demonstrates the fast path."
+        }
+      }
+    },
+    {
+      "id": "send-only-the-new-part",
+      "voiceText": "Instead of sending that repeated prefix again, only the new request takes the fast path.",
+      "sceneDirection": {
+        "narrativePurpose": "Explain the practical effect of a cache hit: only the uncached part needs to continue through the system.",
+        "visualIntent": "A small new-request packet races through a dedicated fast lane while the cached prefix stays docked and still.",
+        "visualMetaphor": "A side-view data tunnel where the cached payload stays parked and the new request travels through a fast lane.",
+        "primarySubject": "new-request",
+        "composition": {
+          "signature": "side-tracking-fast-path-tunnel",
+          "shotType": "wide side-tracking tunnel shot",
+          "camera": {
+            "move": "lateral-tracking",
+            "target": "new-request",
+            "path": "Track alongside the moving request packet through the tunnel; hold the cached rail in the near background.",
+            "animation": {
+              "from": {
+                "x": -22,
+                "y": 0,
+                "scale": 0.9,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "to": {
+                "x": 26,
+                "y": 2,
+                "scale": 1.08,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 3.8,
+              "ease": "power2.inOut"
+            }
+          },
+          "depthLayers": [
+            "dark tunnel walls",
+            "stationary cached-prefix rail",
+            "moving request packet in foreground"
+          ],
+          "focalHierarchy": [
+            "new-request",
+            "fast-lane",
+            "cached-prefix"
+          ],
+          "negativeSpace": "Keep the upper-right third free for captions; the request packet travels through the center-left corridor.",
+          "environment": {
+            "background": "#070d19",
+            "atmosphere": "A deep data tunnel with directional perspective lines."
+          }
+        },
+        "visualEvent": {
+          "setup": "The cached prefix is already parked in memory while a new request approaches.",
+          "action": "The new request packet enters a bright fast lane and accelerates past the stationary cache rail.",
+          "payoff": "The request exits the tunnel without moving the stored prefix, showing that the repeated portion was reused."
+        },
+        "elements": [
+          {
+            "id": "cached-prefix",
+            "role": "stationary cached data",
+            "purpose": "Represents the repeated prefix that remains stored and is not sent again.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.28,
+              "y": 0.55,
+              "width": 0.45,
+              "height": 0.1
+            },
+            "appearance": {
+              "primitive": "rail",
+              "color": "#4c1d95",
+              "accent": "#8b5cf6",
+              "label": "CACHED PREFIX"
+            },
+            "motionRole": "Remains docked and steady while the request moves past."
+          },
+          {
+            "id": "fast-lane",
+            "role": "transport path",
+            "purpose": "Shows the optimized route taken by the new part of the request.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.52,
+              "y": 0.43,
+              "width": 0.7,
+              "height": 0.06
+            },
+            "appearance": {
+              "primitive": "beam",
+              "color": "#1d4ed8",
+              "accent": "#a3e635",
+              "label": "FAST PATH"
+            },
+            "motionRole": "Brightens and pulses from the entry point to the exit."
+          },
+          {
+            "id": "new-request",
+            "role": "moving request payload",
+            "purpose": "Represents only the new request data that still needs to be transmitted.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.18,
+              "y": 0.43,
+              "width": 0.19,
+              "height": 0.1
+            },
+            "appearance": {
+              "primitive": "packet",
+              "color": "#2563eb",
+              "accent": "#a3e635",
+              "label": "NEW REQUEST"
+            },
+            "motionRole": "Accelerates through the fast lane and exits toward the right edge."
+          }
+        ],
+        "choreography": [
+          {
+            "trigger": {
+              "type": "spoken-phrase",
+              "anchor": "only the new request takes the fast path"
+            },
+            "target": "new-request",
+            "event": "accelerate-new-request",
+            "duration": 1.35,
+            "pathOrChange": "Move left-to-right along the tunnel, increase scale slightly and accelerate toward the exit.",
+            "purpose": "Show the remaining request data travelling after the cache hit.",
+            "animation": {
+              "from": {
+                "x": -180,
+                "y": 0,
+                "scale": 0.62,
+                "rotation": 0,
+                "opacity": 0.2
+              },
+              "to": {
+                "x": 300,
+                "y": -22,
+                "scale": 0.94,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 1.35,
+              "ease": "power3.in"
+            },
+            "causeAndEffect": {
+              "reacts": [
+                "fast-lane",
+                "cached-prefix"
+              ],
+              "reaction": "The path lights sequentially while the cached prefix remains motionless."
+            },
+            "reactionMotions": [
+              {
+                "target": "fast-lane",
+                "from": {
+                  "scale": 0.82,
+                  "opacity": 0.35
+                },
+                "to": {
+                  "scale": 1.2,
+                  "opacity": 1
+                },
+                "duration": 0.65,
+                "ease": "power2.inOut"
+              },
+              {
+                "target": "cached-prefix",
+                "from": {
+                  "scale": 1,
+                  "opacity": 1
+                },
+                "to": {
+                  "scale": 1,
+                  "opacity": 1
+                },
+                "duration": 0.3,
+                "ease": "none"
+              }
+            ],
+            "soundCue": {
+              "type": "fast-whoosh",
+              "assetKey": "zoom-swish",
+              "offsetSeconds": 0.35,
+              "purpose": "A short directional whoosh reinforces the packet's acceleration."
+            }
+          }
+        ],
+        "audio": {
+          "voiceSegment": "Instead of sending that repeated prefix again, only the new request takes the fast path.",
+          "ambience": "A very quiet low tunnel tone can support the sense of depth; omit if it competes with narration.",
+          "musicCue": "No separate score in this beat; let the moving packet and whoosh carry the acceleration.",
+          "ducking": "Narration stays foregrounded; the whoosh is brief and tucked below the voice."
+        },
+        "captions": {
+          "mode": "word-synced",
+          "emphasis": [
+            "prompt",
+            "request",
+            "cache",
+            "expires"
+          ],
+          "anchor": "Placed away from the focal object and the active motion path.",
+          "treatment": "Large scene-specific word captions with transparent active background, high contrast and one purposeful highlight.",
+          "placement": {
+            "x": 72,
+            "y": 86,
+            "align": "right",
+            "maxWidth": 920
+          },
+          "style": {
+            "fontSize": 46,
+            "fontWeight": 850,
+            "color": "#ffffff",
+            "highlightColor": "#a3e635",
+            "activeBackgroundColor": "transparent"
+          }
+        },
+        "transition": {
+          "type": "camera-continuation",
+          "continuityReason": "The fast-lane beam streak becomes the circular timer ring in the final shot."
+        }
+      }
+    },
+    {
+      "id": "cache-expiry",
+      "voiceText": "When the cache expires, the stored prompt is released and a future request must store it again.",
+      "sceneDirection": {
+        "narrativePurpose": "Explain that cached prompt storage has a lifetime and must be refreshed after expiration.",
+        "visualIntent": "A memory cartridge sits inside a rotating expiry ring; the ring completes, the lock disengages and the cartridge ejects.",
+        "visualMetaphor": "A physical memory capsule inside a circular countdown mechanism.",
+        "primarySubject": "expiry-ring",
+        "composition": {
+          "signature": "orbiting-expiry-capsule",
+          "shotType": "three-quarter orbital close shot",
+          "camera": {
+            "move": "orbit-and-crane",
+            "target": "expiry-ring",
+            "path": "Orbit around the storage capsule as the countdown ring closes, then crane down as the cartridge ejects.",
+            "animation": {
+              "from": {
+                "x": 18,
+                "y": 12,
+                "scale": 0.94,
+                "rotation": 4,
+                "opacity": 1
+              },
+              "to": {
+                "x": -16,
+                "y": -8,
+                "scale": 1.08,
+                "rotation": -5,
+                "opacity": 1
+              },
+              "duration": 4.2,
+              "ease": "sine.inOut"
+            }
+          },
+          "depthLayers": [
+            "dark circular chamber",
+            "countdown ring and memory capsule",
+            "expiry indicator and ejection path"
+          ],
+          "focalHierarchy": [
+            "expiry-ring",
+            "stored-prompt",
+            "expiry-node"
+          ],
+          "negativeSpace": "Place captions in the upper-left arc, outside the rotating ring and ejection path.",
+          "environment": {
+            "background": "#130915",
+            "atmosphere": "A quiet chamber with a single rotating timing mechanism."
+          }
+        },
+        "visualEvent": {
+          "setup": "A stored prompt is secure inside a glowing countdown ring.",
+          "action": "The countdown ring closes, the lock indicator dims and the cartridge is pushed out.",
+          "payoff": "The rail is empty again, showing that an expired cache must be stored on a later request."
+        },
+        "elements": [
+          {
+            "id": "expiry-ring",
+            "role": "countdown mechanism",
+            "purpose": "Represents the cache lifetime reaching its end.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.5,
+              "y": 0.45,
+              "width": 0.48,
+              "height": 0.48
+            },
+            "appearance": {
+              "primitive": "ring",
+              "color": "#7c3aed",
+              "accent": "#f59e0b",
+              "label": ""
+            },
+            "motionRole": "Rotates and tightens around the memory capsule before completion."
+          },
+          {
+            "id": "stored-prompt",
+            "role": "stored data capsule",
+            "purpose": "Represents the cached prompt that is released when its lifetime ends.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.5,
+              "y": 0.46,
+              "width": 0.24,
+              "height": 0.12
+            },
+            "appearance": {
+              "primitive": "packet",
+              "color": "#6d28d9",
+              "accent": "#c084fc",
+              "label": "STORED PROMPT"
+            },
+            "motionRole": "Stays centered until the lock releases, then moves outward along the ejection path."
+          },
+          {
+            "id": "expiry-node",
+            "role": "expiration indicator",
+            "purpose": "Signals that the stored cache has expired.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.78,
+              "y": 0.28,
+              "width": 0.12,
+              "height": 0.12
+            },
+            "appearance": {
+              "primitive": "node",
+              "color": "#92400e",
+              "accent": "#f59e0b",
+              "label": "EXPIRE"
+            },
+            "motionRole": "Changes from steady amber to a brief flash as the capsule unlocks."
+          }
+        ],
+        "choreography": [
+          {
+            "trigger": {
+              "type": "spoken-phrase",
+              "anchor": "cache expires"
+            },
+            "target": "expiry-ring",
+            "event": "complete-countdown",
+            "duration": 1.2,
+            "pathOrChange": "Rotate the ring one final quarter turn and contract its radius slightly.",
+            "purpose": "Show the cache lifetime reaching its end.",
+            "animation": {
+              "from": {
+                "x": 0,
+                "y": 0,
+                "scale": 1,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "to": {
+                "x": 0,
+                "y": 0,
+                "scale": 0.88,
+                "rotation": 90,
+                "opacity": 1
+              },
+              "duration": 1.2,
+              "ease": "power2.inOut"
+            },
+            "causeAndEffect": {
+              "reacts": [
+                "expiry-node",
+                "stored-prompt"
+              ],
+              "reaction": "The expiry indicator flashes and the prompt capsule unlocks."
+            },
+            "reactionMotions": [
+              {
+                "target": "expiry-node",
+                "from": {
+                  "scale": 0.65,
+                  "opacity": 0.45
+                },
+                "to": {
+                  "scale": 1.18,
+                  "opacity": 1
+                },
+                "duration": 0.35,
+                "ease": "back.out"
+              },
+              {
+                "target": "stored-prompt",
+                "from": {
+                  "scale": 1,
+                  "opacity": 1
+                },
+                "to": {
+                  "scale": 0.94,
+                  "opacity": 0.7
+                },
+                "duration": 0.55,
+                "ease": "power2.in"
+              }
+            ],
+            "soundCue": {
+              "type": "timer-click",
+              "assetKey": "ratchet",
+              "offsetSeconds": 0.3,
+              "purpose": "A restrained ratchet click marks the expiration point."
+            }
+          },
+          {
+            "trigger": {
+              "type": "spoken-phrase",
+              "anchor": "stored prompt is released"
+            },
+            "target": "stored-prompt",
+            "event": "eject-expired-prompt",
+            "duration": 0.9,
+            "pathOrChange": "Eject the capsule outward and slightly down, leaving the ring empty.",
+            "purpose": "Make cache expiration and release visible.",
+            "animation": {
+              "from": {
+                "x": 0,
+                "y": 0,
+                "scale": 0.94,
+                "rotation": 0,
+                "opacity": 0.7
+              },
+              "to": {
+                "x": 190,
+                "y": 160,
+                "scale": 0.68,
+                "rotation": 8,
+                "opacity": 0
+              },
+              "duration": 0.9,
+              "ease": "power3.in"
+            },
+            "causeAndEffect": {
+              "reacts": [
+                "expiry-ring"
+              ],
+              "reaction": "The countdown ring fades back to its empty waiting state."
+            },
+            "reactionMotions": [
+              {
+                "target": "expiry-ring",
+                "from": {
+                  "scale": 0.88,
+                  "opacity": 1
+                },
+                "to": {
+                  "scale": 1,
+                  "opacity": 0.35
+                },
+                "duration": 0.55,
+                "ease": "power2.out"
+              }
+            ],
+            "soundCue": {
+              "type": "release-whoosh",
+              "assetKey": "zoom-swish",
+              "offsetSeconds": 1.25,
+              "purpose": "A short reverse-moving whoosh accompanies the stored capsule leaving the cache."
+            }
+          }
+        ],
+        "audio": {
+          "voiceSegment": "When the cache expires, the stored prompt is released and a future request must store it again.",
+          "ambience": "Keep the countdown chamber nearly silent so the expiry click is clear.",
+          "musicCue": "A restrained tension rise resolves at the empty rail; no constant loop.",
+          "ducking": "Voice remains clear above all transient sounds; duck any future music under speech."
+        },
+        "captions": {
+          "mode": "word-synced",
+          "emphasis": [
+            "prompt",
+            "request",
+            "cache",
+            "expires"
+          ],
+          "anchor": "Placed away from the focal object and the active motion path.",
+          "treatment": "Large scene-specific word captions with transparent active background, high contrast and one purposeful highlight.",
+          "placement": {
+            "x": 22,
+            "y": 23,
+            "align": "left",
+            "maxWidth": 920
+          },
+          "style": {
+            "fontSize": 46,
+            "fontWeight": 850,
+            "color": "#ffffff",
+            "highlightColor": "#a3e635",
+            "activeBackgroundColor": "transparent"
+          }
+        },
+        "transition": {
+          "type": "hard-cut",
+          "continuityReason": "The final empty ring is a clear end state; the next video can return to the initial storage action."
+        }
+      }
+    }
+  ]
+}
