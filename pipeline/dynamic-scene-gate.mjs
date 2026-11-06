@@ -184,7 +184,7 @@ export function validateDynamicScenePlan(project, options = {}) {
       errors.push(`${prefix}: scene-specific caption typography needs bounded fontSize/fontWeight and valid ink/highlight colours.`);
     }
 
-    if (!isText(d.transition?.type) || !isText(d.transition?.continuityReason)) {
+    if (!["hard-cut", "cross-dissolve", "camera-continuation"].includes(d.transition?.type) || !isText(d.transition?.continuityReason)) {
       errors.push(`${prefix}: transition type and narrative reason are required (use a reasoned hard cut or ending when appropriate).`);
     }
   });
