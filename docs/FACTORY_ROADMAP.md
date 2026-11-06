@@ -50,3 +50,35 @@ Make the existing ai_video_factory repository the durable orchestration layer fo
 - Unknown generation cost means stop and ask.
 - Never commit credentials.
 - No auto-publish or metadata mutation without approval.
+
+
+## Stage 1C — Dynamic Scene Engine (active)
+
+**Creative acceptance rule:** This factory must produce original animated video scenes, never a templated slideshow or PowerPoint-like sequence.
+
+- [x] Record the no-slides/no-repeated-card charter.
+- [x] Specify sceneDirection data model: unique composition, camera, visual event, elements, choreography, assets, voice, captions, sound and transition.
+- [x] Add a dedicated dynamic-scene-director skill.
+- [x] Update storyboard, composition and rendered-critique skills to reject template-first planning.
+- [ ] Implement sceneDirection validation as a release-blocking creative gate.
+- [ ] Implement a scene-specific renderer that consumes geometry/elements/choreography rather than selecting a cardType branch.
+- [ ] Add scene signature uniqueness and asset-purpose checks to visual linter.
+- [ ] Ensure audio design is per scene: narration, timed SFX, music arc, ambience and ducking.
+- [ ] Ensure word/phrase captions are derived from the same transcript timing as the scene choreography.
+- [ ] Build a four-scene proof with four distinct visual languages; reject any scene that reads like a slide.
+- [ ] Run rendered creative critique and technical QA, then compare with prior factory Shorts.
+
+## Stage 1C — Provider tests
+
+- [ ] PREVIS: test a topic-specific 3D scene export and import/handoff to the timeline.
+- [ ] Porter: only after cost/credit and commercial-use checks, test one image or clip plus one TTS/SFX sample.
+- [ ] Pollo: quote the required credit cost before any generation.
+- [ ] AI Producer: use its available free editing/export capabilities only after upload; avoid paid scene restyles.
+- [ ] InVideo: continue manual timeline test; AI credits are 0, but free timeline/export entitlement still needs a real export proof.
+- [ ] Adobe: test a manual export only after current account entitlement is established.
+- [ ] YouTube Audio Library: default final music route unless a different music licence is verified.
+
+### New-project compatibility rule
+- Legacy projects can continue on the old `cardType` path.
+- New projects must declare `productionMode: "dynamic"` and carry `sceneDirection` on every scene.
+- Missing dynamic direction must fail closed; never silently downgrade to cards/slides.
