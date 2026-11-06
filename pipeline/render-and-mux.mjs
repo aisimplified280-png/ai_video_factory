@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { HYPERFRAMES_BIN } from "./config.mjs";
+import { HYPERFRAMES_BIN, SFX_DIR } from "./config.mjs";
 import {
   STATUS,
   validateScriptTimingSync,
@@ -247,6 +247,47 @@ export async function renderAndMux(projectDir, projectData) {
 
   const creditsReport = generateCreditsReport(projectReferencedAssets);
 
+  // Record exact bundled SFX assets used, including their licence identifiers.
+  const sfxManifestPath = path.join(SFX_DIR, "manifest.json");
+  const sfxManifest = JSON.parse(await fs.readFile(sfxManifestPath, "utf8"));
+  const usedSfxIds = Array.from(new Set(
+    (projectData.scenes || []).flatMap((scene) => [
+      scene.sfx,
+      ...(scene.extraSfx || []).map((cue) => cue.sound),
+    ]).filter(Boolean)
+  ));
+  const sfxById = new Map((sfxManifest.sounds || []).map((sound) => [sound.id, sound]));
+  const missingSfx = usedSfxIds.filter((id) => !sfxById.has(id));
+  if (missingSfx.length > 0) {
+    rightsStatus = STATUS.FAIL;
+    rightsReason = `Unknown sound-effect asset(s) in project: ${missingSfx.join(", ")}`;
+  }
+  const sfxRights = usedSfxIds.map((id) => {
+    const sound = sfxById.get(id);
+    return {
+      id,
+      file: sound.file,
+      license: sound.license,
+      sha256: sound.sha256,
+      sourceManifest: "assets/sfx/manifest.json",
+    };
+  });
+  const musicRights = projectData.musicLicense
+    ? {
+        status: projectData.musicLicense.usageRightsConfirmed === true ? "CREATOR_CONFIRMED" : "UNCONFIRMED",
+        ...projectData.musicLicense,
+      }
+    : { status: "NOT_USED", reason: "No background music track was supplied to this project." };
+  const audioRightsReport = {
+    voice: {
+      provider: "Microsoft Edge-TTS",
+      voice: projectData.voice || null,
+      commercialTerms: "NOT_INDEPENDENTLY_VERIFIED",
+    },
+    soundEffects: sfxRights,
+    music: musicRights,
+  };
+
   // 5. Visual Critique & Ranked Polish Inspection (claude-motion & motion-graphics-skills review loop)
   const visualCritique = critiqueRenderedSceneMoments(projectData, motionFrameFiles);
   const critiqueReportPath = path.join(exportsDir, "visual-critique-report.json");
@@ -308,7 +349,7 @@ export async function renderAndMux(projectDir, projectData) {
         offlineVendoredAssets: cdnLinksFound.length === 0 ? "PASS (Zero remote CDN dependency)" : `FAIL (${cdnLinksFound.join(", ")})`,
         safeZoneAdherence: "VERIFIED_BY_CSS (1080x1920 layout bounded: top 240px, bottom 380px)",
         hardcodedFictionalMetrics: 0,
-        timingSyncMethod: "Edge-TTS SentenceBoundary stream extraction",
+        timingSyncMethod: "Edge-TTS WordBoundary timings shared by captions and scene choreography",
         scriptTimingSync: timingVerdict.status,
         scriptTimingIssues: timingVerdict.issues,
         visualDiversity: visualDiversity ? {
@@ -333,15 +374,18 @@ export async function renderAndMux(projectDir, projectData) {
         details: rightsReason,
         projectAssetsCount: projectReferencedAssets.length,
         credits: creditsReport.reportText,
+        audio: audioRightsReport,
       },
       editorialGovernance: {
         youtubePolicyReview: "UNASSESSED (Requires Human / Creator Review prior to upload)",
         syntheticMediaDisclosure: "UNASSESSED (Editorial code & motion graphics explainer; check prior to upload)",
-        commercialAudioRights: "UNASSESSED (Edge-TTS neural voice + bundled sound effects; licensing unverified by external scan)",
+        commercialAudioRights: "VOICE: Edge-TTS commercial terms not independently verified. SFX: bundled manifest licences recorded. MUSIC: " + musicRights.status,
         releaseEligible: releaseEvaluation.releaseEligible,
         releaseBlockers: releaseEvaluation.blockers,
       },
     },
+
+    audioRights: audioRightsReport,
 
     mediaSpecs: {
       file: "final.mp4",
