@@ -17,7 +17,7 @@ test("renders original SVG scene elements without cards or slide containers", ()
   assert.match(html, /id="reuse-packet"/);
   assert.doesNotMatch(html, /collage-hero-card|purple-badge|takeaway-collage-card/);
   assert.doesNotMatch(html, /dynamic-atmosphere|M0 1430|M0 1580/);
-  assert.match(html, /<rect width="1080" height="1920" fill="#0d0819"\/>/);
+  assert.match(html, /<rect width="1080" height="1920" fill="#100821"\/>/);
 });
 
 test("builds camera, subject and reaction motion from scene-specific direction", () => {
