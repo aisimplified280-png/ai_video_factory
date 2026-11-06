@@ -1,0 +1,327 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Simplified Lab Video Project",
+  "type": "object",
+  "required": [
+    "project_id",
+    "topic",
+    "format",
+    "channel_profile",
+    "scenes",
+    "delivery"
+  ],
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "topic": {
+      "type": "object",
+      "required": [
+        "working_title",
+        "production_class"
+      ],
+      "properties": {
+        "working_title": {
+          "type": "string"
+        },
+        "production_class": {
+          "enum": [
+            "explanatory",
+            "cinematic",
+            "screen_demo",
+            "hybrid"
+          ]
+        },
+        "research_brief": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "format": {
+      "type": "object",
+      "required": [
+        "aspect_ratio",
+        "width",
+        "height"
+      ],
+      "properties": {
+        "aspect_ratio": {
+          "enum": [
+            "9:16",
+            "16:9"
+          ]
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "fps": {
+          "type": "integer",
+          "default": 30
+        }
+      }
+    },
+    "channel_profile": {
+      "type": "object",
+      "required": [
+        "channel_name",
+        "faceless",
+        "narration_language"
+      ],
+      "properties": {
+        "channel_name": {
+          "type": "string"
+        },
+        "faceless": {
+          "type": "boolean"
+        },
+        "narration_language": {
+          "type": "string"
+        },
+        "audience_notes": {
+          "type": "string"
+        },
+        "visual_profile": {
+          "type": "string"
+        },
+        "subscribe_cta": {
+          "type": "string"
+        }
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "scene_id",
+          "purpose",
+          "duration_seconds",
+          "visual_mode"
+        ],
+        "properties": {
+          "scene_id": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "duration_seconds": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "visual_mode": {
+            "enum": [
+              "previs_3d",
+              "generated_video",
+              "generated_image_motion",
+              "diagram",
+              "kinetic_type",
+              "chart",
+              "screen_capture",
+              "stock_licensed",
+              "code_animation"
+            ]
+          },
+          "narration_text": {
+            "type": "string"
+          },
+          "overlay_text": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "provider": {
+            "type": "string"
+          },
+          "provider_profile": {
+            "type": "string"
+          },
+          "asset_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "camera_motion": {
+            "type": "string"
+          },
+          "sound_design": {
+            "type": "string"
+          },
+          "licence_evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "approval_status": {
+            "enum": [
+              "planned",
+              "approved",
+              "generated",
+              "rejected"
+            ]
+          }
+        }
+      }
+    },
+    "audio": {
+      "type": "object",
+      "properties": {
+        "voice_provider": {
+          "type": "string"
+        },
+        "voice_id": {
+          "type": "string"
+        },
+        "music_provider": {
+          "type": "string"
+        },
+        "music_licence": {
+          "type": "string"
+        },
+        "sfx_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "properties": {
+        "editor_provider": {
+          "type": "string"
+        },
+        "tracks": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "captions_file": {
+          "type": "string"
+        },
+        "render_profile": {
+          "type": "string"
+        }
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "required": [
+        "container",
+        "video_codec",
+        "audio_codec",
+        "target_resolution"
+      ],
+      "properties": {
+        "container": {
+          "const": "mp4"
+        },
+        "video_codec": {
+          "const": "h264"
+        },
+        "audio_codec": {
+          "const": "aac"
+        },
+        "audio_sample_rate_hz": {
+          "type": "integer",
+          "default": 48000
+        },
+        "target_resolution": {
+          "enum": [
+            "1080x1920",
+            "1920x1080"
+          ]
+        },
+        "thumbnail_file": {
+          "type": "string"
+        },
+        "srt_file": {
+          "type": "string"
+        },
+        "youtube_package_file": {
+          "type": "string"
+        }
+      }
+    },
+    "cost_preflight": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "provider",
+          "action",
+          "cost_status"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "cost_status": {
+            "enum": [
+              "free_verified",
+              "quoted",
+              "unknown",
+              "user_approved"
+            ]
+          },
+          "quoted_cost": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ]
+          },
+          "approval_reference": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": [
+        "url",
+        "accessed_at"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "publisher": {
+          "type": "string"
+        },
+        "published_at": {
+          "type": "string"
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "claim_supported": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
