@@ -616,7 +616,33 @@ export async function generateComposition(compDir, projectData) {
     `;
   }).join("\n");
 
-  // Build Kinetic Subtitle Containers in safe zone
+  const isDynamicProject = scenes.length > 0 &&
+    scenes.every((scene) => scene.productionMode === "dynamic" && scene.sceneDirection);
+
+  function dynamicCaptionStyle(scene) {
+    const placement = scene.sceneDirection?.captions?.placement || {};
+    const style = scene.sceneDirection?.captions?.style || {};
+    const clamp = (value, min, max, fallback) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : fallback;
+    };
+    const color = (value, fallback) => /^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$/.test(value || "") ? value : fallback;
+    const align = ["left", "center", "right"].includes(placement.align) ? placement.align : "center";
+    const x = clamp(placement.x, 5, 95, 50);
+    const y = clamp(placement.y, 5, 95, 87);
+    const maxWidth = clamp(placement.maxWidth, 240, 1080, 900);
+    const fontSize = clamp(style.fontSize, 18, 90, 46);
+    const fontWeight = clamp(style.fontWeight, 400, 900, 800);
+    const ink = color(style.color, "#ffffff");
+    const highlight = color(style.highlightColor, "#a3e635");
+    const activeBackground = style.activeBackgroundColor === "transparent"
+      ? "transparent"
+      : color(style.activeBackgroundColor, "transparent");
+    return `--caption-x:${x}%;--caption-y:${y}%;--caption-align:${align};--caption-width:${maxWidth}px;--caption-size:${fontSize}px;--caption-weight:${fontWeight};--caption-ink:${ink};--caption-highlight:${highlight};--caption-active-bg:${activeBackground};`;
+  }
+
+  // Build exact word captions. Dynamic projects receive scene-specific placement/style,
+  // not a shared pill or a fixed bottom caption strip.
   const subtitleScenesHtml = scenes.map((scene, idx) => {
     const words = Array.isArray(scene.wordTimings) && scene.wordTimings.length
       ? scene.wordTimings.map((word) => word.text)
@@ -624,9 +650,12 @@ export async function generateComposition(compDir, projectData) {
     const wordsHtml = words
       .map((w, wIdx) => `<span class="cap-word" id="w-${idx}-${wIdx}">${escapeHtml(w)}</span>`)
       .join(" ");
+    const dynamicCaption = scene.productionMode === "dynamic" && scene.sceneDirection;
+    const dynamicClass = dynamicCaption ? "dynamic-caption-scene" : "";
+    const styleAttribute = dynamicCaption ? ` style="${dynamicCaptionStyle(scene)}"` : "";
 
     return `
-      <div id="sub-scene-${idx}" class="sub-scene ${idx === 0 ? "active" : ""}">
+      <div id="sub-scene-${idx}" class="sub-scene ${dynamicClass} ${idx === 0 ? "active" : ""}"${styleAttribute}>
         ${wordsHtml}
       </div>
     `;
@@ -639,16 +668,15 @@ export async function generateComposition(compDir, projectData) {
     window.__timelines = window.__timelines || {};
     const tl = gsap.timeline({ paused: true });
 
-    // Continuous Subtle Virtual Camera push-in
-    tl.to("#stage-camera", { scale: 1.035, duration: ${totalDuration}, ease: "none" }, 0);
-
-    // Ambient floating purple & lime aura glow
-    tl.to("#orb-violet", { scale: 1.25, x: 25, y: -20, opacity: 0.7, duration: 3.2, yoyo: true, repeat: ${ambientRepeats}, ease: "sine.inOut" }, 0);
-    tl.to("#orb-lime", { scale: 1.2, x: -20, y: 30, opacity: 0.6, duration: 3.6, yoyo: true, repeat: ${ambientRepeats}, ease: "sine.inOut" }, 0);
-    tl.to("#top-progress", { width: "100%", duration: ${totalDuration}, ease: "none" }, 0);
-
-    // Cursor blink
-    tl.to(".typing-cursor", { opacity: 0, duration: 0.45, repeat: ${cursorRepeats}, yoyo: true, ease: "steps(1)" }, 0);
+    ${isDynamicProject ? "" : `
+      // Legacy projects retain the original collage camera and branded chrome.
+      // Dynamic projects use only their own directed cameras and scene events.
+      tl.to("#stage-camera", { scale: 1.035, duration: ${totalDuration}, ease: "none" }, 0);
+      tl.to("#orb-violet", { scale: 1.25, x: 25, y: -20, opacity: 0.7, duration: 3.2, yoyo: true, repeat: ${ambientRepeats}, ease: "sine.inOut" }, 0);
+      tl.to("#orb-lime", { scale: 1.2, x: -20, y: 30, opacity: 0.6, duration: 3.6, yoyo: true, repeat: ${ambientRepeats}, ease: "sine.inOut" }, 0);
+      tl.to("#top-progress", { width: "100%", duration: ${totalDuration}, ease: "none" }, 0);
+      tl.to(".typing-cursor", { opacity: 0, duration: 0.45, repeat: ${cursorRepeats}, yoyo: true, ease: "steps(1)" }, 0);
+    `}
   `;
 
   // Helper: Build element-level GSAP motion choreography from sceneGraph.actions
@@ -1236,6 +1264,16 @@ export async function generateComposition(compDir, projectData) {
       : scene.voiceText.trim().split(/\s+/);
     const wordDur = Math.max(0.18, duration / Math.max(1, words.length));
 
+    const dynamicCaptionStyle = scene.sceneDirection?.captions?.style || {};
+    const baseCaptionColor = dynamicCaptionStyle.color && /^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$/.test(dynamicCaptionStyle.color)
+      ? dynamicCaptionStyle.color : "#ffffff";
+    const highlightCaptionColor = dynamicCaptionStyle.highlightColor && /^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$/.test(dynamicCaptionStyle.highlightColor)
+      ? dynamicCaptionStyle.highlightColor : "#a3e635";
+    const activeCaptionBackground = dynamicCaptionStyle.activeBackgroundColor === "transparent"
+      ? "transparent"
+      : (dynamicCaptionStyle.activeBackgroundColor && /^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$/.test(dynamicCaptionStyle.activeBackgroundColor)
+        ? dynamicCaptionStyle.activeBackgroundColor : "rgba(163, 230, 53, 0.18)");
+
     words.forEach((w, wIdx) => {
       const exactWord = scene.wordTimings?.[wIdx];
       const wStart = Number.isFinite(exactWord?.startTime) ? exactWord.startTime : startT + (wIdx * wordDur);
@@ -1243,8 +1281,8 @@ export async function generateComposition(compDir, projectData) {
 
       gsapTimelineScript += `
         tl.to("#w-${idx}-${wIdx}", {
-          color: "#a3e635",
-          backgroundColor: "rgba(163, 230, 53, 0.18)",
+          color: "${highlightCaptionColor}",
+          backgroundColor: "${activeCaptionBackground}",
           scale: 1.15,
           opacity: 1,
           duration: 0.12,
@@ -1252,7 +1290,7 @@ export async function generateComposition(compDir, projectData) {
         }, ${wStart});
 
         tl.to("#w-${idx}-${wIdx}", {
-          color: "#e2e8f0",
+          color: "${baseCaptionColor}",
           backgroundColor: "transparent",
           scale: 1.0,
           duration: 0.14,
@@ -1379,6 +1417,57 @@ export async function generateComposition(compDir, projectData) {
         border-radius: 50%;
         background-color: #a3e635;
         box-shadow: 0 0 14px #a3e635;
+      }
+
+      /* Dynamic full-frame composition: each scene owns its own stage. */
+      .composition-root.dynamic-project {
+        background: #080312;
+        background-image: none;
+      }
+      .composition-root.dynamic-project .camera-viewport {
+        transform: none;
+      }
+      .scene-stage-dynamic {
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1920px;
+        z-index: 10;
+      }
+      .captions-wrapper-dynamic {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        z-index: 45;
+        pointer-events: none;
+      }
+      .dynamic-project .sub-scene.dynamic-caption-scene {
+        position: absolute;
+        display: none;
+        left: var(--caption-x, 50%);
+        top: var(--caption-y, 87%);
+        transform: translate(-50%, -50%);
+        width: min(var(--caption-width, 900px), 92vw);
+        max-width: var(--caption-width, 900px);
+        flex-wrap: wrap;
+        justify-content: var(--caption-align, center);
+        text-align: var(--caption-align, center);
+        gap: 8px 12px;
+      }
+      .dynamic-project .sub-scene.dynamic-caption-scene.active {
+        display: flex;
+      }
+      .dynamic-project .sub-scene.dynamic-caption-scene .cap-word {
+        font-size: var(--caption-size, 46px);
+        font-weight: var(--caption-weight, 800);
+        color: var(--caption-ink, #ffffff);
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        padding: 0 3px;
+        border-radius: 0;
+        text-shadow: 0 3px 14px rgba(0, 0, 0, 0.9);
       }
 
       /* Scene Stage (Inside Safe-Zone: Y 250 to 1420) */
@@ -2560,35 +2649,35 @@ export async function generateComposition(compDir, projectData) {
     </style>
   </head>
   <body>
-    <div class="composition-root" data-composition-id="${id}" data-width="1080" data-height="1920" data-duration="${totalDuration}">
-      <div class="halftone-overlay"></div>
-      <div id="orb-violet" class="glow-orb orb-violet"></div>
-      <div id="orb-lime" class="glow-orb orb-lime"></div>
+    <div class="composition-root ${isDynamicProject ? "dynamic-project" : "legacy-project"}" data-composition-id="${id}" data-width="1080" data-height="1920" data-duration="${totalDuration}">
+      ${isDynamicProject ? "" : `
+        <div class="halftone-overlay"></div>
+        <div id="orb-violet" class="glow-orb orb-violet"></div>
+        <div id="orb-lime" class="glow-orb orb-lime"></div>
+      `}
 
       <div class="camera-viewport" id="stage-camera">
-        <!-- Top Track & Header -->
-        <div class="top-progress-track">
-          <div id="top-progress" class="top-progress-bar"></div>
-        </div>
-        <header class="top-bar">
-          <div class="brand-badge">
-            <span class="brand-dot"></span>
-            AI SIMPLIFIED LAB
+        ${isDynamicProject ? "" : `
+          <div class="top-progress-track">
+            <div id="top-progress" class="top-progress-bar"></div>
           </div>
-        </header>
+          <header class="top-bar">
+            <div class="brand-badge">
+              <span class="brand-dot"></span>
+              AI SIMPLIFIED LAB
+            </div>
+          </header>
+        `}
 
-        <!-- Main Scene Stage -->
-        <main class="scene-stage">
+        <main class="${isDynamicProject ? "scene-stage scene-stage-dynamic" : "scene-stage"}">
           ${scenesHtml}
         </main>
       </div>
 
-      <!-- Kinetic Captions Frame -->
-      <footer class="captions-wrapper">
-        <div class="caption-pill-backdrop">
-          ${subtitleScenesHtml}
-        </div>
-      </footer>
+      ${isDynamicProject
+        ? `<footer class="captions-wrapper-dynamic">${subtitleScenesHtml}</footer>`
+        : `<footer class="captions-wrapper"><div class="caption-pill-backdrop">${subtitleScenesHtml}</div></footer>`
+      }
     </div>
 
     <!-- Timeline Animation Script -->
