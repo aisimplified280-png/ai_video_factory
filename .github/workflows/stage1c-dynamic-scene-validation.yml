@@ -1,4 +1,4 @@
-name: Stage 1C Dynamic Video Factory Validation
+name: Stage 1C Dynamic Video Factory Validation and Render
 
 on:
   push:
@@ -57,3 +57,67 @@ jobs:
         run: |
           node pipeline/validate-dynamic-scene.mjs examples/dynamic-scene-plan.example.json
           node pipeline/validate-dynamic-scene.mjs examples/dynamic-scene-proof.json
+
+  render-dynamic-proof:
+    if: github.event_name != 'pull_request'
+    needs: dynamic-scene-validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install pinned HyperFrames and GSAP runtime
+        run: npm install --prefix .favstash-studio/runtime --no-audit --no-fund
+
+      - name: Install free Edge-TTS runtime
+        run: python -m pip install --disable-pip-version-check edge-tts
+
+      - name: Verify cloud render dependencies
+        run: |
+          node .favstash-studio/runtime/node_modules/.bin/hyperframes doctor
+          ffmpeg -version
+          ffprobe -version
+          python -m edge_tts --version
+
+      - name: Render five-scene dynamic proof
+        env:
+          HYPERFRAMES_NO_UPDATE_CHECK: "1"
+        run: |
+          node pipeline/validate-dynamic-scene.mjs examples/dynamic-scene-proof.json
+          node pipeline/make-short.mjs --script examples/dynamic-scene-proof.json --id short-dynamic-prompt-cache-proof-cloud
+
+      - name: Upload MP4 and production review assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dynamic-scene-proof-render
+          path: |
+            projects/short-dynamic-prompt-cache-proof-cloud/exports/final.mp4
+            projects/short-dynamic-prompt-cache-proof-cloud/exports/cover-frame.png
+            projects/short-dynamic-prompt-cache-proof-cloud/exports/contact-sheet.png
+            projects/short-dynamic-prompt-cache-proof-cloud/exports/motion-contact-sheet.png
+            projects/short-dynamic-prompt-cache-proof-cloud/exports/frames/**
+            projects/short-dynamic-prompt-cache-proof-cloud/exports/youtube-package.json
+            projects/short-dynamic-prompt-cache-proof-cloud/exports/asset-evaluation-report.json
+            projects/short-dynamic-prompt-cache-proof-cloud/voice.mp3
+            projects/short-dynamic-prompt-cache-proof-cloud/audio-mix.wav
+            projects/short-dynamic-prompt-cache-proof-cloud/speech-words.json
+            projects/short-dynamic-prompt-cache-proof-cloud/speech-timings.json
+          if-no-files-found: warn
+          retention-days: 7
