@@ -179,12 +179,32 @@ export function renderDynamicSceneHtml(scene, sceneIndex) {
   `;
 }
 
-function phraseTime(scene, phrase) {
-  const words = String(scene.voiceText || "").trim().split(/\s+/);
-  const needle = String(phrase || "").trim().toLowerCase().split(/\s+/)[0]?.replace(/[^a-z0-9]/g, "");
-  if (!needle || words.length === 0) return scene.startTime + scene.duration * 0.3;
-  const index = words.findIndex((word) => word.toLowerCase().replace(/[^a-z0-9]/g, "") === needle);
-  return scene.startTime + (Math.max(0,index) / Math.max(1,words.length)) * scene.duration;
+function normalizeAnchorWord(value) {
+  return String(value ?? "").normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function phraseTime(scene, trigger = {}) {
+  if (trigger.type === "timecode") {
+    const time = Number(trigger.anchor);
+    if (!Number.isFinite(time) || time < 0) {
+      throw new Error(`Invalid timecode trigger "${trigger.anchor}" in scene "${scene.id}".`);
+    }
+    return time;
+  }
+
+  const phraseTokens = String(trigger.anchor || "").trim().split(/\s+/).map(normalizeAnchorWord).filter(Boolean);
+  const words = Array.isArray(scene.wordTimings) ? scene.wordTimings : [];
+  if (phraseTokens.length === 0 || words.length === 0) {
+    throw new Error(`Scene "${scene.id}" has no exact word timing for choreography trigger "${trigger.anchor}".`);
+  }
+
+  for (let start = 0; start <= words.length - phraseTokens.length; start += 1) {
+    const matches = phraseTokens.every((token, offset) =>
+      normalizeAnchorWord(words[start + offset]?.text) === token
+    );
+    if (matches) return words[start].startTime;
+  }
+  throw new Error(`Spoken-phrase trigger "${trigger.anchor}" was not found in scene "${scene.id}" word timings.`);
 }
 function motionProps(state) {
   const safe = localAnimationState(state);
@@ -207,7 +227,7 @@ export function buildDynamicSceneAnimation(scene, sceneIndex) {
   }
 
   (d.choreography || []).forEach((action) => {
-    const at = phraseTime(scene, action.trigger?.anchor);
+    const at = phraseTime(scene, action.trigger || {});
     const duration = n(action.animation?.duration, action.duration || 0.8, 0.05, 15);
     const ease = safeEase(action.animation?.ease);
     const target = safeId(action.target, "");
