@@ -131,7 +131,9 @@ function elementSvg(element, index, sceneIndex) {
     </defs>
     <g id="${id}" class="dyn-element" transform="${transform}" data-purpose="${esc(element.purpose)}">
       <title>${esc(element.purpose)}</title>
-      ${shape}
+      <g id="${id}-motion" class="dyn-motion">
+        ${shape}
+      </g>
     </g>
   `;
 }
@@ -221,7 +223,7 @@ export function buildDynamicSceneAnimation(scene, sceneIndex) {
     const target = safeId(action.target, "");
     if (!target) return;
     output.push(`
-      tl.fromTo("#scene-${sceneIndex} #${target}",
+      tl.fromTo("#scene-${sceneIndex} #${target}-motion",
         { ${motionProps(action.animation?.from)} },
         { ${motionProps(action.animation?.to)}, duration: ${duration}, ease: "${ease}" },
         ${at.toFixed(3)}
@@ -231,7 +233,7 @@ export function buildDynamicSceneAnimation(scene, sceneIndex) {
       const reactionTarget = safeId(reaction.target, "");
       if (!reactionTarget) return;
       output.push(`
-        tl.fromTo("#scene-${sceneIndex} #${reactionTarget}",
+        tl.fromTo("#scene-${sceneIndex} #${reactionTarget}-motion",
           { ${motionProps(reaction.from)} },
           { ${motionProps(reaction.to)}, duration: ${n(reaction.duration,0.4,0.05,15)}, ease: "${safeEase(reaction.ease)}" },
           ${at.toFixed(3)}
