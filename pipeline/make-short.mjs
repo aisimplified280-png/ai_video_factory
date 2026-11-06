@@ -9,6 +9,7 @@ import { renderAndMux } from "./render-and-mux.mjs";
 import { AssetRegistry } from "./asset-scout/registry.mjs";
 import { planStoryboard } from "./storyboard-planner.mjs";
 import { lintVisualDiversity } from "./visual-linter.mjs";
+import { assertDynamicScenePlan } from "./dynamic-scene-gate.mjs";
 
 /**
  * Generate a topic-specific, evidence-backed script without hardcoded fake claims.
@@ -342,6 +343,24 @@ async function main() {
     scriptData.id = explicitId;
   }
 
+  // Validate all dynamic scene directions before voice generation or any asset/provider work.
+  if (scriptData.productionMode === "dynamic") {
+    const creativeGate = assertDynamicScenePlan(scriptData);
+    console.log(`[Dynamic Scene Gate] PASS — ${creativeGate.sceneCount} scenes / ${creativeGate.uniqueCompositionCount} unique compositions.`);
+    scriptData.scenes = scriptData.scenes.map((scene) => ({
+      ...scene,
+      extraSfx: [
+        ...(scene.extraSfx || []),
+        ...(scene.sceneDirection?.choreography || [])
+          .filter((action) => action.soundCue?.assetKey && action.soundCue.type !== "deliberate-silence")
+          .map((action) => ({
+            offset: action.soundCue.offsetSeconds,
+            sound: action.soundCue.assetKey,
+          })),
+      ],
+    }));
+  }
+
   console.log(`\n=============================================================`);
   console.log(`🎬 AI Simplified Lab — Purple Collage Shorts Engine`);
   console.log(`   Project ID: ${scriptData.id}`);
@@ -389,7 +408,9 @@ async function main() {
     rawTimings: audioResult.rawTimings,
     scenes: storyboardData.beats.map((beat) => ({
       id: beat.beatId,
-      cardType: beat.visualMode,
+      productionMode: scriptData.productionMode || "legacy",
+      ...(scriptData.productionMode === "dynamic" ? {} : { cardType: beat.visualMode }),
+      sceneDirection: beat.sceneDirection,
       badge: beat.badge,
       visualTitle: beat.visualTitle,
       visualBody: beat.visualBody,
