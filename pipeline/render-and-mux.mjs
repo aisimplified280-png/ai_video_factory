@@ -24,7 +24,7 @@ const execFileAsync = promisify(execFile);
 async function runCmd(cmd, args, cwd) {
   console.log(`[Exec] ${cmd} ${args.join(" ")}`);
   // Only use a shell for Windows npm command shims; FFmpeg filter graphs must remain a single argv value.
-  const shell = process.platform === "win32" && /\\.(cmd|bat)$/i.test(cmd);
+  const shell = process.platform === "win32" && /\.(cmd|bat)$/i.test(cmd);
   const { stdout, stderr } = await execFileAsync(cmd, args, { cwd, shell });
   if (stderr && stderr.trim()) console.warn(`[Warn] ${stderr.trim()}`);
   return stdout;
