@@ -21,7 +21,25 @@
           "camera": {
             "move": "tracking-dolly",
             "target": "prompt-cartridge",
-            "path": "Track the cartridge as it slides into the rail, then arc toward the returning request packet."
+            "path": "Track the cartridge as it slides into the rail, then arc toward the returning request packet.",
+            "animation": {
+              "from": {
+                "x": -18,
+                "y": 0,
+                "scale": 0.96,
+                "rotation": -1,
+                "opacity": 1
+              },
+              "to": {
+                "x": 0,
+                "y": -8,
+                "scale": 1.05,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 4.2,
+              "ease": "power2.inOut"
+            }
           },
           "depthLayers": [
             "dark server-chamber environment",
@@ -33,7 +51,12 @@
             "memory-rail",
             "reuse-packet"
           ],
-          "negativeSpace": "Keep lower quarter free for word-synced captions; labels appear beside the rail, never over the cartridge."
+          "negativeSpace": "Keep lower quarter free for word-synced captions; labels appear beside the rail, never over the cartridge.",
+          "environment": {
+            "atmosphere": "A dark data chamber with suspended dust, thin light shafts and a deep violet horizon.",
+            "background": "#100821",
+            "accent": "#a3e635"
+          }
         },
         "visualEvent": {
           "setup": "A long prompt cartridge floats outside an empty memory rail.",
@@ -49,12 +72,18 @@
             "geometry": {
               "x": 0.34,
               "y": 0.48,
-              "scale": 1.1
+              "scale": 1.1,
+              "width": 0.25,
+              "height": 0.13
             },
             "appearance": {
               "form": "translucent lavender cartridge filled with short data glyphs",
               "material": "glass and brushed metal",
-              "palette": "violet with chartreuse lock indicator"
+              "palette": "violet with chartreuse lock indicator",
+              "primitive": "packet",
+              "color": "#c084fc",
+              "accent": "#a3e635",
+              "label": "STATIC PROMPT"
             },
             "motionRole": "Slides from left, rotates into the rail, locks with a physical snap."
           },
@@ -66,12 +95,18 @@
             "geometry": {
               "x": 0.55,
               "y": 0.52,
-              "scale": 1
+              "scale": 1,
+              "width": 0.72,
+              "height": 0.12
             },
             "appearance": {
               "form": "long illuminated glass rail with empty slots",
               "material": "transparent glass",
-              "palette": "deep purple with violet edge lights"
+              "palette": "deep purple with violet edge lights",
+              "primitive": "rail",
+              "color": "#7c3aed",
+              "accent": "#c084fc",
+              "label": "MEMORY RAIL"
             },
             "motionRole": "Rails illuminate slot-by-slot as the cartridge docks."
           },
@@ -83,12 +118,18 @@
             "geometry": {
               "x": 0.78,
               "y": 0.63,
-              "scale": 0.7
+              "scale": 0.7,
+              "width": 0.18,
+              "height": 0.1
             },
             "appearance": {
               "form": "small chartreuse packet with trailing particles",
               "material": "light beam",
-              "palette": "lime and white"
+              "palette": "lime and white",
+              "primitive": "packet",
+              "color": "#a3e635",
+              "accent": "#ffffff",
+              "label": "NEW REQUEST"
             },
             "motionRole": "Moves along the rail and exits through a fast side path after the cache hit."
           }
@@ -113,7 +154,40 @@
             "soundCue": {
               "type": "mechanical-lock",
               "purpose": "A tactile latch sound marks successful storage."
-            }
+            },
+            "animation": {
+              "from": {
+                "x": -230,
+                "y": 0,
+                "scale": 0.82,
+                "rotation": -14,
+                "opacity": 0
+              },
+              "to": {
+                "x": 0,
+                "y": 0,
+                "scale": 1,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 1.4,
+              "ease": "back.out"
+            },
+            "reactionMotions": [
+              {
+                "target": "memory-rail",
+                "from": {
+                  "scale": 0.9,
+                  "opacity": 0.55
+                },
+                "to": {
+                  "scale": 1.04,
+                  "opacity": 1
+                },
+                "duration": 0.5,
+                "ease": "power2.out"
+              }
+            ]
           },
           {
             "trigger": {
@@ -135,7 +209,51 @@
             "soundCue": {
               "type": "fast-whoosh",
               "purpose": "A short whoosh emphasizes the low-latency reuse path."
-            }
+            },
+            "animation": {
+              "from": {
+                "x": -80,
+                "y": 35,
+                "scale": 0.7,
+                "rotation": 0,
+                "opacity": 0
+              },
+              "to": {
+                "x": 180,
+                "y": -10,
+                "scale": 0.88,
+                "rotation": 5,
+                "opacity": 1
+              },
+              "duration": 1.1,
+              "ease": "power3.out"
+            },
+            "reactionMotions": [
+              {
+                "target": "prompt-cartridge",
+                "from": {
+                  "scale": 1,
+                  "opacity": 1
+                },
+                "to": {
+                  "scale": 1.02,
+                  "opacity": 1
+                },
+                "duration": 0.35,
+                "ease": "sine.inOut"
+              },
+              {
+                "target": "memory-rail",
+                "from": {
+                  "opacity": 0.8
+                },
+                "to": {
+                  "opacity": 1
+                },
+                "duration": 0.4,
+                "ease": "power2.out"
+              }
+            ]
           }
         ],
         "audio": {
