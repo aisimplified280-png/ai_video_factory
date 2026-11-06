@@ -145,7 +145,6 @@ export function renderDynamicSceneHtml(scene, sceneIndex) {
     throw new Error(`Scene ${sceneIndex + 1} is missing a renderable dynamic sceneDirection.`);
   }
   const background = color(d.composition?.environment?.background, "#100821");
-  const atmosphere = esc(d.composition?.environment?.atmosphere || d.visualIntent);
   const elements = d.elements.map((el, i) => elementSvg(el, i, sceneIndex)).join("\n");
   return `
     <div class="dynamic-scene-world" role="img" aria-label="${esc(d.visualIntent)}">
@@ -158,23 +157,12 @@ export function renderDynamicSceneHtml(scene, sceneIndex) {
           <marker id="dyn-arrow-${sceneIndex}" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
             <path d="M0,0 L12,6 L0,12 Z" fill="#a3e635"/>
           </marker>
-          <radialGradient id="dyn-bg-${sceneIndex}">
-            <stop offset="0%" stop-color="#342052"/>
-            <stop offset="100%" stop-color="${background}"/>
-          </radialGradient>
         </defs>
-        <rect width="1080" height="1920" fill="url(#dyn-bg-${sceneIndex})"/>
+        <rect width="1080" height="1920" fill="${background}"/>
         <g class="dynamic-camera" id="dynamic-camera-${sceneIndex}">
-          <path d="M0 1430 Q540 1120 1080 1430" stroke="#c084fc" stroke-opacity=".15" stroke-width="2" fill="none"/>
-          <path d="M0 1580 Q540 1270 1080 1580" stroke="#a3e635" stroke-opacity=".1" stroke-width="2" fill="none"/>
-          <g class="dynamic-atmosphere" opacity=".22">
-            <circle cx="120" cy="160" r="90" fill="#a855f7" filter="url(#dyn-glow-${sceneIndex})"/>
-            <circle cx="930" cy="1480" r="150" fill="#65a30d" filter="url(#dyn-glow-${sceneIndex})"/>
-          </g>
           ${elements}
         </g>
       </svg>
-      <div class="dynamic-atmosphere-note" aria-hidden="true">${atmosphere}</div>
     </div>
   `;
 }
