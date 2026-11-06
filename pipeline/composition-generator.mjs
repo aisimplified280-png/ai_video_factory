@@ -640,7 +640,15 @@ export async function generateComposition(compDir, projectData) {
     const align = ["left", "center", "right"].includes(placement.align) ? placement.align : "center";
     const x = clamp(placement.x, 5, 95, 50);
     const y = clamp(placement.y, 5, 95, 87);
-    const maxWidth = clamp(placement.maxWidth, 240, 1080, 900);
+    const requestedMaxWidth = clamp(placement.maxWidth, 240, 1080, 900);
+    const availableWidth = align === "left"
+      ? (100 - x) * 10.8
+      : align === "right"
+        ? x * 10.8
+        : Math.min(x, 100 - x) * 21.6;
+    const maxWidth = Math.max(240, Math.min(requestedMaxWidth, availableWidth));
+    const translateX = align === "left" ? "0%" : align === "right" ? "-100%" : "-50%";
+    const justify = align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center";
     const fontSize = clamp(style.fontSize, 18, 90, 46);
     const fontWeight = clamp(style.fontWeight, 400, 900, 800);
     const ink = color(style.color, "#ffffff");
@@ -648,7 +656,7 @@ export async function generateComposition(compDir, projectData) {
     const activeBackground = style.activeBackgroundColor === "transparent"
       ? "transparent"
       : color(style.activeBackgroundColor, "transparent");
-    return `--caption-x:${x}%;--caption-y:${y}%;--caption-align:${align};--caption-width:${maxWidth}px;--caption-size:${fontSize}px;--caption-weight:${fontWeight};--caption-ink:${ink};--caption-highlight:${highlight};--caption-active-bg:${activeBackground};`;
+    return `--caption-x:${x}%;--caption-y:${y}%;--caption-align:${align};--caption-justify:${justify};--caption-translate-x:${translateX};--caption-width:${maxWidth}px;--caption-size:${fontSize}px;--caption-weight:${fontWeight};--caption-ink:${ink};--caption-highlight:${highlight};--caption-active-bg:${activeBackground};`;
   }
 
   // Build exact word captions. Dynamic projects receive scene-specific placement/style,
@@ -1467,11 +1475,11 @@ export async function generateComposition(compDir, projectData) {
         display: none;
         left: var(--caption-x, 50%);
         top: var(--caption-y, 87%);
-        transform: translate(-50%, -50%);
+        transform: translate(var(--caption-translate-x, -50%), -50%);
         width: min(var(--caption-width, 900px), 92vw);
         max-width: var(--caption-width, 900px);
         flex-wrap: wrap;
-        justify-content: var(--caption-align, center);
+        justify-content: var(--caption-justify, center);
         text-align: var(--caption-align, center);
         gap: 8px 12px;
       }
