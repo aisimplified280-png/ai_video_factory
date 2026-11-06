@@ -20,7 +20,9 @@ try {
   // Silent fallback if .env is not present
 }
 
-export const HYPERFRAMES_BIN = path.join(ROOT_DIR, ".favstash-studio", "runtime", "node_modules", ".bin", "hyperframes.cmd");
+// Windows npm shims use .cmd; Linux/macOS use the extensionless executable.
+const hyperframesExecutable = process.platform === "win32" ? "hyperframes.cmd" : "hyperframes";
+export const HYPERFRAMES_BIN = path.join(ROOT_DIR, ".favstash-studio", "runtime", "node_modules", ".bin", hyperframesExecutable);
 export const SFX_SYNC_BIN = path.join(ROOT_DIR, ".favstash-studio", "skills-source", "skills", "3-editing", "edit-video", "scripts", "sfx-sync.mjs");
 export const SFX_DIR = path.join(ROOT_DIR, "assets", "sfx");
 
