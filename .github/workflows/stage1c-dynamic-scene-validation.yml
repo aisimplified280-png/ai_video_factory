@@ -25,8 +25,28 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Check JavaScript syntax
+        run: |
+          for file in \
+            pipeline/audio-generator.mjs \
+            pipeline/composition-generator.mjs \
+            pipeline/dynamic-scene-gate.mjs \
+            pipeline/dynamic-scene-renderer.mjs \
+            pipeline/make-short.mjs \
+            pipeline/render-and-mux.mjs \
+            pipeline/storyboard-planner.mjs \
+            pipeline/validate-dynamic-scene.mjs \
+            pipeline/visual-linter.mjs; do
+            node --check "$file"
+          done
+
+      - name: Check Python syntax
+        run: python -m py_compile pipeline/tts-exact-aligner.py
+
       - name: Run offline Node test suite
         run: node --test tests/*.test.mjs
 
-      - name: Validate directed dynamic-scene example
-        run: node pipeline/validate-dynamic-scene.mjs examples/dynamic-scene-plan.example.json
+      - name: Validate directed dynamic-scene examples
+        run: |
+          node pipeline/validate-dynamic-scene.mjs examples/dynamic-scene-plan.example.json
+          node pipeline/validate-dynamic-scene.mjs examples/dynamic-scene-proof.json
