@@ -14,6 +14,7 @@ test("renders original SVG scene elements without cards or slide containers", ()
   assert.match(html, /<svg/);
   assert.match(html, /id="prompt-cartridge"/);
   assert.match(html, /id="prompt-cartridge-motion"/);
+  assert.match(html, /transform-box: fill-box; transform-origin: center center;/);
   assert.match(html, /id="memory-rail"/);
   assert.match(html, /id="reuse-packet"/);
   assert.doesNotMatch(html, /collage-hero-card|purple-badge|takeaway-collage-card/);
