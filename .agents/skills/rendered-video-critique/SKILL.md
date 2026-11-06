@@ -54,3 +54,22 @@ Run automated checks via `pipeline/qa-gate.mjs`, `pipeline/visual-linter.mjs`, a
 - `motion-contact-sheet.png` (3 columns: Entrance | Action | Payoff x 4 rows) and `cover-frame.png` exist in `exports/`.
 - `visual-critique-report.json` generated with ranked polish checklist and score >= 85.
 - Multi-moment inspection confirms genuine element-level motion and cause-and-effect responses.
+
+
+## Stage 1C — Creative Gate: Reject Slide-Deck Output
+
+The technical MP4 gate is not sufficient. A technically valid export fails creative QA if it looks like a slide deck.
+
+For every scene, inspect the actual rendered entrance, action and payoff frames and ask:
+1. Does the scene visually demonstrate the spoken idea, rather than repeat its words?
+2. Is the focal subject specific to this scene?
+3. Does something meaningful happen to the subject or its environment?
+4. Does the camera movement support comprehension?
+5. Does each asset participate in the explanation or have an explicit contextual purpose?
+6. Are captions positioned without obscuring the visual event?
+7. Are SFX synchronized to actual impacts/movement/reveals?
+8. Does the transition connect ideas or deliberately separate them?
+
+Fail the creative gate for repeated card/slide compositions, static wallpaper, text-only scenes, decorative icons/badges, generic fades as the only movement, redundant assets, filler scenes or unmotivated sound effects. A unique background color or different title does not make a scene unique.
+
+Every new scene must have its own composition signature and a clear setup/action/payoff. Repeated signatures require a written narrative-continuity reason. Keep the technical QA result and creative QA result separate; both must pass before release.
