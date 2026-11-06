@@ -1206,6 +1206,11 @@ export async function generateComposition(compDir, projectData) {
       // Hard-kill the inner visual layer at its clip boundary for deterministic random-access seeking.
       gsapTimelineScript += `
         tl.set("#scene-motion-${idx}", { opacity: 0 }, ${(startT + duration).toFixed(3)});
+        tl.call(() => {
+          document.querySelectorAll(".sub-scene").forEach((el) => el.classList.remove("active"));
+          const target = document.getElementById("sub-scene-${idx}");
+          if (target) target.classList.add("active");
+        }, null, ${startT});
       `;
     } else if (isFirst) {
       gsapTimelineScript += `
