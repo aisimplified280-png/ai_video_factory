@@ -345,7 +345,10 @@ async function main() {
 
   // Validate all dynamic scene directions before voice generation or any asset/provider work.
   if (scriptData.productionMode === "dynamic") {
-    const creativeGate = assertDynamicScenePlan(scriptData);
+    const sfxManifestPath = path.join(ROOT_DIR, "assets", "sfx", "manifest.json");
+    const sfxManifest = JSON.parse(await fs.readFile(sfxManifestPath, "utf8"));
+    const allowedSfxIds = new Set((sfxManifest.sounds || []).map((sound) => sound.id));
+    const creativeGate = assertDynamicScenePlan(scriptData, { allowedSfxIds });
     console.log(`[Dynamic Scene Gate] PASS — ${creativeGate.sceneCount} scenes / ${creativeGate.uniqueCompositionCount} unique compositions.`);
     scriptData.scenes = scriptData.scenes.map((scene) => ({
       ...scene,
