@@ -290,7 +290,7 @@
           }
         },
         "transition": {
-          "type": "match-cut",
+          "type": "cross-dissolve",
           "continuityReason": "The outgoing request packet becomes the entering fast-path packet in the next scene."
         }
       }
