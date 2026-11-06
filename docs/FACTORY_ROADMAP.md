@@ -9,16 +9,17 @@ Make the existing ai_video_factory repository the durable orchestration layer fo
 - [x] Audit connected app/tool catalogues and live balances where available.
 - [x] Add Porter research, creative profiles, audio actions and account status.
 - [x] Save persistent inventory in Notion.
-- [ ] Add provider capability and cost-preflight registry.
-- [ ] Add provider-independent project manifest and timeline schema.
-- [ ] Add channel profile and export presets without credentials.
+- [x] Add initial provider inventory, roadmap and provider-independent project schema on branch stage1/provider-registry.
 
 ## Stage 1B — Assembly proof
-- [ ] Create a 30–45 second explanatory Short using approved existing/free assets first.
-- [ ] Test AI Producer; confirm free allowance, export URL and no-watermark status before use.
-- [ ] Test InVideo manual timeline and verify account's 1080p/no-watermark export.
-- [ ] Test local FFmpeg/HyperFrames assembly using the existing pipeline.
-- [ ] Retrieve, play and inspect final MP4.
+- [x] Build a disposable deterministic FFmpeg smoke test using synthetic visuals, synthetic voice and a quiet audio bed.
+- [x] Render four sequential scenes into an 18-second 1080x1920 MP4.
+- [x] Verify H.264, 30fps, AAC stereo 48kHz, full decode, no black segments >=0.5s, SRT and cover frame.
+- [ ] Import the local smoke-test MP4 into InVideo and verify hosted timeline/export. Project and 1080x1920/30fps timeline created; upload slot issued. Runtime could not PUT local bytes to signed upload endpoint; use InVideo project UI to upload the attached/downloaded MP4.
+- [ ] Confirm AI Producer export from an actual uploaded clip; account price table shows most generation/editing pipeline actions free for a limited time, export free, and scene restyles paid at 6 credits per generated second. No projects existed at inspection.
+- [ ] Confirm Adobe export entitlement from an actual account workflow.
+- [ ] Compare local FFmpeg/HyperFrames assembly against the existing pipeline.
+- [ ] Retrieve, play and inspect final hosted MP4.
 
 ## Stage 1C — Scene and audio
 - [ ] Test PREVIS scene export and file handoff.
@@ -28,10 +29,10 @@ Make the existing ai_video_factory repository the durable orchestration layer fo
 - [ ] Store asset provenance and licence evidence per scene.
 
 ## Stage 1D — Quality and packaging
-- [ ] Verify 1080x1920 vertical or 1920x1080 horizontal.
-- [ ] Verify H.264 MP4, AAC, 48kHz, 30fps target.
-- [ ] Check black frames, clipping, missing media, subtitle drift and watermarks.
-- [ ] Generate SRT, thumbnail, title, description, hashtags and tags.
+- [x] Define technical target: 1080x1920 vertical or 1920x1080 horizontal; H.264 MP4, AAC stereo 48kHz, 30fps.
+- [x] Produce SRT and cover frame in smoke test.
+- [ ] Add black-frame, clipping, missing media, subtitle drift and watermark checks to final QA.
+- [ ] Generate final thumbnail, title, description, hashtags and tags.
 - [ ] Keep publishing manual/private until explicit approval.
 
 ## Stage 2 — Research engine
