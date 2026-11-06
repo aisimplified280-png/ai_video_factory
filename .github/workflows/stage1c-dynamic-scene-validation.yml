@@ -77,10 +77,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install FFmpeg
+      - name: Install FFmpeg from runner package index
         run: |
-          timeout 300 sudo apt-get update
-          timeout 300 sudo apt-get install -y ffmpeg
+          timeout 180 sudo apt-get install -y ffmpeg
           command -v ffmpeg
           command -v ffprobe
 
