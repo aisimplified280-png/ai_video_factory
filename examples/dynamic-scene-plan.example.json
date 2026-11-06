@@ -153,7 +153,9 @@
             },
             "soundCue": {
               "type": "mechanical-lock",
-              "purpose": "A tactile latch sound marks successful storage."
+              "purpose": "A tactile latch sound marks successful storage.",
+              "assetKey": "latch",
+              "offsetSeconds": 0.4
             },
             "animation": {
               "from": {
@@ -208,7 +210,9 @@
             },
             "soundCue": {
               "type": "fast-whoosh",
-              "purpose": "A short whoosh emphasizes the low-latency reuse path."
+              "purpose": "A short whoosh emphasizes the low-latency reuse path.",
+              "assetKey": "zoom-swish",
+              "offsetSeconds": 2.1
             },
             "animation": {
               "from": {
