@@ -14,7 +14,7 @@ function makeScene(id, signature = id) {
       composition: {
         signature,
         shotType: "tracking macro",
-        camera: { move: "tracking", target: `${id}-subject`, path: "Follow the mechanism as it changes state." },
+        camera: { move: "tracking", target: `${id}-subject`, path: "Follow the mechanism as it changes state.", animation: { from: { x: -10, y: 0, scale: 0.96 }, to: { x: 0, y: -5, scale: 1.03 }, duration: 2, ease: "power2.out" } },
         depthLayers: ["environment", "moving mechanism", "focal object"],
         focalHierarchy: [`${id}-subject`, `${id}-reactor`],
         negativeSpace: "Upper left holds only short timed captions."
@@ -35,6 +35,8 @@ function makeScene(id, signature = id) {
         duration: 1.2,
         pathOrChange: "Travels right and locks into the receiver.",
         purpose: "Make the mechanism visible.",
+        animation: { from: { x: -30, y: 0, scale: 0.8, opacity: 0 }, to: { x: 0, y: 0, scale: 1, opacity: 1 }, duration: 1.2, ease: "power3.out" },
+        reactionMotions: [{ target: `${id}-reactor`, from: { scale: 0.8, opacity: 0.6 }, to: { scale: 1, opacity: 1 }, duration: 0.4, ease: "power2.out" }],
         causeAndEffect: { reacts: [`${id}-reactor`], reaction: "Receiver illuminates and rotates." },
         soundCue: { type: "impact", purpose: "Mark the contact point." }
       }],
