@@ -13,6 +13,7 @@ import {
 } from "./qa-gate.mjs";
 import { generateCreditsReport } from "./rights-gate.mjs";
 import { critiqueRenderedSceneMoments } from "./visual-critique.mjs";
+import { buildContactSheetFilter } from "./contact-sheet.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -175,42 +176,32 @@ export async function renderAndMux(projectDir, projectData) {
     motionFrameFiles.push(entPath, midPath, payPath);
   }
 
-  // Combine into traditional 2x2 midpoint contact sheet
-  if (sceneFrameFiles.length >= 4) {
-    await runCmd("ffmpeg", [
-      "-v", "error",
-      "-y",
-      "-i", sceneFrameFiles[0],
-      "-i", sceneFrameFiles[1],
-      "-i", sceneFrameFiles[2],
-      "-i", sceneFrameFiles[3],
-      "-filter_complex", "[0:v][1:v]hstack[top];[2:v][3:v]hstack[bottom];[top][bottom]vstack,scale=1080:1920",
-      contactSheetPng,
-    ]);
-  } else if (sceneFrameFiles.length >= 2) {
-    await runCmd("ffmpeg", [
-      "-v", "error",
-      "-y",
-      "-i", sceneFrameFiles[0],
-      "-i", sceneFrameFiles[1],
-      "-filter_complex", "[0:v][1:v]vstack,scale=1080:1920",
-      contactSheetPng,
-    ]);
-  }
-
-  // Combine into 3-column x N-row Motion Choreography Diagnostic Sheet
-  if (motionFrameFiles.length === 12) {
-    // 4 scenes x 3 moments (Entrance | Action | Payoff)
+  // Build an all-scenes midpoint contact sheet (3 columns; remaining cells padded).
+  if (sceneFrameFiles.length >= 2) {
+    const grid = buildContactSheetFilter(sceneFrameFiles.length, { columns: 3 });
     const ffmpegInputs = [];
-    for (const f of motionFrameFiles) {
-      ffmpegInputs.push("-i", f);
-    }
+    for (const frame of sceneFrameFiles) ffmpegInputs.push("-i", frame);
     await runCmd("ffmpeg", [
       "-v", "error",
       "-y",
       ...ffmpegInputs,
-      "-filter_complex",
-      "[0:v][1:v][2:v]hstack=3[r0];[3:v][4:v][5:v]hstack=3[r1];[6:v][7:v][8:v]hstack=3[r2];[9:v][10:v][11:v]hstack=3[r3];[r0][r1][r2][r3]vstack=4,scale=1080:1920",
+      "-filter_complex", grid.filterComplex,
+      "-map", "[out]",
+      contactSheetPng,
+    ]);
+  }
+
+  // Build every scene's Entrance | Action | Payoff row in the motion diagnostic sheet.
+  if (motionFrameFiles.length >= 3) {
+    const grid = buildContactSheetFilter(motionFrameFiles.length, { columns: 3 });
+    const ffmpegInputs = [];
+    for (const frame of motionFrameFiles) ffmpegInputs.push("-i", frame);
+    await runCmd("ffmpeg", [
+      "-v", "error",
+      "-y",
+      ...ffmpegInputs,
+      "-filter_complex", grid.filterComplex,
+      "-map", "[out]",
       motionContactSheetPng,
     ]);
   }
