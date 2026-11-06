@@ -26,7 +26,7 @@ Every scene includes `id`, `voiceText` and `sceneDirection`:
 - `choreography`: spoken-phrase/timecode triggers, target element, visible change, animation, cause/effect reaction motions and an SFX key/purpose/timing.
 - `audio`: exact voice segment, ambience direction, music direction and ducking direction.
 - `captions`: timing mode, emphasis, anchor/treatment and an actual per-scene placement/style.
-- `transition`: motivated transition type and continuity reason.
+- `transition`: one of the implemented types (`hard-cut`, `cross-dissolve`, or `camera-continuation`) plus the story reason. Unsupported transitions fail validation rather than being silently approximated.
 
 ### Composition and camera
 
