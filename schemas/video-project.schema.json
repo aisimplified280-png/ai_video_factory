@@ -172,6 +172,9 @@
               "generated",
               "rejected"
             ]
+          },
+          "sceneDirection": {
+            "$ref": "#/$defs/dynamicSceneDirection"
           }
         }
       }
@@ -294,6 +297,13 @@
           }
         }
       }
+    },
+    "productionMode": {
+      "enum": [
+        "dynamic",
+        "legacy"
+      ],
+      "default": "dynamic"
     }
   },
   "$defs": {
@@ -322,6 +332,739 @@
           "type": "string"
         }
       }
+    },
+    "dynamicSceneDirection": {
+      "type": "object",
+      "required": [
+        "narrativePurpose",
+        "visualIntent",
+        "visualMetaphor",
+        "primarySubject",
+        "composition",
+        "visualEvent",
+        "elements",
+        "choreography",
+        "audio",
+        "captions",
+        "transition"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "narrativePurpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visualIntent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visualMetaphor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "primarySubject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "composition": {
+          "type": "object",
+          "required": [
+            "signature",
+            "shotType",
+            "camera",
+            "depthLayers",
+            "focalHierarchy",
+            "negativeSpace"
+          ],
+          "properties": {
+            "signature": {
+              "type": "string",
+              "minLength": 1
+            },
+            "shotType": {
+              "type": "string",
+              "minLength": 1
+            },
+            "camera": {
+              "type": "object",
+              "required": [
+                "move",
+                "target",
+                "path",
+                "animation"
+              ],
+              "properties": {
+                "move": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "animation": {
+                  "type": "object",
+                  "required": [
+                    "from",
+                    "to",
+                    "duration"
+                  ],
+                  "properties": {
+                    "from": {
+                      "type": "object",
+                      "minProperties": 1,
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "scale": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        "rotation": {
+                          "type": "number"
+                        },
+                        "opacity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "to": {
+                      "type": "object",
+                      "minProperties": 1,
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "scale": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        "rotation": {
+                          "type": "number"
+                        },
+                        "opacity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "duration": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "ease": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "depthLayers": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "type": "string"
+              }
+            },
+            "focalHierarchy": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            },
+            "negativeSpace": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "object",
+              "properties": {
+                "background": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "atmosphere": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "visualEvent": {
+          "type": "object",
+          "required": [
+            "setup",
+            "action",
+            "payoff"
+          ],
+          "properties": {
+            "setup": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            },
+            "payoff": {
+              "type": "string"
+            }
+          }
+        },
+        "elements": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "role",
+              "purpose",
+              "source",
+              "geometry",
+              "appearance",
+              "motionRole"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "role": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "source": {
+                "enum": [
+                  "procedural",
+                  "original",
+                  "generated",
+                  "licensed",
+                  "captured"
+                ]
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "properties": {
+                  "x": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "y": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "width": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1
+                  },
+                  "height": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1
+                  },
+                  "scale": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "rotation": {
+                    "type": "number"
+                  },
+                  "endX": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "endY": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              },
+              "appearance": {
+                "type": "object",
+                "required": [
+                  "primitive"
+                ],
+                "properties": {
+                  "primitive": {
+                    "enum": [
+                      "orb",
+                      "ring",
+                      "capsule",
+                      "packet",
+                      "rail",
+                      "beam",
+                      "node",
+                      "panel",
+                      "label",
+                      "particle-field",
+                      "image"
+                    ]
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-fA-F]{6}$"
+                  },
+                  "accent": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-fA-F]{6}$"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "material": {
+                    "type": "string"
+                  },
+                  "assetPath": {
+                    "type": "string"
+                  }
+                }
+              },
+              "motionRole": {
+                "type": "string"
+              },
+              "licenseEvidence": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "choreography": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "trigger",
+              "target",
+              "event",
+              "duration",
+              "pathOrChange",
+              "purpose",
+              "animation",
+              "causeAndEffect",
+              "reactionMotions",
+              "soundCue"
+            ],
+            "properties": {
+              "trigger": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "anchor"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "spoken-phrase",
+                      "timecode"
+                    ]
+                  },
+                  "anchor": {
+                    "type": "string"
+                  }
+                }
+              },
+              "target": {
+                "type": "string"
+              },
+              "event": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "pathOrChange": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "animation": {
+                "type": "object",
+                "required": [
+                  "from",
+                  "to",
+                  "duration"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "scale": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "rotation": {
+                        "type": "number"
+                      },
+                      "opacity": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "to": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "scale": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "rotation": {
+                        "type": "number"
+                      },
+                      "opacity": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "duration": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "ease": {
+                    "type": "string"
+                  }
+                }
+              },
+              "causeAndEffect": {
+                "type": "object",
+                "required": [
+                  "reacts",
+                  "reaction"
+                ],
+                "properties": {
+                  "reacts": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "reaction": {
+                    "type": "string"
+                  }
+                }
+              },
+              "reactionMotions": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "target",
+                    "from",
+                    "to",
+                    "duration"
+                  ],
+                  "properties": {
+                    "target": {
+                      "type": "string"
+                    },
+                    "from": {
+                      "type": "object",
+                      "minProperties": 1,
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "scale": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        "rotation": {
+                          "type": "number"
+                        },
+                        "opacity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "to": {
+                      "type": "object",
+                      "minProperties": 1,
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "scale": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        "rotation": {
+                          "type": "number"
+                        },
+                        "opacity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "duration": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "ease": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "soundCue": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "assetKey",
+                  "offsetSeconds",
+                  "purpose"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "assetKey": {
+                    "type": "string"
+                  },
+                  "offsetSeconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "purpose": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "audio": {
+          "type": "object",
+          "required": [
+            "voiceSegment",
+            "ambience",
+            "musicCue",
+            "ducking"
+          ],
+          "properties": {
+            "voiceSegment": {
+              "type": "string"
+            },
+            "ambience": {
+              "type": "string"
+            },
+            "musicCue": {
+              "type": "string"
+            },
+            "ducking": {
+              "type": "string"
+            }
+          }
+        },
+        "captions": {
+          "type": "object",
+          "required": [
+            "mode",
+            "anchor",
+            "treatment",
+            "placement",
+            "style"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "word-synced",
+                "phrase-synced"
+              ]
+            },
+            "emphasis": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "anchor": {
+              "type": "string"
+            },
+            "treatment": {
+              "type": "string"
+            },
+            "placement": {
+              "type": "object",
+              "required": [
+                "x",
+                "y",
+                "align",
+                "maxWidth"
+              ],
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "minimum": 5,
+                  "maximum": 95
+                },
+                "y": {
+                  "type": "number",
+                  "minimum": 5,
+                  "maximum": 95
+                },
+                "align": {
+                  "enum": [
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "maxWidth": {
+                  "type": "number",
+                  "minimum": 240,
+                  "maximum": 1080
+                }
+              }
+            },
+            "style": {
+              "type": "object",
+              "required": [
+                "fontSize",
+                "fontWeight",
+                "color",
+                "highlightColor",
+                "activeBackgroundColor"
+              ],
+              "properties": {
+                "fontSize": {
+                  "type": "number",
+                  "minimum": 18,
+                  "maximum": 90
+                },
+                "fontWeight": {
+                  "type": "number",
+                  "minimum": 400,
+                  "maximum": 900
+                },
+                "color": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$"
+                },
+                "highlightColor": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$"
+                },
+                "activeBackgroundColor": {
+                  "oneOf": [
+                    {
+                      "const": "transparent"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "transition": {
+          "type": "object",
+          "required": [
+            "type",
+            "continuityReason"
+          ],
+          "properties": {
+            "type": {
+              "enum": [
+                "hard-cut",
+                "cross-dissolve",
+                "camera-continuation"
+              ]
+            },
+            "continuityReason": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "productionMode": {
+            "const": "dynamic"
+          }
+        },
+        "required": [
+          "productionMode"
+        ]
+      },
+      "then": {
+        "properties": {
+          "scenes": {
+            "items": {
+              "required": [
+                "sceneDirection"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
 }
