@@ -265,7 +265,7 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
     let assignedAsset = null;
     let assetDecision = "bespoke-procedural-svg";
     let assetDecisionReason = "Scene uses bespoke procedural graphics.";
-    const allowsAssets = visualMode !== "subscribe-outro" && visualMode !== "code";
+    const allowsAssets = scriptData.productionMode !== "dynamic" && visualMode !== "subscribe-outro" && visualMode !== "code";
     let beatEvaluation = null;
 
     if (assetRegistry && allowsAssets) {
@@ -330,6 +330,7 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       visualBody: scene.visualBody || "",
       badge: scene.badge || "METHODOLOGY",
       source: scene.source || null,
+      sceneDirection: scene.sceneDirection || null,
       assetDecision,
       assetDecisionReason,
       assignedAssetId: assignedAsset ? assignedAsset.assetId : null,
@@ -383,7 +384,8 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
   const topicStrategy = selectTopicVisualStrategy(scriptData.topic || scriptData.title, scriptData);
 
   const storyboard = {
-    version: 2,
+    version: scriptData.productionMode === "dynamic" ? 3 : 2,
+    productionMode: scriptData.productionMode || "legacy",
     id: scriptData.id,
     topic: scriptData.topic || scriptData.title,
     visualStrategy: topicStrategy.strategy,
