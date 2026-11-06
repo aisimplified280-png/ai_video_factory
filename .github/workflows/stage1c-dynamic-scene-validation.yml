@@ -77,10 +77,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install FFmpeg
+      - name: Confirm runner FFmpeg
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          command -v ffmpeg
+          command -v ffprobe
+          ffmpeg -version
 
       - name: Install pinned HyperFrames and GSAP runtime
         run: npm install --prefix .favstash-studio/runtime --no-audit --no-fund
