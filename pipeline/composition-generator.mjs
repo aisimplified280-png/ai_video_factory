@@ -618,7 +618,9 @@ export async function generateComposition(compDir, projectData) {
 
   // Build Kinetic Subtitle Containers in safe zone
   const subtitleScenesHtml = scenes.map((scene, idx) => {
-    const words = scene.voiceText.trim().split(/\s+/);
+    const words = Array.isArray(scene.wordTimings) && scene.wordTimings.length
+      ? scene.wordTimings.map((word) => word.text)
+      : scene.voiceText.trim().split(/\s+/);
     const wordsHtml = words
       .map((w, wIdx) => `<span class="cap-word" id="w-${idx}-${wIdx}">${escapeHtml(w)}</span>`)
       .join(" ");
@@ -1229,12 +1231,15 @@ export async function generateComposition(compDir, projectData) {
     }
 
     // Kinetic word-by-word active captioning
-    const words = scene.voiceText.trim().split(/\s+/);
-    const wordDur = Math.max(0.18, duration / words.length);
+    const words = Array.isArray(scene.wordTimings) && scene.wordTimings.length
+      ? scene.wordTimings.map((word) => word.text)
+      : scene.voiceText.trim().split(/\s+/);
+    const wordDur = Math.max(0.18, duration / Math.max(1, words.length));
 
     words.forEach((w, wIdx) => {
-      const wStart = startT + (wIdx * wordDur);
-      const wEnd = wStart + (wordDur * 0.9);
+      const exactWord = scene.wordTimings?.[wIdx];
+      const wStart = Number.isFinite(exactWord?.startTime) ? exactWord.startTime : startT + (wIdx * wordDur);
+      const wEnd = Number.isFinite(exactWord?.endTime) ? exactWord.endTime : wStart + (wordDur * 0.9);
 
       gsapTimelineScript += `
         tl.to("#w-${idx}-${wIdx}", {
