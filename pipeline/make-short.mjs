@@ -418,6 +418,7 @@ async function main() {
       visualTitle: beat.visualTitle,
       visualBody: beat.visualBody,
       voiceText: beat.spokenLine,
+      wordTimings: beat.wordTimings,
       startTime: beat.startTime,
       endTime: beat.endTime,
       duration: beat.duration,
