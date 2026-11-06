@@ -5,7 +5,7 @@ import { validateDynamicScenePlan } from "../pipeline/dynamic-scene-gate.mjs";
 function makeScene(id, signature = id) {
   return {
     id,
-    voiceText: `Explain the ${id} mechanism.`,
+    voiceText: `Explain the ${id} mechanism as it changes state.`,
     sceneDirection: {
       narrativePurpose: `Show why ${id} matters.`,
       visualIntent: `The viewer sees ${id} change state.`,
@@ -41,7 +41,7 @@ function makeScene(id, signature = id) {
         soundCue: { type: "impact", assetKey: "latch", offsetSeconds: 0.3, purpose: "Mark the contact point." }
       }],
       audio: {
-        voiceSegment: `Explain the ${id} mechanism.`,
+        voiceSegment: `Explain the ${id} mechanism as it changes state.`,
         ambience: "Low mechanical room tone.",
         musicCue: "Subtle tension that resolves at payoff.",
         ducking: "Keep narration 6 dB above score and ambience."
@@ -86,4 +86,23 @@ test("dynamic scene gate rejects missing choreography and asset purpose", () => 
   assert.equal(result.passed, false);
   assert.ok(result.errors.some((item) => item.includes("motion event")));
   assert.ok(result.errors.some((item) => item.includes("explicit narrative purpose")));
+});
+
+test("dynamic scene gate rejects a spoken-phrase trigger absent from narration", () => {
+  const scene = makeScene("cache");
+  scene.sceneDirection.choreography[0].trigger.anchor = "never spoken";
+  const result = validateDynamicScenePlan({ productionMode: "dynamic", scenes: [scene] });
+  assert.equal(result.passed, false);
+  assert.ok(result.errors.some((item) => item.includes("does not occur in the narration")));
+});
+
+test("dynamic scene gate validates SFX keys against the curated sound library when supplied", () => {
+  const scene = makeScene("cache");
+  scene.sceneDirection.choreography[0].soundCue.assetKey = "unknown-sfx";
+  const result = validateDynamicScenePlan(
+    { productionMode: "dynamic", scenes: [scene] },
+    { allowedSfxIds: new Set(["latch", "zoom-swish"]) }
+  );
+  assert.equal(result.passed, false);
+  assert.ok(result.errors.some((item) => item.includes('unknown SFX asset "unknown-sfx"')));
 });
