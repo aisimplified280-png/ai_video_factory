@@ -396,6 +396,9 @@ async function main() {
   if (diversityLint.issues.length > 0) {
     console.warn(`[Diversity Lint Warnings]:`, diversityLint.issues);
   }
+  if (scriptData.productionMode === "dynamic" && !diversityLint.passed) {
+    throw new Error(`Dynamic creative release gate failed:\n${diversityLint.criticalIssues.join("\n")}`);
+  }
   console.log(`✓ Storyboard planned with ${storyboardData.beatsCount} beats.\n`);
 
   // Step 3: Build HTML & GSAP Composition (AI Simplified Lab Purple Collage Explainer)
