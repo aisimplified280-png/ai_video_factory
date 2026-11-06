@@ -362,7 +362,7 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
         cameraPush: true,
         staggerRate: 0.12,
       },
-      sfxCue: scene.sfx || (isFirst ? "hook-impact" : isLast ? "clean-ding" : "ui-pop"),
+      sfxCue: scriptData.productionMode === "dynamic" ? (scene.sfx || null) : (scene.sfx || (isFirst ? "hook-impact" : isLast ? "clean-ding" : "ui-pop")),
     };
 
     // Copy specialized metadata for diagrams, metaphors, or terminal
