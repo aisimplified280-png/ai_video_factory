@@ -416,7 +416,7 @@
             ],
             "soundCue": {
               "type": "scan-tick",
-              "assetKey": "synth-click-tick",
+              "assetKey": "tick",
               "offsetSeconds": 0.25,
               "purpose": "A restrained tick marks the precise match result."
             }
