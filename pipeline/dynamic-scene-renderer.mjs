@@ -131,7 +131,7 @@ function elementSvg(element, index, sceneIndex) {
     </defs>
     <g id="${id}" class="dyn-element" transform="${transform}" data-purpose="${esc(element.purpose)}">
       <title>${esc(element.purpose)}</title>
-      <g id="${id}-motion" class="dyn-motion">
+      <g id="${id}-motion" class="dyn-motion" style="transform-box: fill-box; transform-origin: center center;">
         ${shape}
       </g>
     </g>
