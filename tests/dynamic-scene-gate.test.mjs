@@ -46,7 +46,7 @@ function makeScene(id, signature = id) {
         musicCue: "Subtle tension that resolves at payoff.",
         ducking: "Keep narration 6 dB above score and ambience."
       },
-      captions: { mode: "word-synced", anchor: "lower third away from moving target", treatment: "Short phrase emphasis with high-contrast type." },
+      captions: { mode: "word-synced", anchor: "lower third away from moving target", treatment: "Short phrase emphasis with high-contrast type.", placement: { x: 50, y: 86, align: "center", maxWidth: 900 }, style: { fontSize: 44, fontWeight: 800, color: "#ffffff", highlightColor: "#a3e635", activeBackgroundColor: "transparent" } },
       transition: { type: "match-cut", continuityReason: "The moving subject's trajectory motivates the next shot." }
     }
   };
