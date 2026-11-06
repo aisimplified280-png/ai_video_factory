@@ -1265,14 +1265,14 @@ export async function generateComposition(compDir, projectData) {
     const wordDur = Math.max(0.18, duration / Math.max(1, words.length));
 
     const dynamicCaptionStyle = scene.sceneDirection?.captions?.style || {};
-    const baseCaptionColor = dynamicCaptionStyle.color && /^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$/.test(dynamicCaptionStyle.color)
-      ? dynamicCaptionStyle.color : "#ffffff";
+    const baseCaptionColor = scene.productionMode !== "dynamic" ? "#e2e8f0" : (dynamicCaptionStyle.color && /^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$/.test(dynamicCaptionStyle.color)
+      ? dynamicCaptionStyle.color : "#ffffff");
     const highlightCaptionColor = dynamicCaptionStyle.highlightColor && /^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$/.test(dynamicCaptionStyle.highlightColor)
       ? dynamicCaptionStyle.highlightColor : "#a3e635";
-    const activeCaptionBackground = dynamicCaptionStyle.activeBackgroundColor === "transparent"
+    const activeCaptionBackground = scene.productionMode !== "dynamic" ? "rgba(163, 230, 53, 0.18)" : (dynamicCaptionStyle.activeBackgroundColor === "transparent"
       ? "transparent"
       : (dynamicCaptionStyle.activeBackgroundColor && /^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$/.test(dynamicCaptionStyle.activeBackgroundColor)
-        ? dynamicCaptionStyle.activeBackgroundColor : "rgba(163, 230, 53, 0.18)");
+        ? dynamicCaptionStyle.activeBackgroundColor : "transparent"));
 
     words.forEach((w, wIdx) => {
       const exactWord = scene.wordTimings?.[wIdx];
@@ -1427,7 +1427,7 @@ export async function generateComposition(compDir, projectData) {
       .composition-root.dynamic-project .camera-viewport {
         transform: none;
       }
-      .scene-stage-dynamic {
+      .composition-root.dynamic-project .scene-stage-dynamic {
         top: 0;
         left: 0;
         width: 1080px;
