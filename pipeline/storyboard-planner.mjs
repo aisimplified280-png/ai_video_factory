@@ -328,7 +328,9 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       endTime: scene.endTime ?? (idx + 1) * 3.0,
       duration: scene.duration ?? 3.0,
       visualMode,
-      visualTitle: scene.visualTitle || scriptData.title,
+      visualTitle: scene.productionMode === "dynamic"
+        ? (scene.sceneDirection?.visualIntent || scene.visualTitle || scriptData.title)
+        : (scene.visualTitle || scriptData.title),
       visualBody: scene.visualBody || "",
       badge: scene.badge || "METHODOLOGY",
       source: scene.source || null,
@@ -427,7 +429,7 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
     topic: scriptData.topic || scriptData.title,
     visualStrategy: topicStrategy.strategy,
     strategyRationale: topicStrategy.rationale,
-    styleProfile: "ai_simplified_purple_collage",
+    styleProfile: scriptData.productionMode === "dynamic" ? "dynamic_scene_directed" : "ai_simplified_purple_collage",
     totalDuration: scriptData.totalDuration,
     beatsCount: beats.length,
     beats,
