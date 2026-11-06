@@ -49,3 +49,14 @@ Every scene must define a validated `sceneGraph` with:
 - Every beat contains actions with `causeAndEffect`, spoken phrase triggers, and `sfxCue` sound hooks.
 - Transition continuities link moving focal objects across adjacent beats.
 - `lintVisualDiversity()` passes with score >= 75.
+
+
+## Stage 1C — Dynamic Scene Requirement (overrides any older template guidance)
+
+The factory is not a slideshow or a presentation builder. For every new project, do not plan a sequence of card types or slide layouts. Start from the spoken idea and invent the shot.
+
+Every beat must carry a scene-specific `sceneDirection` matching `docs/DYNAMIC_SCENE_ENGINE_SPEC.md`: unique composition signature, camera plan, focal hierarchy, a visual event (setup/action/payoff), object-level choreography, asset purpose, voice segment, caption treatment, sound design and motivated transition.
+
+Do not copy a composition and swap the title/image/color. Reuse is allowed only for a story-driven return to a subject/state, explicitly documented as continuity. Reject passive stock wallpaper, decorative filler and motionless scenes. If the idea cannot be shown clearly, redesign the visual or omit the beat; do not make a slide.
+
+Voice, captions and action triggers must use the same sentence/word timing source. Every asset and sound cue must explain or reinforce something in the narration. Prefer original procedural animation and custom scene elements over generic stock imagery.
