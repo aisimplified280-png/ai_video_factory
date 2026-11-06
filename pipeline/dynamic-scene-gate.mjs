@@ -132,7 +132,7 @@ export function validateDynamicScenePlan(project) {
           if (!ids.has(id)) errors.push(`${prefix}: choreography event "${label}" reacts through undeclared element "${id}".`);
         });
       }
-      if (!isText(action?.soundCue?.type) || !isText(action?.soundCue?.purpose) || (action.soundCue.type !== "deliberate-silence" && !isText(action.soundCue.assetKey))) {
+      if (!isText(action?.soundCue?.type) || !isText(action?.soundCue?.purpose) || (action.soundCue.type !== "deliberate-silence" && (!isText(action.soundCue.assetKey) || !isFiniteNumber(action.soundCue.offsetSeconds) || action.soundCue.offsetSeconds < 0))) {
         errors.push(`${prefix}: choreography event "${label}" needs a purpose-led SFX assetKey or documented deliberate silence.`);
       }
     });
