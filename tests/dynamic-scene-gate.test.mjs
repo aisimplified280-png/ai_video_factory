@@ -25,8 +25,8 @@ function makeScene(id, signature = id) {
         payoff: "The target changes state."
       },
       elements: [
-        { id: `${id}-subject`, role: "focal subject", purpose: "Shows the main operation.", source: "procedural", geometry: { x: 0.5, y: 0.5 }, motionRole: "Travels into the target." },
-        { id: `${id}-reactor`, role: "reacting system", purpose: "Shows the result of the operation.", source: "original", geometry: { x: 0.75, y: 0.6 }, motionRole: "Changes state when the subject arrives." }
+        { id: `${id}-subject`, role: "focal subject", purpose: "Shows the main operation.", source: "procedural", geometry: { x: 0.5, y: 0.5, width: 0.2, height: 0.12 }, appearance: { primitive: "packet", color: "#c084fc", accent: "#a3e635", label: "CACHE" }, motionRole: "Travels into the target." },
+        { id: `${id}-reactor`, role: "reacting system", purpose: "Shows the result of the operation.", source: "original", geometry: { x: 0.75, y: 0.6, width: 0.18, height: 0.18 }, appearance: { primitive: "node", color: "#7c3aed", accent: "#a3e635", label: "RESULT" }, motionRole: "Changes state when the subject arrives." }
       ],
       choreography: [{
         trigger: { type: "spoken-phrase", anchor: "changes state" },
