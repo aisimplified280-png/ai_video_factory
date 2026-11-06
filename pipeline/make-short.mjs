@@ -412,6 +412,7 @@ async function main() {
     totalFrames: audioResult.totalFrames,
     fps: audioResult.fps,
     rawTimings: audioResult.rawTimings,
+    musicLicense: audioResult.musicLicense,
     scenes: storyboardData.beats.map((beat) => ({
       id: beat.beatId,
       productionMode: scriptData.productionMode || "legacy",
@@ -422,6 +423,7 @@ async function main() {
       visualBody: beat.visualBody,
       voiceText: beat.spokenLine,
       wordTimings: beat.wordTimings,
+      extraSfx: beat.extraSfx,
       startTime: beat.startTime,
       endTime: beat.endTime,
       duration: beat.duration,
