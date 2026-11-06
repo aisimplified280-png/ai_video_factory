@@ -322,6 +322,7 @@ export async function planStoryboard(projectDir, scriptData, assetRegistry) {
       narrativePurpose,
       viewerQuestion,
       spokenLine: scene.voiceText,
+      wordTimings: scene.wordTimings || [],
       startTime: scene.startTime ?? idx * 3.0,
       endTime: scene.endTime ?? (idx + 1) * 3.0,
       duration: scene.duration ?? 3.0,
