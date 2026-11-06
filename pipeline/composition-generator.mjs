@@ -1186,10 +1186,10 @@ export async function generateComposition(compDir, projectData) {
           tl.set("#scene-${idx}", { opacity: 1 }, ${startT});
         `;
       } else {
-        // Match-cut, morph and sound-bridge preserve visual continuity with a short handoff.
+        // Cross-dissolve: outgoing scene fully clears as the incoming scene resolves.
         gsapTimelineScript += `
-          tl.to("#scene-${idx - 1}", { opacity: 0.12, duration: 0.12, ease: "power1.in" }, ${startT - 0.12});
-          tl.fromTo("#scene-${idx}", { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, ${startT});
+          tl.to("#scene-${idx - 1}", { opacity: 0, duration: 0.16, ease: "power1.in" }, ${startT - 0.08});
+          tl.fromTo("#scene-${idx}", { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, ${startT - 0.08});
         `;
       }
     } else if (isFirst) {
