@@ -122,3 +122,31 @@ Turn an approved topic into an upload-ready YouTube Short (9:16) or horizontal v
 - Unknown generation cost means stop and ask.
 - Never commit credentials to Git.
 - No automatic YouTube publishing or metadata mutation without approval.
+
+
+## Stage 1C — Automated validation checkpoint (6 November 2026)
+
+- [x] Dynamic scene validator accepts the single-scene example and the five-scene proof plan.
+- [x] GitHub Actions run **42176347627** completed successfully:
+  - JavaScript syntax checks: PASS.
+  - Python TTS aligner syntax check: PASS.
+  - Project schema and both example JSON files: PASS.
+  - Offline Node test suite: **66 passed, 0 failed**.
+  - One-scene plan: PASS (1 scene / 1 unique composition).
+  - Five-scene plan: PASS (5 scenes / 5 unique compositions).
+- [x] Contact-sheet tests cover 5-scene layout, 4-scene partial final row, 15 motion frames and invalid dimensions.
+- [x] Render diagnostics now include every scene's midpoint and every scene's entrance/action/payoff; no first-four-scene truncation.
+- [x] Runbook provides Windows/Antigravity steps to render the proof without consuming image/video generation credits.
+
+**Current branch comparison:** `stage1c/dynamic-scene-engine` is 86 commits ahead of `main`, 0 behind at this checkpoint. All changes remain isolated on this branch; main has not been modified.
+
+### Still required before merge or public release
+
+- [ ] Run the five-scene proof on the user's Windows/Antigravity environment using the local runbook.
+- [ ] Inspect the actual MP4, all five scenes' entrance/action/payoff contact sheets and the final mixed audio. CI validates the plan and code; it cannot judge visual taste or audio quality.
+- [ ] Fix any composition, motion, caption collision, timing, audio or render defects found in the actual video.
+- [ ] Test a real rights-cleared music bed and confirm final mix loudness/ducking.
+- [ ] Implement and test an approved video-asset layer for importing PREVIS/Porter/Pollo scene clips. Current dynamic renderer creates original procedural SVG/HTML scenes; external generated MP4 clips are not yet a first-class scene element.
+- [ ] Implement and test horizontal 16:9 canvas/safe-zone/render profiles.
+- [ ] Complete hosted editor handoff/export proof (InVideo/AI Producer/Adobe) or decide that deterministic local HyperFrames/FFmpeg remains the final export engine.
+- [ ] Only after local render and review, open a pull request and merge with user approval.
