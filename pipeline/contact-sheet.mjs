@@ -36,7 +36,10 @@ export function buildContactSheetFilter(inputCount, options = {}) {
     const rowLabel = `r${row}`;
     const needsPad = rowCount < columns;
     const pad = needsPad ? `,pad=${outputWidth}:${cellHeight}:0:0:black` : "";
-    filters.push(`${inputs}hstack=inputs=${rowCount}${pad}[${rowLabel}]`);
+    const rowFilter = rowCount === 1
+      ? `${inputs}pad=${outputWidth}:${cellHeight}:0:0:black[${rowLabel}]`
+      : `${inputs}hstack=inputs=${rowCount}${pad}[${rowLabel}]`;
+    filters.push(rowFilter);
     rowLabels.push(`[${rowLabel}]`);
   }
 
