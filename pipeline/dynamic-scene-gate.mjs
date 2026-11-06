@@ -3,6 +3,9 @@
 
 const isText = (value) => typeof value === "string" && value.trim().length > 0;
 const isFiniteNumber = (value) => typeof value === "number" && Number.isFinite(value);
+const hasMotionState = (state) => state && ["x", "y", "scale", "rotation", "opacity"].some((key) => isFiniteNumber(state[key]));
+const ELEMENT_PRIMITIVES = new Set(["orb", "ring", "capsule", "packet", "rail", "beam", "node", "panel", "label", "particle-field", "image"]);
+const ELEMENT_ID = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/;
 
 export function validateDynamicScenePlan(project) {
   const errors = [];
@@ -59,7 +62,7 @@ export function validateDynamicScenePlan(project) {
       errors.push(`${prefix}: focalHierarchy is required.`);
     }
     if (!isText(composition.negativeSpace)) errors.push(`${prefix}: caption-safe negative space must be planned.`);
-    if (!composition.camera?.animation || !composition.camera.animation.from || !composition.camera.animation.to) {
+    if (!hasMotionState(composition.camera?.animation?.from) || !hasMotionState(composition.camera?.animation?.to)) {
       errors.push(`${prefix}: camera animation from/to states are required.`);
     }
 
@@ -73,15 +76,15 @@ export function validateDynamicScenePlan(project) {
     const ids = new Set();
     elements.forEach((element, eIndex) => {
       const label = element?.id || eIndex;
-      if (!isText(element?.id)) errors.push(`${prefix}: element [${eIndex}] needs an id.`);
+      if (!isText(element?.id) || !ELEMENT_ID.test(element.id)) errors.push(`${prefix}: element [${eIndex}] needs a renderer-safe id.`);
       if (ids.has(element?.id)) errors.push(`${prefix}: duplicate element id "${element.id}".`);
       ids.add(element?.id);
       if (!isText(element?.role)) errors.push(`${prefix}: element "${label}" needs a role.`);
       if (!isText(element?.purpose)) errors.push(`${prefix}: element "${label}" needs an explicit narrative purpose.`);
       if (!isText(element?.source)) errors.push(`${prefix}: element "${label}" needs a source type.`);
       if (!isText(element?.motionRole)) errors.push(`${prefix}: element "${label}" needs a participation/motion role.`);
-      if (!isText(element?.appearance?.primitive)) errors.push(`${prefix}: element "${label}" needs a renderable appearance.primitive.`);
-      if (!element?.geometry || !isFiniteNumber(element.geometry.x) || !isFiniteNumber(element.geometry.y)) {
+      if (!ELEMENT_PRIMITIVES.has(element?.appearance?.primitive)) errors.push(`${prefix}: element "${label}" needs a supported appearance.primitive.`);
+      if (!element?.geometry || !isFiniteNumber(element.geometry.x) || !isFiniteNumber(element.geometry.y) || element.geometry.x < 0 || element.geometry.x > 1 || element.geometry.y < 0 || element.geometry.y > 1) {
         errors.push(`${prefix}: element "${label}" needs normalized geometry coordinates.`);
       }
       if (element?.source === "licensed" && !isText(element.licenseEvidence)) {
@@ -109,7 +112,7 @@ export function validateDynamicScenePlan(project) {
         errors.push(`${prefix}: choreography event "${label}" needs a positive duration.`);
       }
       if (!isText(action?.purpose)) errors.push(`${prefix}: choreography event "${label}" needs a purpose.`);
-      if (!action?.animation?.from || !action.animation.to) {
+      if (!hasMotionState(action?.animation?.from) || !hasMotionState(action?.animation?.to)) {
         errors.push(`${prefix}: choreography event "${label}" needs explicit from/to motion states.`);
       }
       const reactionMotions = Array.isArray(action?.reactionMotions) ? action.reactionMotions : [];
@@ -129,8 +132,8 @@ export function validateDynamicScenePlan(project) {
           if (!ids.has(id)) errors.push(`${prefix}: choreography event "${label}" reacts through undeclared element "${id}".`);
         });
       }
-      if (!isText(action?.soundCue?.type) || !isText(action?.soundCue?.purpose)) {
-        errors.push(`${prefix}: choreography event "${label}" needs a purposeful sound cue or documented deliberate silence.`);
+      if (!isText(action?.soundCue?.type) || !isText(action?.soundCue?.purpose) || (action.soundCue.type !== "deliberate-silence" && !isText(action.soundCue.assetKey))) {
+        errors.push(`${prefix}: choreography event "${label}" needs a purpose-led SFX assetKey or documented deliberate silence.`);
       }
     });
 
