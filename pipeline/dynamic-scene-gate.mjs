@@ -6,6 +6,7 @@ const isFiniteNumber = (value) => typeof value === "number" && Number.isFinite(v
 const hasMotionState = (state) => state && ["x", "y", "scale", "rotation", "opacity"].some((key) => isFiniteNumber(state[key]));
 const ELEMENT_PRIMITIVES = new Set(["orb", "ring", "capsule", "packet", "rail", "beam", "node", "panel", "label", "particle-field", "image"]);
 const ELEMENT_ID = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/;
+const normalizePhrase = (value) => String(value ?? "").normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
 export function validateDynamicScenePlan(project, options = {}) {
   const errors = [];
@@ -99,8 +100,16 @@ export function validateDynamicScenePlan(project, options = {}) {
     if (choreography.length === 0) errors.push(`${prefix}: at least one scene-specific motion event is required.`);
     choreography.forEach((action, aIndex) => {
       const label = action?.event || aIndex;
-      if (!isText(action?.trigger?.type) || !isText(action?.trigger?.anchor)) {
-        errors.push(`${prefix}: choreography event "${label}" needs a trigger type and anchor.`);
+      if (!["spoken-phrase", "timecode"].includes(action?.trigger?.type) || !isText(action?.trigger?.anchor)) {
+        errors.push(`${prefix}: choreography event "${label}" needs a supported spoken-phrase or timecode trigger and anchor.`);
+      } else if (action.trigger.type === "spoken-phrase") {
+        const phrase = normalizePhrase(action.trigger.anchor);
+        const narration = normalizePhrase(scene.voiceText);
+        if (!phrase || !narration.includes(phrase)) {
+          errors.push(`${prefix}: spoken-phrase trigger "${action.trigger.anchor}" does not occur in the narration.`);
+        }
+      } else if (!Number.isFinite(Number(action.trigger.anchor)) || Number(action.trigger.anchor) < 0) {
+        errors.push(`${prefix}: timecode trigger "${action.trigger.anchor}" must be a non-negative project time in seconds.`);
       }
       if (!isText(action?.target) || !ids.has(action.target)) {
         errors.push(`${prefix}: choreography event "${label}" targets an undeclared element.`);
@@ -120,8 +129,14 @@ export function validateDynamicScenePlan(project, options = {}) {
         errors.push(`${prefix}: choreography event "${label}" needs executable reactionMotions for its cause-and-effect targets.`);
       }
       reactionMotions.forEach((motion) => {
-        if (!ids.has(motion?.target) || !motion?.from || !motion?.to) {
+        if (!ids.has(motion?.target) || !hasMotionState(motion?.from) || !hasMotionState(motion?.to)) {
           errors.push(`${prefix}: choreography event "${label}" has an invalid reaction motion target/state.`);
+        }
+      });
+      const reactionTargets = new Set(reactionMotions.map((motion) => motion.target));
+      (action?.causeAndEffect?.reacts || []).forEach((id) => {
+        if (!reactionTargets.has(id)) {
+          errors.push(`${prefix}: choreography event "${label}" declares reaction "${id}" without executable reaction motion.`);
         }
       });
       const reaction = action?.causeAndEffect;
