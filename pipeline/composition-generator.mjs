@@ -609,6 +609,16 @@ export async function generateComposition(compDir, projectData) {
       `;
     }
 
+    if (scene.productionMode === "dynamic" && scene.sceneDirection) {
+      return `
+        <div id="scene-${idx}" class="scene-layer clip" data-start="${scene.startTime}" data-duration="${scene.duration}">
+          <div id="scene-motion-${idx}" class="scene-motion" style="opacity: ${isFirst ? 1 : 0};">
+            ${cardContent}
+          </div>
+        </div>
+      `;
+    }
+
     return `
       <div id="scene-${idx}" class="scene-layer clip" data-start="${scene.startTime}" data-duration="${scene.duration}" style="opacity: ${isFirst ? 1 : 0};">
         ${cardContent}
@@ -1173,25 +1183,30 @@ export async function generateComposition(compDir, projectData) {
       const transitionType = scene.sceneDirection.transition?.type || "hard-cut";
       if (isFirst) {
         gsapTimelineScript += `
-          tl.set("#scene-${idx}", { opacity: 1 }, ${startT});
+          tl.set("#scene-motion-${idx}", { opacity: 1 }, ${startT});
         `;
       } else if (transitionType === "hard-cut") {
         gsapTimelineScript += `
-          tl.set("#scene-${idx - 1}", { opacity: 0 }, ${startT});
-          tl.set("#scene-${idx}", { opacity: 1 }, ${startT});
+          tl.set("#scene-motion-${idx - 1}", { opacity: 0 }, ${startT});
+          tl.set("#scene-motion-${idx}", { opacity: 1 }, ${startT});
         `;
       } else if (transitionType === "camera-continuation") {
         gsapTimelineScript += `
-          tl.to("#scene-${idx - 1}", { opacity: 0, duration: 0.08 }, ${startT - 0.08});
-          tl.set("#scene-${idx}", { opacity: 1 }, ${startT});
+          tl.to("#scene-motion-${idx - 1}", { opacity: 0, duration: 0.08 }, ${startT - 0.08});
+          tl.set("#scene-motion-${idx}", { opacity: 1 }, ${startT});
         `;
       } else {
-        // Cross-dissolve: outgoing scene fully clears as the incoming scene resolves.
+        // Cross-dissolve the inner scene layer; the HyperFrames clip host remains framework-managed.
         gsapTimelineScript += `
-          tl.to("#scene-${idx - 1}", { opacity: 0, duration: 0.16, ease: "power1.in" }, ${startT - 0.08});
-          tl.fromTo("#scene-${idx}", { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, ${startT - 0.08});
+          tl.to("#scene-motion-${idx - 1}", { opacity: 0, duration: 0.16, ease: "power1.in" }, ${startT - 0.08});
+          tl.fromTo("#scene-motion-${idx}", { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, ${startT - 0.08});
         `;
       }
+
+      // Hard-kill the inner visual layer at its clip boundary for deterministic random-access seeking.
+      gsapTimelineScript += `
+        tl.set("#scene-motion-${idx}", { opacity: 0 }, ${(startT + duration).toFixed(3)});
+      `;
     } else if (isFirst) {
       gsapTimelineScript += `
         // Scene ${idx} Entrance (Hook)
@@ -1493,6 +1508,18 @@ export async function generateComposition(compDir, projectData) {
         align-items: center;
         justify-content: flex-start;
         text-align: center;
+      }
+      .scene-motion {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: center;
+        transform-origin: center center;
       }
 
       /* Scene-specific procedural SVG scenes: no card/slide wrapper */
