@@ -1,3 +1,5 @@
+import { validateDynamicScenePlan } from "./dynamic-scene-gate.mjs";
+
 // pipeline/visual-linter.mjs - Deterministic Visual Diversity & Storyboard Linter
 
 /**
@@ -8,6 +10,7 @@ export function lintVisualDiversity(storyboard) {
   const criticalIssues = [];
   const warnings = [];
   const beats = storyboard.beats || [];
+  const isDynamic = storyboard.productionMode === "dynamic";
 
   if (!Array.isArray(beats) || beats.length === 0) {
     return {
@@ -19,8 +22,8 @@ export function lintVisualDiversity(storyboard) {
     };
   }
 
-  // 1. Consecutive repetition check
-  for (let i = 1; i < beats.length; i++) {
+  // 1. Consecutive repetition check (legacy modes only; dynamic scenes use composition signatures below).
+  for (let i = 1; !isDynamic && i < beats.length; i++) {
     const prev = beats[i - 1];
     const curr = beats[i];
     if (prev.visualMode === curr.visualMode) {
@@ -33,10 +36,13 @@ export function lintVisualDiversity(storyboard) {
   // 2. Overused visual modes check (> 50% of beats using same mode)
   const modeCounts = {};
   beats.forEach((b) => {
-    modeCounts[b.visualMode] = (modeCounts[b.visualMode] || 0) + 1;
+    const mode = isDynamic
+      ? b.sceneDirection?.composition?.signature || "missing-scene-signature"
+      : b.visualMode;
+    modeCounts[mode] = (modeCounts[mode] || 0) + 1;
   });
 
-  const maxAllowedSingleMode = Math.max(2, Math.floor(beats.length * 0.5));
+  const maxAllowedSingleMode = isDynamic ? beats.length : Math.max(2, Math.floor(beats.length * 0.5));
   Object.entries(modeCounts).forEach(([mode, count]) => {
     if (count > maxAllowedSingleMode) {
       warnings.push(
@@ -183,6 +189,20 @@ export function lintVisualDiversity(storyboard) {
       );
     }
   });
+
+  // Dynamic creative plan is a release-blocking gate, not a visual-diversity suggestion.
+  if (isDynamic) {
+    const dynamicResult = validateDynamicScenePlan({
+      productionMode: "dynamic",
+      scenes: beats.map((beat) => ({
+        id: beat.beatId,
+        voiceText: beat.spokenLine,
+        cardType: beat.cardType,
+        sceneDirection: beat.sceneDirection,
+      })),
+    });
+    for (const error of dynamicResult.errors) criticalIssues.push(`Dynamic Scene Gate: ${error}`);
+  }
 
   // Combined issues list
   const allIssues = [...criticalIssues, ...warnings];
