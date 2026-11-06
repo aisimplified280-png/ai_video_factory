@@ -133,7 +133,7 @@ async function mixLicensedMusic({ sourceMix, musicPath, outputPath, totalDuratio
   const ffmpegFilter = [
     "[1:a]volume=0.18[music]",
     "[music][0:a]sidechaincompress=threshold=0.025:ratio=8:attack=18:release=420[duckedmusic]",
-    "[0:a][duckedmusic]amix=inputs=2:duration=first:dropout_transition=0,alimiter=limit=0.89125[aout]",
+    "[0:a][duckedmusic]amix=inputs=2:duration=first:dropout_transition=0,loudnorm=I=-14:TP=-2:LRA=11,alimiter=limit=0.89125[aout]",
   ].join(";");
 
   await execFileAsync("ffmpeg", [
