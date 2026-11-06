@@ -43,6 +43,12 @@ jobs:
       - name: Check Python syntax
         run: python -m py_compile pipeline/tts-exact-aligner.py
 
+      - name: Check project and example JSON
+        run: |
+          python -m json.tool schemas/video-project.schema.json > /dev/null
+          python -m json.tool examples/dynamic-scene-plan.example.json > /dev/null
+          python -m json.tool examples/dynamic-scene-proof.json > /dev/null
+
       - name: Run offline Node test suite
         run: node --test tests/*.test.mjs
 
