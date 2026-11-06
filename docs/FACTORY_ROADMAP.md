@@ -82,3 +82,21 @@ Make the existing ai_video_factory repository the durable orchestration layer fo
 - Legacy projects can continue on the old `cardType` path.
 - New projects must declare `productionMode: "dynamic"` and carry `sceneDirection` on every scene.
 - Missing dynamic direction must fail closed; never silently downgrade to cards/slides.
+
+
+## Stage 1C — Dynamic scene gate progress (2026-11-06)
+
+- [x] Added `docs/DYNAMIC_SCENE_CHARTER.md`: no slides, no repeated card templates, no passive wallpaper or decorative filler.
+- [x] Added `docs/DYNAMIC_SCENE_ENGINE_SPEC.md`: sceneDirection schema for composition, camera, visual event, elements, choreography, audio, captions and transitions.
+- [x] Added `.agents/skills/dynamic-scene-director/SKILL.md`.
+- [x] Updated storyboard-director, composition-builder and rendered-video-critique skills with the strict dynamic-scene rule.
+- [x] Added `pipeline/dynamic-scene-gate.mjs` for fail-closed validation of new dynamic scene plans.
+- [x] Added `pipeline/validate-dynamic-scene.mjs` for validation without generating any media or spending credits.
+- [x] Added an example scene plan and unit tests covering valid direction, card rejection, repeated compositions, and missing motion/asset purpose.
+- [ ] Run the new unit tests locally in the user's Antigravity/Windows environment before merging.
+- [ ] Wire the gate into the production CLI and visual release gate.
+- [ ] Implement the dynamic scene renderer. Until then, new dynamic projects must not be sent through the legacy cardType renderer.
+- [ ] Implement per-scene music/ambience/SFX tracks and transcript-based caption timing in the dynamic renderer.
+- [ ] Create a four-scene explanatory Short with four distinct compositions and inspect actual output.
+
+**Current truth:** The scene charter, schema, skill, validator CLI, example and tests are committed on this branch. The validator has not yet been run in the user's local environment, and the dynamic renderer is not yet implemented. The existing legacy engine and verified local smoke render remain intact.
