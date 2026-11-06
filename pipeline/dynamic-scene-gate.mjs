@@ -7,7 +7,7 @@ const hasMotionState = (state) => state && ["x", "y", "scale", "rotation", "opac
 const ELEMENT_PRIMITIVES = new Set(["orb", "ring", "capsule", "packet", "rail", "beam", "node", "panel", "label", "particle-field", "image"]);
 const ELEMENT_ID = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/;
 
-export function validateDynamicScenePlan(project) {
+export function validateDynamicScenePlan(project, options = {}) {
   const errors = [];
   const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
 
@@ -134,6 +134,8 @@ export function validateDynamicScenePlan(project) {
       }
       if (!isText(action?.soundCue?.type) || !isText(action?.soundCue?.purpose) || (action.soundCue.type !== "deliberate-silence" && (!isText(action.soundCue.assetKey) || !isFiniteNumber(action.soundCue.offsetSeconds) || action.soundCue.offsetSeconds < 0))) {
         errors.push(`${prefix}: choreography event "${label}" needs a purpose-led SFX assetKey or documented deliberate silence.`);
+      } else if (action.soundCue.type !== "deliberate-silence" && options.allowedSfxIds instanceof Set && !options.allowedSfxIds.has(action.soundCue.assetKey)) {
+        errors.push(`${prefix}: choreography event "${label}" references unknown SFX asset "${action.soundCue.assetKey}".`);
       }
     });
 
@@ -164,8 +166,8 @@ export function validateDynamicScenePlan(project) {
   };
 }
 
-export function assertDynamicScenePlan(project) {
-  const result = validateDynamicScenePlan(project);
+export function assertDynamicScenePlan(project, options = {}) {
+  const result = validateDynamicScenePlan(project, options);
   if (!result.passed) {
     const detail = result.errors.map((error) => ` - ${error}`).join("\n");
     throw new Error(`Dynamic scene creative gate failed. No generation or rendering may proceed until fixed:\n${detail}`);
