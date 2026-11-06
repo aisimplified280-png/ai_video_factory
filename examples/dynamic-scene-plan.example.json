@@ -1,0 +1,164 @@
+{
+  "productionMode": "dynamic",
+  "format": {
+    "aspectRatio": "9:16",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30
+  },
+  "scenes": [
+    {
+      "id": "cache-lock",
+      "voiceText": "The system prompt is pinned in memory, so the next request can reuse it instantly.",
+      "sceneDirection": {
+        "narrativePurpose": "Show how the reusable prompt prefix is stored and reused instead of being resent.",
+        "visualIntent": "The viewer sees a large prompt block lock into a memory rail, then a smaller request reuses the same block.",
+        "visualMetaphor": "A luminous data cartridge docks into a glass memory rail; the next packet takes a fast path through the stored cartridge.",
+        "primarySubject": "prompt-cartridge",
+        "composition": {
+          "signature": "macro-memory-rail-docking",
+          "shotType": "tracking macro",
+          "camera": {
+            "move": "tracking-dolly",
+            "target": "prompt-cartridge",
+            "path": "Track the cartridge as it slides into the rail, then arc toward the returning request packet."
+          },
+          "depthLayers": [
+            "dark server-chamber environment",
+            "glass memory rail and data particles",
+            "cartridge and request packet in foreground"
+          ],
+          "focalHierarchy": [
+            "prompt-cartridge",
+            "memory-rail",
+            "reuse-packet"
+          ],
+          "negativeSpace": "Keep lower quarter free for word-synced captions; labels appear beside the rail, never over the cartridge."
+        },
+        "visualEvent": {
+          "setup": "A long prompt cartridge floats outside an empty memory rail.",
+          "action": "The cartridge docks and locks; a second request packet approaches and branches through the stored prefix.",
+          "payoff": "The prompt cartridge remains lit while only the new request packet continues, showing reuse."
+        },
+        "elements": [
+          {
+            "id": "prompt-cartridge",
+            "role": "primary subject",
+            "purpose": "Represents the reusable static system prompt.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.34,
+              "y": 0.48,
+              "scale": 1.1
+            },
+            "appearance": {
+              "form": "translucent lavender cartridge filled with short data glyphs",
+              "material": "glass and brushed metal",
+              "palette": "violet with chartreuse lock indicator"
+            },
+            "motionRole": "Slides from left, rotates into the rail, locks with a physical snap."
+          },
+          {
+            "id": "memory-rail",
+            "role": "mechanism",
+            "purpose": "Shows persistent prompt-prefix storage.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.55,
+              "y": 0.52,
+              "scale": 1
+            },
+            "appearance": {
+              "form": "long illuminated glass rail with empty slots",
+              "material": "transparent glass",
+              "palette": "deep purple with violet edge lights"
+            },
+            "motionRole": "Rails illuminate slot-by-slot as the cartridge docks."
+          },
+          {
+            "id": "reuse-packet",
+            "role": "data packet",
+            "purpose": "Shows a later request reusing the stored prefix.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.78,
+              "y": 0.63,
+              "scale": 0.7
+            },
+            "appearance": {
+              "form": "small chartreuse packet with trailing particles",
+              "material": "light beam",
+              "palette": "lime and white"
+            },
+            "motionRole": "Moves along the rail and exits through a fast side path after the cache hit."
+          }
+        ],
+        "choreography": [
+          {
+            "trigger": {
+              "type": "spoken-phrase",
+              "anchor": "pinned in memory"
+            },
+            "target": "prompt-cartridge",
+            "event": "dock-cartridge",
+            "duration": 1.4,
+            "pathOrChange": "Move left-to-right, rotate 12 degrees into alignment, then settle into the rail.",
+            "purpose": "Make storage and reuse tangible.",
+            "causeAndEffect": {
+              "reacts": [
+                "memory-rail"
+              ],
+              "reaction": "The rail slots illuminate in sequence and the lock indicator turns lime."
+            },
+            "soundCue": {
+              "type": "mechanical-lock",
+              "purpose": "A tactile latch sound marks successful storage."
+            }
+          },
+          {
+            "trigger": {
+              "type": "spoken-phrase",
+              "anchor": "reuse it instantly"
+            },
+            "target": "reuse-packet",
+            "event": "reuse-prefix",
+            "duration": 1.1,
+            "pathOrChange": "Travel along the illuminated rail, branch into the fast exit lane and accelerate out of frame.",
+            "purpose": "Show that the stored prefix is reused rather than transmitted again.",
+            "causeAndEffect": {
+              "reacts": [
+                "prompt-cartridge",
+                "memory-rail"
+              ],
+              "reaction": "The cartridge stays lit while the packet exits on the fast path."
+            },
+            "soundCue": {
+              "type": "fast-whoosh",
+              "purpose": "A short whoosh emphasizes the low-latency reuse path."
+            }
+          }
+        ],
+        "audio": {
+          "voiceSegment": "The system prompt is pinned in memory, so the next request can reuse it instantly.",
+          "ambience": "Quiet low-frequency server-room tone, kept subtle.",
+          "musicCue": "Build light tension during docking, resolve into a restrained bright pulse on reuse.",
+          "ducking": "Narration remains clearly foregrounded; duck music and ambience beneath every spoken phrase."
+        },
+        "captions": {
+          "mode": "word-synced",
+          "emphasis": [
+            "pinned",
+            "reuse",
+            "instantly"
+          ],
+          "anchor": "lower-center safe zone outside the rail's moving foreground",
+          "treatment": "Large white word captions with one lime-highlighted active word; no panel/card background."
+        },
+        "transition": {
+          "type": "match-cut",
+          "continuityReason": "The outgoing request packet becomes the entering fast-path packet in the next scene."
+        }
+      }
+    }
+  ]
+}
