@@ -365,7 +365,7 @@ async function main() {
   }
 
   console.log(`\n=============================================================`);
-  console.log(`🎬 AI Simplified Lab — Purple Collage Shorts Engine`);
+  console.log(`🎬 AI Simplified Lab — ${scriptData.productionMode === "dynamic" ? "Dynamic Scene Engine" : "Purple Collage Shorts Engine"}`);
   console.log(`   Project ID: ${scriptData.id}`);
   console.log(`   Topic:      ${scriptData.topic || scriptData.title}`);
   console.log(`=============================================================\n`);
@@ -378,7 +378,7 @@ async function main() {
   await fs.writeFile(path.join(projectDir, "script.json"), JSON.stringify(scriptData, null, 2));
 
   // Step 1: Generate Voiceover & Aligned SFX using exact SentenceBoundary timing
-  console.log(`[Step 1/4] Generating Speech and Audio Mix (Exact Timings)...`);
+  console.log(`[Step 1/4] Generating Speech, exact WordBoundary Timings and Audio Mix...`);
   const audioResult = await generateAudio(projectDir, scriptData);
   console.log(`✓ Audio complete: ${audioResult.totalDuration}s (${audioResult.totalFrames} frames @ ${audioResult.fps} fps)\n`);
 
@@ -405,7 +405,7 @@ async function main() {
   console.log(`✓ Storyboard planned with ${storyboardData.beatsCount} beats.\n`);
 
   // Step 3: Build HTML & GSAP Composition (AI Simplified Lab Purple Collage Explainer)
-  console.log(`[Step 3/4] Synthesizing HyperFrames Composition (Purple Collage Style)...`);
+  console.log(`[Step 3/4] Synthesizing HyperFrames Composition (${scriptData.productionMode === "dynamic" ? "Scene-Specific Dynamic" : "Purple Collage"} Style)...`);
   const compositionData = {
     ...scriptData,
     totalDuration: audioResult.totalDuration,
