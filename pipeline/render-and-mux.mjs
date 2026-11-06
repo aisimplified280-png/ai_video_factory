@@ -1,6 +1,7 @@
 // pipeline/render-and-mux.mjs - HyperFrames render, FFmpeg mux, and truthful QA verification
 import fs from "node:fs/promises";
 import path from "node:path";
+import process from "node:process";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { HYPERFRAMES_BIN, SFX_DIR } from "./config.mjs";
@@ -22,7 +23,9 @@ const execFileAsync = promisify(execFile);
  */
 async function runCmd(cmd, args, cwd) {
   console.log(`[Exec] ${cmd} ${args.join(" ")}`);
-  const { stdout, stderr } = await execFileAsync(cmd, args, { cwd, shell: true });
+  // Only use a shell for Windows npm command shims; FFmpeg filter graphs must remain a single argv value.
+  const shell = process.platform === "win32" && /\\.(cmd|bat)$/i.test(cmd);
+  const { stdout, stderr } = await execFileAsync(cmd, args, { cwd, shell });
   if (stderr && stderr.trim()) console.warn(`[Warn] ${stderr.trim()}`);
   return stdout;
 }
@@ -124,7 +127,7 @@ export async function renderAndMux(projectDir, projectData) {
       "-vf", "blackdetect=d=0.5:pix_th=0.10",
       "-f", "null",
       "-",
-    ], { shell: true });
+    ], { shell: false });
     blackStderr = stderr;
   } catch (err) {
     blackStderr = err.stderr || "";
