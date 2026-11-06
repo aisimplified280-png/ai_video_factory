@@ -957,6 +957,310 @@
           "continuityReason": "The final empty ring is a clear end state; the next video can return to the initial storage action."
         }
       }
+    },
+    {
+      "id": "subscribe-outro",
+      "voiceText": "For more clear AI breakdowns, subscribe to AI Simplified Lab.",
+      "sceneDirection": {
+        "narrativePurpose": "Give the viewer one clear next action and identify the channel at the end of the explanation.",
+        "visualIntent": "A distinctive AI signal assembles into the channel wordmark, then activates a subscribe control and notification bell.",
+        "visualMetaphor": "A focused signal pulse travels through a custom lab mark and locks into a visible subscribe action.",
+        "primarySubject": "brand-mark",
+        "composition": {
+          "signature": "outro-brand-signal-assembly",
+          "shotType": "front-facing kinetic brand reveal",
+          "camera": {
+            "move": "controlled-dolly",
+            "target": "brand-mark",
+            "path": "Move toward the forming brand mark, then settle as the subscribe control activates.",
+            "animation": {
+              "from": {
+                "x": 0,
+                "y": 18,
+                "scale": 0.94,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "to": {
+                "x": 0,
+                "y": 0,
+                "scale": 1.03,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 3.5,
+              "ease": "power2.out"
+            }
+          },
+          "depthLayers": [
+            "dark open stage",
+            "brand symbol and wordmark",
+            "subscribe control and notification indicator"
+          ],
+          "focalHierarchy": [
+            "brand-mark",
+            "channel-wordmark",
+            "subscribe-control",
+            "notification-bell"
+          ],
+          "negativeSpace": "Keep the top third clear for the short final caption; the subscribe control occupies the lower-middle.",
+          "environment": {
+            "background": "#080b16",
+            "atmosphere": "A minimal dark stage with no decorative objects; all visible elements are part of the brand action."
+          }
+        },
+        "visualEvent": {
+          "setup": "A compact AI signal mark waits in darkness.",
+          "action": "The mark assembles, its wordmark resolves, and a subscribe control locks into place.",
+          "payoff": "The notification indicator reacts once, leaving a clean final subscribe state."
+        },
+        "elements": [
+          {
+            "id": "brand-mark",
+            "role": "channel symbol",
+            "purpose": "Creates a recognisable visual signature for AI Simplified Lab.",
+            "source": "original",
+            "geometry": {
+              "x": 0.32,
+              "y": 0.43,
+              "width": 0.16,
+              "height": 0.16
+            },
+            "appearance": {
+              "primitive": "node",
+              "color": "#6d28d9",
+              "accent": "#a3e635",
+              "label": "AI"
+            },
+            "motionRole": "Forms from a small pulse, rotates into alignment and settles."
+          },
+          {
+            "id": "channel-wordmark",
+            "role": "channel identity",
+            "purpose": "Names the channel so viewers know where the explanation came from.",
+            "source": "original",
+            "geometry": {
+              "x": 0.58,
+              "y": 0.43,
+              "width": 0.42,
+              "height": 0.09
+            },
+            "appearance": {
+              "primitive": "label",
+              "color": "#ffffff",
+              "accent": "#a3e635",
+              "label": "AI SIMPLIFIED LAB"
+            },
+            "motionRole": "Moves into alignment beside the mark and resolves from low opacity."
+          },
+          {
+            "id": "subscribe-control",
+            "role": "viewer action",
+            "purpose": "Makes the subscribe action explicit and visually easy to understand.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.48,
+              "y": 0.66,
+              "width": 0.46,
+              "height": 0.11
+            },
+            "appearance": {
+              "primitive": "panel",
+              "color": "#4c1d95",
+              "accent": "#a3e635",
+              "label": "SUBSCRIBE"
+            },
+            "motionRole": "Slides into place and gives one restrained confirmation pulse."
+          },
+          {
+            "id": "notification-bell",
+            "role": "notification affordance",
+            "purpose": "Shows the optional notification action that follows subscribing.",
+            "source": "procedural",
+            "geometry": {
+              "x": 0.82,
+              "y": 0.66,
+              "width": 0.12,
+              "height": 0.12
+            },
+            "appearance": {
+              "primitive": "node",
+              "color": "#365314",
+              "accent": "#a3e635",
+              "label": "BELL"
+            },
+            "motionRole": "Rings once after the subscribe control activates."
+          }
+        ],
+        "choreography": [
+          {
+            "trigger": {
+              "type": "spoken-phrase",
+              "anchor": "subscribe to AI Simplified Lab"
+            },
+            "target": "brand-mark",
+            "event": "assemble-channel-identity",
+            "duration": 1.1,
+            "pathOrChange": "Scale from a small pulse, rotate into alignment and resolve at full size.",
+            "purpose": "Reveal the channel identity as part of the spoken CTA.",
+            "animation": {
+              "from": {
+                "x": -20,
+                "y": 14,
+                "scale": 0.2,
+                "rotation": -28,
+                "opacity": 0
+              },
+              "to": {
+                "x": 0,
+                "y": 0,
+                "scale": 1,
+                "rotation": 0,
+                "opacity": 1
+              },
+              "duration": 0.9,
+              "ease": "back.out"
+            },
+            "causeAndEffect": {
+              "reacts": [
+                "channel-wordmark",
+                "subscribe-control"
+              ],
+              "reaction": "The wordmark resolves and the subscribe control slides into its final position."
+            },
+            "reactionMotions": [
+              {
+                "target": "channel-wordmark",
+                "from": {
+                  "x": 36,
+                  "y": 0,
+                  "scale": 0.94,
+                  "opacity": 0
+                },
+                "to": {
+                  "x": 0,
+                  "y": 0,
+                  "scale": 1,
+                  "opacity": 1
+                },
+                "duration": 0.55,
+                "ease": "power2.out"
+              },
+              {
+                "target": "subscribe-control",
+                "from": {
+                  "x": 0,
+                  "y": 24,
+                  "scale": 0.9,
+                  "opacity": 0
+                },
+                "to": {
+                  "x": 0,
+                  "y": 0,
+                  "scale": 1,
+                  "opacity": 1
+                },
+                "duration": 0.6,
+                "ease": "back.out"
+              }
+            ],
+            "soundCue": {
+              "type": "subscribe-confirmation",
+              "assetKey": "ui-click",
+              "offsetSeconds": 0.3,
+              "purpose": "A single soft click marks the subscribe control becoming active."
+            }
+          },
+          {
+            "trigger": {
+              "type": "spoken-phrase",
+              "anchor": "subscribe to AI Simplified Lab"
+            },
+            "target": "notification-bell",
+            "event": "confirm-notifications",
+            "duration": 0.6,
+            "pathOrChange": "Pulse once and rotate a few degrees as if ringing, then return to neutral.",
+            "purpose": "Show the notification affordance without distracting from the spoken CTA.",
+            "animation": {
+              "from": {
+                "x": 0,
+                "y": 0,
+                "scale": 0.82,
+                "rotation": -12,
+                "opacity": 0.35
+              },
+              "to": {
+                "x": 0,
+                "y": 0,
+                "scale": 1.08,
+                "rotation": 8,
+                "opacity": 1
+              },
+              "duration": 0.3,
+              "ease": "back.out"
+            },
+            "causeAndEffect": {
+              "reacts": [
+                "subscribe-control"
+              ],
+              "reaction": "The subscribe control receives a final lime confirmation pulse."
+            },
+            "reactionMotions": [
+              {
+                "target": "subscribe-control",
+                "from": {
+                  "scale": 1,
+                  "opacity": 1
+                },
+                "to": {
+                  "scale": 1.035,
+                  "opacity": 1
+                },
+                "duration": 0.25,
+                "ease": "sine.inOut"
+              }
+            ],
+            "soundCue": {
+              "type": "notification-confirmation",
+              "assetKey": "clean-ding",
+              "offsetSeconds": 1.25,
+              "purpose": "A quiet bright tone marks the completed CTA."
+            }
+          }
+        ],
+        "audio": {
+          "voiceSegment": "For more clear AI breakdowns, subscribe to AI Simplified Lab.",
+          "ambience": "Silence behind the spoken CTA; the scene's motion and final confirmation sounds are sufficient.",
+          "musicCue": "Resolve any existing score into a short, low-volume ending; do not add a new music bed solely to fill this scene.",
+          "ducking": "Keep the voice prominent; the click and confirmation tone sit below the final words."
+        },
+        "captions": {
+          "mode": "word-synced",
+          "emphasis": [
+            "subscribe",
+            "AI Simplified Lab"
+          ],
+          "anchor": "Top-center, away from the assembling logo and subscribe control.",
+          "treatment": "Clean word-synced captions; transparent active state with lime emphasis.",
+          "placement": {
+            "x": 50,
+            "y": 16,
+            "align": "center",
+            "maxWidth": 900
+          },
+          "style": {
+            "fontSize": 44,
+            "fontWeight": 850,
+            "color": "#ffffff",
+            "highlightColor": "#a3e635",
+            "activeBackgroundColor": "transparent"
+          }
+        },
+        "transition": {
+          "type": "hard-cut",
+          "continuityReason": "The final subscribe state holds briefly and closes the video cleanly."
+        }
+      }
     }
   ]
 }
