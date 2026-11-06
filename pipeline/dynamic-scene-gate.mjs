@@ -167,6 +167,22 @@ export function validateDynamicScenePlan(project, options = {}) {
     if (!isText(captions.anchor) || !isText(captions.treatment)) {
       errors.push(`${prefix}: caption anchor and treatment are required.`);
     }
+    const placement = captions.placement || {};
+    if (!isFiniteNumber(placement.x) || placement.x < 5 || placement.x > 95 ||
+        !isFiniteNumber(placement.y) || placement.y < 5 || placement.y > 95 ||
+        !["left", "center", "right"].includes(placement.align) ||
+        !isFiniteNumber(placement.maxWidth) || placement.maxWidth < 240 || placement.maxWidth > 1080) {
+      errors.push(`${prefix}: scene-specific caption placement needs x/y percentages, align and maxWidth in pixels.`);
+    }
+    const captionStyle = captions.style || {};
+    const validColor = (value) => typeof value === "string" &&
+      /^#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$/.test(value);
+    if (!isFiniteNumber(captionStyle.fontSize) || captionStyle.fontSize < 18 || captionStyle.fontSize > 90 ||
+        !isFiniteNumber(captionStyle.fontWeight) || captionStyle.fontWeight < 400 || captionStyle.fontWeight > 900 ||
+        !validColor(captionStyle.color) || !validColor(captionStyle.highlightColor) ||
+        !(captionStyle.activeBackgroundColor === "transparent" || validColor(captionStyle.activeBackgroundColor))) {
+      errors.push(`${prefix}: scene-specific caption typography needs bounded fontSize/fontWeight and valid ink/highlight colours.`);
+    }
 
     if (!isText(d.transition?.type) || !isText(d.transition?.continuityReason)) {
       errors.push(`${prefix}: transition type and narrative reason are required (use a reasoned hard cut or ending when appropriate).`);
