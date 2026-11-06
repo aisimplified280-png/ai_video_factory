@@ -38,7 +38,7 @@ function makeScene(id, signature = id) {
         animation: { from: { x: -30, y: 0, scale: 0.8, opacity: 0 }, to: { x: 0, y: 0, scale: 1, opacity: 1 }, duration: 1.2, ease: "power3.out" },
         reactionMotions: [{ target: `${id}-reactor`, from: { scale: 0.8, opacity: 0.6 }, to: { scale: 1, opacity: 1 }, duration: 0.4, ease: "power2.out" }],
         causeAndEffect: { reacts: [`${id}-reactor`], reaction: "Receiver illuminates and rotates." },
-        soundCue: { type: "impact", purpose: "Mark the contact point." }
+        soundCue: { type: "impact", assetKey: "latch", purpose: "Mark the contact point." }
       }],
       audio: {
         voiceSegment: `Explain the ${id} mechanism.`,
